@@ -45,7 +45,7 @@ function LandingHeaderAndNav({
     <>
       {/* Top logo header */}
       <header className=" py-4 ">
-        <div className="w-[1170px] mx-auto px-4 flex justify-between items-center">
+        <div className=" w-[1170px] mx-auto flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3">
             {settings?.fullLogo ? (
               <div className="relative h-12 w-auto">
@@ -59,8 +59,8 @@ function LandingHeaderAndNav({
                 />
               </div>
             ) : (
-              <div className="h-12 flex items-center justify-center font-bold text-2xl text-cyan-600 tracking-wide font-mono">
-                VISOTHAP
+              <div className="h-12 flex items-center justify-center font-bold text-2xl text-primary tracking-wide font-mono">
+                Logo
               </div>
             )}
           </Link>
@@ -183,10 +183,10 @@ export default function LandingLayout({
         >
           <Suspense
             fallback={
-              <div className="bg-white border-b border-gray-100 py-4 shadow-sm">
+              <div className=" border-b py-4 shadow-sm">
                 <div className="w-[1170px] mx-auto px-4 flex justify-between items-center">
                   <div className="h-12 flex items-center justify-center font-bold text-2xl text-cyan-600 tracking-wide font-mono">
-                    VISOTHAP
+                    Logo
                   </div>
                 </div>
               </div>
@@ -214,11 +214,10 @@ export default function LandingLayout({
       {/* Footer: Always w-full of the screen width, outside the scaled wrapper */}
       <footer className="w-full bg-primary text-primary-foreground py-4 md:py-10 lg:py-20 border-t text-sm mt-auto">
         <div
-          className={`w-full max-w-[1170px] mx-auto px-6 flex ${
-            scale < 1
-              ? "flex-col gap-2 text-center"
-              : "flex-row justify-between items-center gap-4"
-          }`}
+          className={`w-full max-w-[1170px] mx-auto px-6 flex ${scale < 1
+            ? "flex-col gap-2 text-center"
+            : "flex-row justify-between items-center gap-4"
+            }`}
         >
           <div
             className="text-xs md:text-base"
