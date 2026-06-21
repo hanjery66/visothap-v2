@@ -231,15 +231,6 @@ export default function GeneralPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-5xl">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold font-sans tracking-tight">
-          General Layout Settings
-        </h2>
-        <p className="text-xs mt-1">
-          Configure logo image references and HTML footer content sections
-          stored in the database.
-        </p>
-      </div>
 
       <form onSubmit={handleUpdateGeneral} className="flex flex-col gap-6">
         {/* LOGO REFERENCES PANEL */}

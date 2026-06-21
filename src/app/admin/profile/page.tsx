@@ -71,7 +71,7 @@ export default function ProfilePage() {
     onError: (err) => {
       toast.error(
         err.message ||
-          "Failed to change password. Please confirm your current password.",
+        "Failed to change password. Please confirm your current password.",
       );
     },
   });
@@ -140,15 +140,6 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-6xl">
       {/* Dynamic Header */}
-      <div>
-        <h2 className="text-xl font-bold font-sans tracking-tight">
-          Account Profile
-        </h2>
-        <p className="text-xs mt-1">
-          Manage username, email address, system roles, and secure access
-          credentials.
-        </p>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Side: General Profile Card & Security Password Card */}

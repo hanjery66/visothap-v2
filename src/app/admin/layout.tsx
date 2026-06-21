@@ -17,6 +17,7 @@ import {
   LogOut,
   Loader2,
 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AdminLayout({
   children,
@@ -71,6 +72,47 @@ export default function AdminLayout({
         setLoggingOut(false);
       });
   };
+
+  type Menu = {
+    title: string;
+    description: string
+    href: string;
+    icon: React.ReactNode;
+  }
+
+  const menus: Menu[] = [
+    {
+      title: "Lottery Numbers",
+      description: "Create and manage lottery numbers.",
+      href: "/admin",
+      icon: <BarChart2 className="h-4 w-4" />,
+    },
+    {
+      title: "Advertisements",
+      description: "Manage advertisements.",
+      href: "/admin/advertisement",
+      icon: <ImageIcon className="h-4 w-4" />,
+    },
+    {
+      title: "System Users",
+      description: "Manage system users.",
+      href: "/admin/user",
+      icon: <Users className="h-4 w-4" />,
+    },
+    {
+      title: "General Settings",
+      description: "Manage general settings.",
+      href: "/admin/general",
+      icon: <Settings className="h-4 w-4" />,
+    },
+    {
+      title: "Admin Profile",
+      description: "Manage admin profile.",
+      href: "/admin/profile",
+      icon: <User className="h-4 w-4" />,
+    },
+  ]
+
 
   const renderSidebarItem = (
     href: string,
@@ -162,37 +204,27 @@ export default function AdminLayout({
               <span className="text-[10px] font-bold px-2 mb-1 tracking-wider uppercase text-muted-foreground">
                 Management
               </span>
-              {renderSidebarItem(
-                "/admin",
-                "Lottery Numbers",
-                <BarChart2 className="h-4 w-4" />,
-              )}
-              {renderSidebarItem(
-                "/admin/advertisement",
-                "Advertisements",
-                <ImageIcon className="h-4 w-4" />,
-              )}
-              {renderSidebarItem(
-                "/admin/user",
-                "System Users",
-                <Users className="h-4 w-4" />,
-              )}
-              {renderSidebarItem(
-                "/admin/general",
-                "General Settings",
-                <Settings className="h-4 w-4" />,
-              )}
-              {renderSidebarItem(
-                "/admin/profile",
-                "Admin Profile",
-                <User className="h-4 w-4" />,
-              )}
+
+              {
+                menus.map((menu) => renderSidebarItem(menu.href, menu.title, menu.icon))
+              }
+
             </aside>
 
             {/* MAIN DYNAMIC CONTENT WORKSPACE */}
-            <section className="flex-1 w-full p-6 rounded-xl relative shadow-lg min-h-[500px]">
-              {children}
-            </section>
+            <Card className="flex-1 w-full rounded-xl shadow-lg min-h-[500px]">
+              <CardHeader>
+                <CardTitle>
+                  {menus.find((m) => m.href === pathname)?.title}
+                </CardTitle>
+                <CardDescription>
+                  {menus.find((m) => m.href === pathname)?.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="">
+                {children}
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

@@ -291,15 +291,6 @@ export default function AdvertisementPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-bold font-sans tracking-tight">
-            Advertisement Banners
-          </h2>
-          <p className="text-xs  mt-1">
-            Configure position layouts, visibility toggles, and image banners
-            stored in database.
-          </p>
-        </div>
         {!formAd && (
           <Button
             onClick={handleCreateNew}

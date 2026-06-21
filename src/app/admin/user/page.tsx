@@ -54,11 +54,6 @@ export default function UserPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="">
-        <h2 className="text-xl font-bold font-sans tracking-tight">System Users</h2>
-        <p className="text-xs mt-1">List of registered administrator and staff accounts with system access.</p>
-      </div>
-
       <DataTable
         columns={columns}
         data={(users as UserRow[]) || []}

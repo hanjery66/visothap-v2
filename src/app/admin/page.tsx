@@ -178,58 +178,47 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            Lottery Management
-          </h2>
-          <p className="text-xs mt-1">
-            Select a date and click directly on any cell to edit details
-            instantly.
-          </p>
-        </div>
 
-        {/* Date selection and automation tools */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" data-empty={!selectedDate} size={"sm"}>
-                {selectedDate ? (
-                  selectedDate.toString()
-                ) : (
-                  <span>Pick a date</span>
-                )}
-                <ChevronDownIcon />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto" align="start">
-              <Calendar
-                mode="single"
-                selected={dayjs(selectedDate).toDate()}
-                onSelect={(date) =>
-                  setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
-                }
-                defaultMonth={dayjs(selectedDate).toDate()}
-              />
-            </PopoverContent>
-          </Popover>
+      {/* Date selection and automation tools */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" data-empty={!selectedDate} size={"sm"}>
+              {selectedDate ? (
+                selectedDate.toString()
+              ) : (
+                <span>Pick a date</span>
+              )}
+              <ChevronDownIcon />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto" align="start">
+            <Calendar
+              mode="single"
+              selected={dayjs(selectedDate).toDate()}
+              onSelect={(date) =>
+                setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
+              }
+              defaultMonth={dayjs(selectedDate).toDate()}
+            />
+          </PopoverContent>
+        </Popover>
 
-          <Button
-            onClick={handleFillRandomLottery}
-            size="sm"
-            className="text-xs"
-          >
-            Auto-fill Numbers
-          </Button>
-          <Button
-            onClick={handleResetLottery}
-            variant="destructive"
-            size="sm"
-            className="text-xs bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
-          >
-            Clear Numbers
-          </Button>
-        </div>
+        <Button
+          onClick={handleFillRandomLottery}
+          size="sm"
+          className="text-xs"
+        >
+          Auto-fill Numbers
+        </Button>
+        <Button
+          onClick={handleResetLottery}
+          variant="destructive"
+          size="sm"
+          className="text-xs bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
+        >
+          Clear Numbers
+        </Button>
       </div>
 
       {/* Time / Period tabs selection */}
