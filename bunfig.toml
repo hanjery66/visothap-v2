@@ -1,0 +1,23 @@
+[install]
+# optional: keep lockfile in sync with bun install
+# lockfile = "bun.lock"
+
+[build]
+# optional: set output directory
+# outdir = "build"
+
+[test]
+# optional: set test directory
+# testdir = "tests"
+
+[dev]
+# optional: watch files for changes
+# watch = true
+
+[bun]
+# optional: set environment variables
+# env = { "NODE_ENV" = "development" }
+
+# Configure path aliases (matches tsconfig.json)
+[alias]
+"@" = "./src"

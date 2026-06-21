@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+.next
+
+# Build outputs
+.next
+
+# Environment files
+.env*.local
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
+.DS_Store
+Thumbs.db
