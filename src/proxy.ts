@@ -8,7 +8,7 @@ export function proxy(request: NextRequest) {
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     const sessionToken =
       request.cookies.get("better-auth.session_token") ||
-      request.cookies.get("__secure-better-auth.session_token");
+      request.cookies.get("__Secure-better-auth.session_token");
 
     if (!sessionToken) {
       const loginUrl = new URL("/admin/login", request.url);
@@ -21,7 +21,7 @@ export function proxy(request: NextRequest) {
   if (pathname === "/admin/login") {
     const sessionToken =
       request.cookies.get("better-auth.session_token") ||
-      request.cookies.get("__secure-better-auth.session_token");
+      request.cookies.get("__Secure-better-auth.session_token");
 
     if (sessionToken) {
       return NextResponse.redirect(new URL("/admin", request.url));
