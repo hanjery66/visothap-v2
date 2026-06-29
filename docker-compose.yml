@@ -2,8 +2,8 @@ services:
   app:
     build:
       context: .
-      # platforms:
-      #   - "linux/amd64"
+      platforms:
+        - "linux/amd64"
     container_name: visothap-v2
     restart: unless-stopped
     image: xosothap/visothap-v2
