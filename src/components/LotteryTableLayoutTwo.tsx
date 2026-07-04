@@ -36,7 +36,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
     switch (key) {
       case "db":
         return (
-          <div className=" hover:bg-primary transition-all hover:text-primary-foreground rounded-xl cursor-pointer  text-red-650 font-extrabold text-[30px] md:text-[40px] tracking-wider text-center w-full">
+          <div className=" hover:bg-primary transition-all hover:text-primary-foreground rounded-xl cursor-pointer  text-red-650 font-extrabold text-[30px] md:text-[35px] tracking-wider text-center w-full">
             {prizes[0]?.value || <span className="text-zinc-300 font-normal ">X</span>}
           </div>
         );
@@ -81,7 +81,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
         );
       case "gSeven":
         return (
-          <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center  text-red-650 font-extrabold tracking-wider text-[30px] md:text-[40px]">
+          <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center  text-red-650 font-extrabold tracking-wider text-[30px] md:text-[35px]">
             {prizes.map((pz, idx) => (
               <span key={idx} className="hover:bg-primary transition-all hover:text-primary-foreground w-full rounded-xl cursor-pointer">{pz.value || <span className="text-zinc-300 font-normal">X</span>}</span>
             ))}

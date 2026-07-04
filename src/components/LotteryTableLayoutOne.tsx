@@ -1,16 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useLayoutEffect } from "react";
 import dayjs from "dayjs";
 import { LocationData, Prize } from "@/lib/mockData";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableHead,
-} from "@/components/ui/table";
 
 interface LotteryTableLayoutOneProps {
   periodData: any;
@@ -22,7 +14,7 @@ export function LotteryTableLayoutOne({ periodData, dateParam }: LotteryTableLay
   const locations = periodData.data as LocationData[];
 
   const rows = [
-    { key: "gEight", label: "Gi 8", color: "text-red-600 font-extrabold text-[30px] md:text-[40px]" },
+    { key: "gEight", label: "Gi 8", color: "text-red-600 font-extrabold text-[30px] md:text-[35px]" },
     { key: "gSeven", label: "Gi 7", color: "text-zinc-800 text-[25px] md:text-[30px] font-bold" },
     { key: "gSix", label: "Gi 6", color: "text-zinc-800 text-[20px] md:text-[25px] font-bold" },
     { key: "gFive", label: "Gi 5", color: "text-zinc-800 text-[20px] md:text-[25px] font-bold" },
@@ -30,76 +22,124 @@ export function LotteryTableLayoutOne({ periodData, dateParam }: LotteryTableLay
     { key: "gThree", label: "Gi 3", color: "text-zinc-800 text-[20px] md:text-[25px] font-bold" },
     { key: "gTwo", label: "Gi 2", color: "text-zinc-800 text-[20px] md:text-[25px] font-bold" },
     { key: "gOne", label: "Gi 1", color: "text-zinc-800 text-[20px] md:text-[25px] font-bold" },
-    { key: "db", label: "Đ. B", color: "text-red-600 font-extrabold text-[30px] md:text-[40px]" },
+    { key: "db", label: "Đ. B", color: "text-red-600 font-extrabold text-[30px] md:text-[35px]" },
   ];
+
+  // Refs used to sync heights between the label column and the first data column.
+  // Since we switched to a column-first DOM, rows no longer share a <tr> to auto-equalize height.
+  const srcHeadRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const lblHeadRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const srcRowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const lblRowRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Run after every paint so resize / data changes are handled.
+  // Direct DOM style writes won't trigger React re-renders → no infinite loop.
+  useLayoutEffect(() => {
+    srcHeadRefs.current.forEach((el, i) => {
+      const lbl = lblHeadRefs.current[i];
+      if (el && lbl) lbl.style.minHeight = `${el.getBoundingClientRect().height}px`;
+    });
+    srcRowRefs.current.forEach((el, i) => {
+      const lbl = lblRowRefs.current[i];
+      if (el && lbl) lbl.style.minHeight = `${el.getBoundingClientRect().height}px`;
+    });
+  });
 
   const formattedName = periodData.name.toUpperCase().replace("SỔ KẾT QUẢ", "KẾT QUẢ XỔ SỐ");
 
   return (
-    <div className=" rounded-lg shadow-md  overflow-hidden mb-8 transition-all hover:shadow-lg">
-      {/* Table header */}
-      <div className="bg-primary text-primary-foreground px-4 py-2 font-bold  text-lg md:text-xl text-center flex flex-col sm:flex-row justify-center items-center gap-1 shadow-sm uppercase">
+    <div className="rounded-lg shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
+      {/* Banner */}
+      <div className="bg-primary text-primary-foreground px-4 py-2 font-bold text-lg md:text-xl text-center flex flex-col sm:flex-row justify-center items-center gap-1 shadow-sm uppercase">
         <span>{periodData.displayNumber} - {dayjs(dateParam).format("DD/MM/YYYY")} {formattedName}</span>
       </div>
 
-      {/* Responsive wrapper */}
-      <div className="overflow-x-auto border-t ">
-        <Table className="w-full min-w-[500px] border-collapse ">
-          <TableHeader className=" border-b ">
-            {/* Row 1 of Header */}
-            <TableRow className="hover:bg-transparent border-b ">
-              <TableHead className="py-2.5 px-4 text-black font-bold text-[19px] md:text-[21px] border-r  w-1/4 text-center bg-white">
-                {dayjs(dateParam).format("dddd")}
-              </TableHead>
-              {locations.map((loc, i) => (
-                <TableHead key={i} className="py-2.5 px-4 text-black font-bold text-[19px] md:text-[21px] border-r  last:border-r-0 text-center bg-white">
-                  {loc.location}
-                </TableHead>
-              ))}
-            </TableRow>
-            {/* Row 2 of Header */}
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="py-2 px-4 text-black font-extrabold text-[19px] md:text-[21px] border-r  w-1/4 text-center bg-white">
-                {dayjs(dateParam).format("DD/MM/YYYY")}
-              </TableHead>
-              {locations.map((loc, i) => (
-                <TableHead key={i} className="py-2 px-4 text-black font-extrabold text-[19px] md:text-[21px] border-r  last:border-r-0 text-center bg-white uppercase">
-                  {loc.code}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.key} className="border-b border-zinc-200 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
-                {/* Left Label */}
-                <TableCell className="py-4 px-4 font-bold text-muted-foreground text-[19px] md:text-[21px] border-r border-zinc-200 text-center bg-zinc-50/30">
-                  {row.label}
-                </TableCell>
-                {/* Values */}
-                {locations.map((loc, i) => {
-                  const prizes = loc[row.key] as Prize[];
-                  return (
-                    <TableCell key={i} className={`border-r border-zinc-200 last:border-r-0 text-center !px-1 py-1! ${row.color}`}>
-                      <div className="flex flex-col justify-center items-center ">
-                        {prizes && prizes.length > 0 ? (
-                          prizes.map((pz, idx) => (
-                            <span key={idx} className="tracking-wide hover:bg-primary hover:text-primary-foreground rounded-xl w-full transition-all cursor-pointer">
-                              {pz.value || <span className="text-zinc-300 font-normal">XX</span>}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-zinc-300 font-normal">--</span>
-                        )}
-                      </div>
-                    </TableCell>
-                  );
-                })}
-              </TableRow>
+      {/*
+        Column-first layout.
+        Each location is its own vertical flex container with `user-select: contain`.
+        This means dragging vertically inside a column stays within that column only.
+      */}
+      <div className="overflow-x-auto border-t">
+        <div className="flex w-full min-w-[500px]">
+
+          {/* ── Label column (not selectable) ── */}
+          <div
+            className="flex flex-col shrink-0 w-1/4 border-r border-zinc-200"
+            style={{ userSelect: "none" }}
+          >
+            <div
+              ref={el => { lblHeadRefs.current[0] = el; }}
+              className="flex items-center justify-center py-2.5 px-4 text-black font-bold text-[19px] md:text-[21px] border-b border-zinc-200 bg-white text-center"
+            >
+              {dayjs(dateParam).format("dddd")}
+            </div>
+            <div
+              ref={el => { lblHeadRefs.current[1] = el; }}
+              className="flex items-center justify-center py-2 px-4 text-black font-extrabold text-[19px] md:text-[21px] border-b border-zinc-200 bg-white text-center"
+            >
+              {dayjs(dateParam).format("DD/MM/YYYY")}
+            </div>
+            {rows.map((row, i) => (
+              <div
+                key={row.key}
+                ref={el => { lblRowRefs.current[i] = el; }}
+                className="flex items-center justify-center px-4 font-bold text-muted-foreground text-[19px] md:text-[21px] border-b border-zinc-200 last:border-b-0 bg-zinc-50/30"
+              >
+                {row.label}
+              </div>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+
+          {/* ── One div per location — selection is contained to each ── */}
+          {locations.map((loc, colIdx) => (
+            <div
+              key={colIdx}
+              className="flex flex-col flex-1 border-r border-zinc-200 last:border-r-0"
+            >
+              {/* Header row 1 */}
+              <div
+                ref={colIdx === 0 ? el => { srcHeadRefs.current[0] = el; } : undefined}
+                className="flex items-center justify-center py-2.5 px-4 text-black font-bold text-[19px] md:text-[21px] border-b border-zinc-200 bg-white text-center"
+              >
+                {loc.location}
+              </div>
+              {/* Header row 2 */}
+              <div
+                ref={colIdx === 0 ? el => { srcHeadRefs.current[1] = el; } : undefined}
+                className="flex items-center justify-center py-2 px-4 text-black font-extrabold text-[19px] md:text-[21px] border-b border-zinc-200 bg-white text-center uppercase"
+              >
+                {loc.code}
+              </div>
+              {/* Prize rows */}
+              {rows.map((row, rowIdx) => {
+                const prizes = loc[row.key] as Prize[];
+                return (
+                  <div
+                    key={row.key}
+                    ref={colIdx === 0 ? el => { srcRowRefs.current[rowIdx] = el; } : undefined}
+                    className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center ${row.color}`}
+                  >
+                    {prizes && prizes.length > 0 ? (
+                      prizes.map((pz, idx) => (
+                        <span
+                          key={idx}
+                          className=" tracking-wide hover:bg-primary hover:text-primary-foreground rounded-xl w-full cursor-pointer"
+                        >
+                          {pz.value || <span className=" font-normal">XX</span>}
+                        </span>
+                      ))
+                    ) : (
+                      <span className=" font-normal">--</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+        </div>
       </div>
     </div>
   );
 }
+
