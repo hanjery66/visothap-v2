@@ -23,5 +23,7 @@ ENV SKIP_ENV_VALIDATION=1
 # Build the app
 RUN bun run build
 
+EXPOSE 3000
+
 # Start Next.js
 CMD ["bun", "run", "start"]
