@@ -4,10 +4,17 @@ services:
       context: .
       platforms:
         - "linux/amd64"
+
     container_name: visothap-v2
     restart: unless-stopped
     image: xosothap/visothap-v2
+
     ports:
       - "3000:3000"
+
     env_file:
       - .env
+
+    environment:
+      # overide only url 
+      NEXT_PUBLIC_APP_URL: https://visothap.cloud

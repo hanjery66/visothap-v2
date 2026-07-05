@@ -1,7 +1,7 @@
 import { router, publicProcedure, authedProcedure } from "../trpc";
 import { db } from "@/db";
-import { user, advertisement, generalSetting } from "@/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize } from "@/db/schema";
+import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
@@ -328,6 +328,253 @@ export const appRouter = router({
         console.error("tRPC saveGeneralSettings error:", error);
         throw new Error("Failed to save general layout configuration.");
       }
+    }),
+
+  // ---------------------------------------------------------------------------
+  // LOTTERY PROCEDURES
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Public — fetch all lottery data for a given date.
+   * Returns a LotteryState-shaped object (same shape as mockData)
+   * so existing components (LotteryTableLayoutOne / Two) need zero changes.
+   */
+  getLotteryByDate: publicProcedure
+    .input(z.object({ date: z.string() }))
+    .query(async ({ input }) => {
+      const PERIODS = ["first", "second", "third", "fourth"] as const;
+
+      // Fetch all sessions for this date
+      const sessions = await db
+        .select()
+        .from(lotterySession)
+        .where(eq(lotterySession.date, input.date));
+
+      if (sessions.length === 0) return null;
+
+      // Fetch all locations and prizes for those sessions in bulk
+      const sessionIds = sessions.map((s) => s.id);
+      const locations = await db
+        .select()
+        .from(lotteryLocation)
+        .where(inArray(lotteryLocation.sessionId, sessionIds))
+        .orderBy(lotteryLocation.sortOrder);
+
+      const locationIds = locations.map((l) => l.id);
+      const prizes =
+        locationIds.length > 0
+          ? await db
+            .select()
+            .from(lotteryPrize)
+            .where(inArray(lotteryPrize.locationId, locationIds))
+            .orderBy(lotteryPrize.sortOrder)
+          : [];
+
+      // Assemble into LotteryState shape
+      const PRIZE_KEYS = ["gEight", "gSeven", "gSix", "gFive", "gFour", "gThree", "gTwo", "gOne", "db"];
+      const PERIOD_LABELS: Record<string, Record<string, string>> = {
+        gEight: { label: "Giải Tám" },
+        gSeven: { label: "Giải Bảy" },
+        gSix: { label: "Giải Sáu" },
+        gFive: { label: "Giải Năm" },
+        gFour: { label: "Giải Tư" },
+        gThree: { label: "Giải Ba" },
+        gTwo: { label: "Giải Nhì" },
+        gOne: { label: "Giải Nhất" },
+        db: { label: "Đặc Biệt" },
+      };
+
+      const result: Record<string, any> = { _id: `lottery-${input.date}`, date: input.date };
+
+      for (const period of PERIODS) {
+        const session = sessions.find((s) => s.period === period);
+        if (!session) {
+          result[period] = null;
+          continue;
+        }
+
+        const sessionLocs = locations.filter((l) => l.sessionId === session.id);
+
+        const locData = sessionLocs.map((loc) => {
+          const locPrizes = prizes.filter((p) => p.locationId === loc.id);
+          const entry: Record<string, any> = {
+            location: loc.location,
+            code: loc.code,
+          };
+          for (const key of PRIZE_KEYS) {
+            const group = locPrizes
+              .filter((p) => p.prizeKey === key)
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((p) => ({ value: p.value, type: key, status: "done" }));
+            entry[key] = group;
+          }
+          return entry;
+        });
+
+        result[period] = {
+          name: session.name,
+          displayTable: session.displayTable,
+          displayNumber: session.displayNumber,
+          ...Object.fromEntries(PRIZE_KEYS.map((k) => [k, PERIOD_LABELS[k].label])),
+          data: locData,
+        };
+      }
+
+      return result as any;
+    }),
+
+  /**
+   * Authed — upsert a single prize value by its DB id.
+   */
+  upsertLotteryPrize: authedProcedure
+    .input(
+      z.object({
+        prizeId: z.string(),
+        value: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db
+        .update(lotteryPrize)
+        .set({ value: input.value })
+        .where(eq(lotteryPrize.id, input.prizeId));
+      return { success: true };
+    }),
+
+  /**
+   * Authed — create blank skeleton for a date (all 4 periods with empty prize values).
+   * No-ops for periods that already exist.
+   */
+  seedLotteryDate: authedProcedure
+    .input(z.object({ date: z.string() }))
+    .mutation(async ({ input }) => {
+      const { date } = input;
+
+      // Static period definitions (mirrors mockData structure)
+      const PERIOD_DEFS = [
+        {
+          period: "first",
+          name: "Sổ Kết Quả Miền Trung",
+          displayTable: "first",
+          displayNumber: "10:50 AM",
+          locations: [
+            { location: "TP. Đà Nẵng", code: "XSDNG", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+            { location: "Khánh Hòa", code: "XSKH", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+            { location: "Kon Tum", code: "XSKT", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+          ],
+        },
+        {
+          period: "second",
+          name: "Sổ Kết Quả Miền Đông",
+          displayTable: "second",
+          displayNumber: "1:50 PM",
+          locations: [
+            { location: "Bình Dương", code: "XSBD", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+            { location: "Tây Ninh", code: "XSTN", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+            { location: "An Giang", code: "XSAG", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+          ],
+        },
+        {
+          period: "third",
+          name: "Sổ Kết Quả Miền Nam",
+          displayTable: "third",
+          displayNumber: "4:50 PM",
+          locations: [
+            { location: "TP. HCM", code: "XSHCM", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+            { location: "Đồng Tháp", code: "XSDT", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+            { location: "Cà Mau", code: "XSCM", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
+          ],
+        },
+        {
+          period: "fourth",
+          name: "Sổ Kết Quả Miền Bắc",
+          displayTable: "fourth",
+          displayNumber: "6:45 PM",
+          locations: [
+            { location: "Miền Bắc", code: "XSMB", prizes: { gEight: 0, gSeven: 4, gSix: 3, gFive: 6, gFour: 4, gThree: 6, gTwo: 2, gOne: 1, db: 1 } },
+          ],
+        },
+      ];
+
+      for (const def of PERIOD_DEFS) {
+        const sessionId = `${date}-${def.period}`;
+        const existing = await db
+          .select({ id: lotterySession.id })
+          .from(lotterySession)
+          .where(eq(lotterySession.id, sessionId))
+          .limit(1);
+
+        if (existing.length > 0) continue; // Already seeded
+
+        // Insert session
+        await db.insert(lotterySession).values({
+          id: sessionId,
+          date,
+          period: def.period,
+          name: def.name,
+          displayTable: def.displayTable,
+          displayNumber: def.displayNumber,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        // Insert locations + prizes
+        for (let li = 0; li < def.locations.length; li++) {
+          const loc = def.locations[li];
+          const locationId = crypto.randomUUID();
+          await db.insert(lotteryLocation).values({
+            id: locationId,
+            sessionId,
+            location: loc.location,
+            code: loc.code,
+            sortOrder: li,
+          });
+
+          const prizeRows: { id: string; locationId: string; prizeKey: string; value: string; sortOrder: number }[] = [];
+          const PRIZE_ORDER = ["gEight", "gSeven", "gSix", "gFive", "gFour", "gThree", "gTwo", "gOne", "db"];
+          for (const key of PRIZE_ORDER) {
+            const count = (loc.prizes as Record<string, number>)[key] ?? 0;
+            for (let pi = 0; pi < count; pi++) {
+              prizeRows.push({ id: crypto.randomUUID(), locationId, prizeKey: key, value: "", sortOrder: pi });
+            }
+          }
+          if (prizeRows.length > 0) {
+            await db.insert(lotteryPrize).values(prizeRows);
+          }
+        }
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Authed — blank all prize values for every location in a date.
+   */
+  resetLotteryDate: authedProcedure
+    .input(z.object({ date: z.string() }))
+    .mutation(async ({ input }) => {
+      const sessions = await db
+        .select({ id: lotterySession.id })
+        .from(lotterySession)
+        .where(eq(lotterySession.date, input.date));
+
+      if (sessions.length === 0) return { success: true };
+
+      const sessionIds = sessions.map((s) => s.id);
+      const locations = await db
+        .select({ id: lotteryLocation.id })
+        .from(lotteryLocation)
+        .where(inArray(lotteryLocation.sessionId, sessionIds));
+
+      if (locations.length === 0) return { success: true };
+
+      const locationIds = locations.map((l) => l.id);
+      await db
+        .update(lotteryPrize)
+        .set({ value: "" })
+        .where(inArray(lotteryPrize.locationId, locationIds));
+
+      return { success: true };
     }),
 });
 

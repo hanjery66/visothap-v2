@@ -1,5 +1,4 @@
 import { auth } from "../lib/auth";
-import { env } from "@/env";
 
 async function main() {
   console.log("🚀 Starting database seeding...");
@@ -14,7 +13,7 @@ async function main() {
         username: "admin",
       },
     });
-    
+
     console.log("✅ Seed completed successfully!");
     console.log("Admin details:", {
       id: res.user.id,
@@ -29,7 +28,7 @@ async function main() {
       console.error("❌ Seeding failed with error:", error);
     }
   }
-  
+
   process.exit(0);
 }
 

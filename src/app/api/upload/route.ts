@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const baseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9]/g, "_");
     const uniqueFilename = `${baseName}${ext}`;
 
-    // Upload to MinIO/S3
+    // Upload to Vercel Blob
     const fileUrl = await uploadFileToS3(
       uniqueFilename,
       buffer,
@@ -29,9 +29,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: fileUrl });
   } catch (error: any) {
-    console.error("MinIO upload API error:", error);
+    console.error("Vercel Blob upload API error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to save uploaded image to MinIO." },
+      { error: error.message || "Failed to save uploaded image to Vercel Blob." },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -79,3 +79,55 @@ export type Ads = typeof advertisement.$inferSelect & {
   createdAt: string
   updatedAt: string
 }
+
+// ---------------------------------------------------------------------------
+// Lottery tables
+// ---------------------------------------------------------------------------
+
+/**
+ * One row per (date, period) pair.
+ * period: "first" | "second" | "third" | "fourth"
+ */
+export const lotterySession = pgTable("lottery_session", {
+  id: text("id").primaryKey(),           // e.g. "2026-07-04-first"
+  date: text("date").notNull(),          // "YYYY-MM-DD"
+  period: text("period").notNull(),      // "first" | "second" | "third" | "fourth"
+  name: text("name").notNull(),          // "Sổ Kết Quả Miền Trung"
+  displayTable: text("display_table").notNull(),
+  displayNumber: text("display_number").notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+/**
+ * One row per province/location within a session.
+ * sortOrder controls the column order in the table UI.
+ */
+export const lotteryLocation = pgTable("lottery_location", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => lotterySession.id, { onDelete: "cascade" }),
+  location: text("location").notNull(),  // "TP. Đà Nẵng"
+  code: text("code").notNull(),          // "XSDNG"
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+/**
+ * One row per individual lottery number value.
+ * prizeKey: "gEight" | "gSeven" | "gSix" | "gFive" | "gFour" | "gThree" | "gTwo" | "gOne" | "db"
+ * sortOrder: index within that prize group (e.g. gSix has 3 values → 0,1,2)
+ */
+export const lotteryPrize = pgTable("lottery_prize", {
+  id: text("id").primaryKey(),
+  locationId: text("location_id")
+    .notNull()
+    .references(() => lotteryLocation.id, { onDelete: "cascade" }),
+  prizeKey: text("prize_key").notNull(),  // "gEight" | ... | "db"
+  value: text("value").notNull().default(""),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export type LotterySession   = typeof lotterySession.$inferSelect;
+export type LotteryLocation  = typeof lotteryLocation.$inferSelect;
+export type LotteryPrize     = typeof lotteryPrize.$inferSelect;

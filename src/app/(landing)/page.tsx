@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
-import { getLotteryData, LotteryState } from "@/lib/mockData";
+import { LotteryState } from "@/lib/mockData";
 import { trpc } from "@/app/_trpc/client";
 import { LotteryTableLayoutOne } from "@/components/LotteryTableLayoutOne";
 import { LotteryTableLayoutTwo } from "@/components/LotteryTableLayoutTwo";
@@ -24,19 +24,16 @@ export default function LandingPage() {
   const dateParam = searchParams.get("date") || todayStr;
   const tableParam = searchParams.get("table") || "Thông Tin Kết Quả";
 
-  const [lottery, setLottery] = useState<LotteryState | null>(null);
   const [calendarDate, setCalendarDate] = useState(dayjs(dateParam));
+
+  // Query lottery data from DB (refetch every 30 seconds)
+  const { data: lottery } = trpc.getLotteryByDate.useQuery(
+    { date: dateParam },
+    { refetchInterval: 30_000 }
+  ) as { data: LotteryState | null | undefined };
 
   // Query advertisements from database
   const { data: ads = [] } = trpc.getAdvertisements.useQuery();
-
-  useEffect(() => {
-    // Load lottery data
-    function call() {
-      setLottery(getLotteryData(dateParam));
-    }
-    call();
-  }, [dateParam]);
 
   // Group ads by position
   const adsByPosition = useMemo(() => {

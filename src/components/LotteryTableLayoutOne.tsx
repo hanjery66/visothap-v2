@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useLayoutEffect } from "react";
+import { useRef, useLayoutEffect } from "react";
 import dayjs from "dayjs";
 import { LocationData, Prize } from "@/lib/mockData";
 
