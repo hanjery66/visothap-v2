@@ -17,5 +17,5 @@ export const auth = betterAuth({
     username(),
   ],
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.NEXT_PUBLIC_APP_URL,
+  baseURL: env.BETTER_AUTH_URL,
 });

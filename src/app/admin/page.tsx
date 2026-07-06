@@ -202,7 +202,7 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
                       <textarea
                         value={text}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/[^\d\n]/g, "").replaceAll(" ", "").trim()
+                          const value = e.target.value.replace(/[^\d\n]/g, "").trim()
                           setColumnTexts((prev) => ({ ...prev, [locKey]: value }));
                           setDirty(true);
                         }}
