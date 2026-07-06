@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { trpc } from "@/app/_trpc/client";
+import { Prize, LocationData, LotteryPeriod, LotteryState } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,37 +22,82 @@ import {
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Prize key ordering shared by both layout types
 // ---------------------------------------------------------------------------
-const PRIZE_KEYS = [
-  { key: "db",     label: "Đ.Biệt",  color: "text-red-600 font-extrabold" },
-  { key: "gOne",   label: "Giải 1",  color: "text-zinc-800 font-bold" },
-  { key: "gTwo",   label: "Giải 2",  color: "text-zinc-800 font-bold" },
-  { key: "gThree", label: "Giải 3",  color: "text-zinc-800 font-bold" },
-  { key: "gFour",  label: "Giải 4",  color: "text-zinc-800 font-bold" },
-  { key: "gFive",  label: "Giải 5",  color: "text-zinc-800 font-bold" },
-  { key: "gSix",   label: "Giải 6",  color: "text-zinc-800 font-bold" },
-  { key: "gSeven", label: "Giải 7",  color: "text-zinc-800 font-bold" },
-  { key: "gEight", label: "Giải 8",  color: "text-red-600 font-extrabold" },
-] as const;
-
+// Period grid editor — renders one table per period with textarea column inputs
 // ---------------------------------------------------------------------------
-// Editable prize input component
-// ---------------------------------------------------------------------------
-interface PrizeInputProps {
-  prizeId: string;
-  initialValue: string;
-  digits: number;
+interface PeriodEditorProps {
+  periodData: LotteryPeriod;
   onSaved: () => void;
 }
 
-function PrizeInput({ prizeId, initialValue, digits, onSaved }: PrizeInputProps) {
-  const [val, setVal] = useState(initialValue);
-  const [dirty, setDirty] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
+  if (!periodData?.data?.length) return null;
+  const locations: LocationData[] = periodData.data;
+  const isNorthern = periodData.displayTable === "fourth";
+
+  // Build the list of expected prize labels matching visual table layout exactly
+  const getPrizesMeta = () => {
+    const list: { key: string; label: string; digits: number }[] = [];
+    if (isNorthern) {
+      list.push({ key: "db", label: "Đ. B", digits: 5 });
+      list.push({ key: "gOne", label: "Gi 1", digits: 5 });
+      list.push({ key: "gTwo", label: "Gi 2 (1)", digits: 5 });
+      list.push({ key: "gTwo", label: "Gi 2 (2)", digits: 5 });
+      for (let i = 1; i <= 6; i++) list.push({ key: "gThree", label: `Gi 3 (${i})`, digits: 5 });
+      for (let i = 1; i <= 4; i++) list.push({ key: "gFour", label: `Gi 4 (${i})`, digits: 4 });
+      for (let i = 1; i <= 6; i++) list.push({ key: "gFive", label: `Gi 5 (${i})`, digits: 4 });
+      for (let i = 1; i <= 3; i++) list.push({ key: "gSix", label: `Gi 6 (${i})`, digits: 3 });
+      for (let i = 1; i <= 4; i++) list.push({ key: "gSeven", label: `Gi 7 (${i})`, digits: 2 });
+    } else {
+      list.push({ key: "gEight", label: "Gi 8", digits: 2 });
+      list.push({ key: "gSeven", label: "Gi 7", digits: 3 });
+      for (let i = 1; i <= 3; i++) list.push({ key: "gSix", label: `Gi 6 (${i})`, digits: 4 });
+      list.push({ key: "gFive", label: "Gi 5", digits: 4 });
+      for (let i = 1; i <= 7; i++) list.push({ key: "gFour", label: `Gi 4 (${i})`, digits: 5 });
+      for (let i = 1; i <= 2; i++) list.push({ key: "gThree", label: `Gi 3 (${i})`, digits: 5 });
+      list.push({ key: "gTwo", label: "Gi 2", digits: 5 });
+      list.push({ key: "gOne", label: "Gi 1", digits: 5 });
+      list.push({ key: "db", label: "Đ. B", digits: 6 });
+    }
+    return list;
+  };
+
+  const prizeMeta = getPrizesMeta();
+  const expectedCount = prizeMeta.length;
   const utils = trpc.useUtils();
 
-  const { mutate: savePrize, isPending } = trpc.upsertLotteryPrize.useMutation({
+  // Helper to extract ordered prizes for a location in correct layout order
+  const getOrderedPrizes = (loc: LocationData): Prize[] => {
+    const prizes: Prize[] = [];
+    const keys: (keyof LocationData)[] = isNorthern
+      ? ["db", "gOne", "gTwo", "gThree", "gFour", "gFive", "gSix", "gSeven"]
+      : ["gEight", "gSeven", "gSix", "gFive", "gFour", "gThree", "gTwo", "gOne", "db"];
+
+    for (const key of keys) {
+      const group = loc[key];
+      if (Array.isArray(group)) prizes.push(...group);
+    }
+    return prizes;
+  };
+
+  const getInitialText = (loc: LocationData) => {
+    return getOrderedPrizes(loc).map((pz) => pz.value ?? "").join("\n");
+  };
+
+  const [columnTexts, setColumnTexts] = useState<Record<string, string>>({});
+  const [dirty, setDirty] = useState(false);
+
+  // Sync if parent updates (e.g. on invalidation / refetch)
+  useEffect(() => {
+    const initialTexts: Record<string, string> = {};
+    locations.forEach((loc: LocationData, idx: number) => {
+      initialTexts[loc.code || idx] = getInitialText(loc);
+    });
+    setColumnTexts(initialTexts);
+    setDirty(false);
+  }, [periodData]);
+
+  const { mutate: savePrizes, isPending } = trpc.upsertLotteryPrizes.useMutation({
     onSuccess: () => {
       setDirty(false);
       onSaved();
@@ -59,141 +105,155 @@ function PrizeInput({ prizeId, initialValue, digits, onSaved }: PrizeInputProps)
     },
   });
 
-  // Sync when parent data refreshes
-  useEffect(() => {
-    if (!dirty) setVal(initialValue);
-  }, [initialValue, dirty]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const cleaned = e.target.value.replace(/\D/g, "").slice(0, digits);
-    setVal(cleaned);
-    setDirty(cleaned !== initialValue);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") save();
-    if (e.key === "Escape") {
-      setVal(initialValue);
-      setDirty(false);
-      inputRef.current?.blur();
+  const getNormalizedLines = (rawText: string) => {
+    let rawLines = (rawText ?? "").split("\n").filter(Boolean)
+    // If last line is empty and we have one extra line, remove it (typical copy-paste artifact)
+    if (rawLines.length === expectedCount + 1 && rawLines[expectedCount] === "") {
+      rawLines = rawLines.slice(0, expectedCount);
     }
+    return rawLines
   };
 
-  const save = () => {
-    if (!dirty) return;
-    savePrize({ prizeId, value: val });
+  const handleCancel = () => {
+    const initialTexts: Record<string, string> = {};
+    locations.forEach((loc: LocationData, idx: number) => {
+      initialTexts[loc.code || idx] = getInitialText(loc);
+    });
+    setColumnTexts(initialTexts);
+    setDirty(false);
   };
 
+  const handleSave = () => {
+    if (!allValid) return;
+    const allUpdates: { prizeId: string; value: string }[] = [];
+
+    locations.forEach((loc: LocationData, idx: number) => {
+      const locKey = loc.code || idx;
+      const text = columnTexts[locKey] ?? "";
+      const currentLines = getNormalizedLines(text);
+      const orderedPrizes = getOrderedPrizes(loc);
+
+      orderedPrizes.forEach((pz: Prize, pzIdx: number) => {
+        if (!pz.id) return; // skip prizes without a DB id (shouldn't happen in save flow)
+        allUpdates.push({
+          prizeId: pz.id,
+          value: currentLines[pzIdx] ?? "",
+        });
+      });
+    });
+
+    savePrizes(allUpdates);
+  };
+
+  const columnStatus = locations.map((loc: LocationData, idx: number) => {
+    const locKey = loc.code || idx;
+    const text = columnTexts[locKey] ?? "";
+    const currentLines = getNormalizedLines(text);
+    const isValid = currentLines.length === expectedCount;
+    return { locKey, isValid, count: currentLines.length };
+  });
+
+  type ColumnStatus = { locKey: string | number; isValid: boolean; count: number };
+  const allValid = columnStatus.every((status: ColumnStatus) => status.isValid);
+
   return (
-    <div className="relative flex items-center justify-center w-full">
-      <input
-        ref={inputRef}
-        type="text"
-        inputMode="numeric"
-        value={val}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onBlur={save}
-        placeholder={"—".repeat(digits)}
-        maxLength={digits}
-        className={`
-          w-full text-center font-mono text-sm py-0.5 px-1 rounded border transition-all outline-none
-          ${dirty
-            ? "border-amber-400 bg-amber-50 ring-1 ring-amber-300"
-            : val
-              ? "border-transparent bg-transparent hover:border-zinc-300"
-              : "border-dashed border-zinc-300 bg-zinc-50/60 text-zinc-400"
-          }
-          focus:border-primary focus:ring-1 focus:ring-primary/30 focus:bg-white
-        `}
-      />
-      {isPending && (
-        <Loader2 className="absolute right-1 w-3 h-3 animate-spin text-primary" />
-      )}
-    </div>
-  );
-}
+    <div className="flex flex-col gap-4">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 shadow-sm bg-white">
+        <table className="w-full min-w-[600px] border-collapse text-sm">
+          <thead>
+            <tr className="bg-primary/5 border-b border-zinc-200">
+              <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-[140px]">Giải</th>
+              {locations.map((loc: LocationData, i: number) => (
+                <th key={i} className="px-3 py-2.5 text-center font-bold text-zinc-800 border-l border-zinc-100">
+                  <div>{loc.location}</div>
+                  <div className="text-xs font-semibold text-primary uppercase">{loc.code}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {/* Left labels column */}
+              <td className="px-3 py-2 border-r border-zinc-200 align-top bg-zinc-50/50">
+                <div className="flex flex-col font-mono text-xs select-none py-2 gap-0">
+                  {prizeMeta.map((pm, idx) => (
+                    <div
+                      key={idx}
+                      className="h-6 flex items-center justify-between text-zinc-500 pr-2 border-b border-zinc-100 last:border-b-0"
+                    >
+                      <span className="font-semibold text-zinc-700">{pm.label}</span>
+                      <span className="text-[10px] text-zinc-400">({pm.digits} digits)</span>
+                    </div>
+                  ))}
+                </div>
+              </td>
 
-// ---------------------------------------------------------------------------
-// Period grid editor — renders one table per period
-// ---------------------------------------------------------------------------
-interface PeriodEditorProps {
-  periodData: any;
-  onSaved: () => void;
-}
+              {/* Location textarea columns */}
+              {locations.map((loc: LocationData, li: number) => {
+                const locKey = loc.code || li;
+                const text = (columnTexts[locKey] || '').trim();
+                const status = columnStatus.find((s) => s.locKey === locKey);
+                const isValid = status?.isValid ?? false;
+                const lineCount = status?.count ?? 0;
 
-function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
-  if (!periodData?.data?.length) return null;
-  const locations = periodData.data;
+                return (
+                  <td key={li} className="p-3 border-r border-border last:border-r-0 align-top">
+                    <div className="flex flex-col gap-2">
+                      <textarea
+                        value={text}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^\d\n]/g, "").replaceAll(" ", "").trim()
+                          setColumnTexts((prev) => ({ ...prev, [locKey]: value }));
+                          setDirty(true);
+                        }}
+                        className="w-full font-mono text-xs leading-6 py-2 px-3 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none bg-zinc-50/30 hover:bg-zinc-50 focus:bg-white transition-all"
+                        style={{
+                          height: `${expectedCount * 24 + 16}px`, // 24px per line + 16px padding
+                        }}
+                        placeholder="Type or paste column values..."
+                      />
 
-  // Build prize lookup: prizeKey → prizes[] per location
-  // prizes carry their DB id from tRPC response
-  return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200 shadow-sm">
-      <table className="w-full min-w-[500px] border-collapse text-sm">
-        <thead>
-          <tr className="bg-primary/5 border-b border-zinc-200">
-            <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-[90px]">Giải</th>
-            {locations.map((loc: any, i: number) => (
-              <th key={i} className="px-3 py-2.5 text-center font-bold text-zinc-800">
-                <div>{loc.location}</div>
-                <div className="text-xs font-semibold text-primary uppercase">{loc.code}</div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {PRIZE_KEYS.map(({ key, label, color }) => {
-            // Skip gEight row if no location has any gEight prizes (Miền Bắc)
-            const hasAny = locations.some((loc: any) => loc[key]?.length > 0);
-            if (!hasAny) return null;
-
-            // Find max prize count for this key across all locations
-            const maxCount = Math.max(...locations.map((loc: any) => (loc[key] as any[])?.length ?? 0));
-
-            return (
-              <tr key={key} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
-                <td className={`px-3 py-2 font-bold text-xs whitespace-nowrap ${color}`}>{label}</td>
-                {locations.map((loc: any, li: number) => {
-                  const prizes: any[] = loc[key] ?? [];
-                  return (
-                    <td key={li} className="px-2 py-1.5 text-center align-middle">
-                      <div className="flex flex-col gap-1 items-center">
-                        {prizes.map((pz: any, pi: number) => {
-                          // Digit count per prize type
-                          const digits =
-                            key === "db" ? (periodData.displayTable === "fourth" ? 5 : 6)
-                            : key === "gOne"   ? 5
-                            : key === "gTwo"   ? 5
-                            : key === "gThree" ? 5
-                            : key === "gFour"  ? (periodData.displayTable === "fourth" ? 4 : 5)
-                            : key === "gFive"  ? (periodData.displayTable === "fourth" ? 4 : 4)
-                            : key === "gSix"   ? (periodData.displayTable === "fourth" ? 3 : 4)
-                            : key === "gSeven" ? (periodData.displayTable === "fourth" ? 2 : 3)
-                            : key === "gEight" ? 2
-                            : 4;
-                          return (
-                            <PrizeInput
-                              key={pz.id ?? `${li}-${pi}`}
-                              prizeId={pz.id}
-                              initialValue={pz.value ?? ""}
-                              digits={digits}
-                              onSaved={onSaved}
-                            />
-                          );
-                        })}
-                        {prizes.length === 0 && (
-                          <span className="text-zinc-300 text-xs">—</span>
+                      <div className="text-[11px] mt-1">
+                        {isValid ? (
+                          <span className="text-emerald-600 font-medium">
+                            ✓ Valid ({expectedCount}/{expectedCount} lines)
+                          </span>
+                        ) : (
+                          <span className="text-red-500 font-semibold">
+                            ✗ Invalid ({lineCount}/{expectedCount} lines)
+                          </span>
                         )}
                       </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    </div>
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {dirty && (
+        <div className="flex justify-end gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl animate-in fade-in duration-200">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCancel}
+            disabled={isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[90px]"
+            onClick={handleSave}
+            disabled={!allValid || isPending}
+          >
+            {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+            Save All
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -209,7 +269,7 @@ export default function AdminPage() {
   const utils = trpc.useUtils();
 
   // ── Fetch lottery data for selected date ──────────────────────────────────
-  const { data: lotteryState, isLoading: isFetching } = trpc.getLotteryByDate.useQuery(
+  const { data: lotteryState, isLoading, isFetching } = trpc.getLotteryByDate.useQuery(
     { date: selectedDate },
     { refetchOnWindowFocus: false }
   );
@@ -240,10 +300,10 @@ export default function AdminPage() {
   const isWorking = isSeeding || isResetting || isFetching;
 
   const PERIOD_TABS = [
-    { key: "first",  label: "Miền Trung", time: "10:50 AM" },
-    { key: "second", label: "Miền Đông",  time: "1:50 PM"  },
-    { key: "third",  label: "Miền Nam",   time: "4:50 PM"  },
-    { key: "fourth", label: "Miền Bắc",   time: "6:45 PM"  },
+    { key: "first", label: "Miền Trung", time: "10:50 AM" },
+    { key: "second", label: "Miền Đông", time: "1:50 PM" },
+    { key: "third", label: "Miền Nam", time: "4:50 PM" },
+    { key: "fourth", label: "Miền Bắc", time: "6:45 PM" },
   ] as const;
 
   return (
@@ -326,7 +386,7 @@ export default function AdminPage() {
       </div>
 
       {/* ── Status hint ─────────────────────────────────────────────────────── */}
-      {!hasData && !isFetching && (
+      {!hasData && !isLoading && (
         <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center text-zinc-500">
           <DatabaseZap className="mx-auto mb-3 w-8 h-8 text-zinc-300" />
           <p className="font-semibold text-sm">No data for {selectedDate}</p>
@@ -334,7 +394,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {isFetching && (
+      {isLoading && (
         <div className="flex items-center justify-center gap-2 py-10 text-zinc-400 text-sm">
           <Loader2 className="w-5 h-5 animate-spin" />
           Loading lottery data...
@@ -342,10 +402,10 @@ export default function AdminPage() {
       )}
 
       {/* ── Period tabs + editors ────────────────────────────────────────────── */}
-      {hasData && !isFetching && (
+      {hasData && !isLoading && (
         <Tabs
           value={activePeriod}
-          onValueChange={(val) => setActivePeriod(val as any)}
+          onValueChange={(val) => setActivePeriod(val as "first" | "second" | "third" | "fourth")}
         >
           <TabsList className="flex justify-start w-fit bg-transparent p-0 mb-4 h-auto gap-1">
             {PERIOD_TABS.map(({ key, label, time }) => (
@@ -361,27 +421,24 @@ export default function AdminPage() {
 
           {PERIOD_TABS.map(({ key }) => (
             <TabsContent key={key} value={key} className="focus-visible:ring-0 mt-0">
-              {(lotteryState as any)?.[key] ? (
+              {(lotteryState as LotteryState)?.[key] ? (
                 <>
                   {/* Section header */}
                   <div className="mb-3 flex items-center gap-2">
                     <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
-                      {(lotteryState as any)[key].name}
+                      {(lotteryState as LotteryState)[key].name}
                     </span>
                     <span className="text-xs text-zinc-300">·</span>
                     <span className="text-xs text-zinc-400">
-                      {(lotteryState as any)[key].data?.length} location(s)
+                      {(lotteryState as LotteryState)[key].data?.length} location(s)
                     </span>
                   </div>
 
                   <PeriodEditor
-                    periodData={(lotteryState as any)[key]}
-                    onSaved={() => {}}
+                    periodData={(lotteryState as LotteryState)[key]}
+                    onSaved={() => { }}
                   />
 
-                  <p className="mt-2 text-[11px] text-zinc-400 text-right">
-                    Press <kbd className="px-1 py-0.5 rounded bg-zinc-100 border border-zinc-200 font-mono text-[10px]">Enter</kbd> or click away to save each value.
-                  </p>
                 </>
               ) : (
                 <div className="text-center text-zinc-400 text-sm py-10">

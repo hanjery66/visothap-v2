@@ -1,4 +1,5 @@
 import { router, publicProcedure, authedProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
 import { db } from "@/db";
 import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize } from "@/db/schema";
 import { desc, eq, inArray } from "drizzle-orm";
@@ -405,7 +406,7 @@ export const appRouter = router({
             const group = locPrizes
               .filter((p) => p.prizeKey === key)
               .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((p) => ({ value: p.value, type: key, status: "done" }));
+              .map((p) => ({ id: p.id, value: p.value, type: key, status: "done" }));
             entry[key] = group;
           }
           return entry;
@@ -438,6 +439,75 @@ export const appRouter = router({
         .update(lotteryPrize)
         .set({ value: input.value })
         .where(eq(lotteryPrize.id, input.prizeId));
+      return { success: true };
+    }),
+
+  upsertLotteryPrizes: authedProcedure
+    .input(
+      z.array(
+        z.object({
+          prizeId: z.string(),
+          value: z.string().regex(/^\d*$/, "Value must contain only digits").max(6, "Value is too long"),
+        })
+      )
+    )
+    .mutation(async ({ input }) => {
+      if (input.length === 0) return { success: true };
+
+      // 1. Fetch corresponding prizes from DB
+      const prizeIds = input.map(item => item.prizeId);
+      const dbPrizes = await db
+        .select()
+        .from(lotteryPrize)
+        .where(inArray(lotteryPrize.id, prizeIds));
+
+      // 2. Validate that all submitted prize IDs exist in the database
+      if (dbPrizes.length !== input.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "One or more prize IDs are invalid.",
+        });
+      }
+
+      // 3. For each location affected, check that updates count does not exceed max allowed count of prizes
+      const locationUpdatesCount: Record<string, number> = {};
+      const prizeLocationMap: Record<string, string> = {};
+
+      for (const p of dbPrizes) {
+        prizeLocationMap[p.id] = p.locationId;
+      }
+
+      for (const item of input) {
+        const locId = prizeLocationMap[item.prizeId];
+        locationUpdatesCount[locId] = (locationUpdatesCount[locId] ?? 0) + 1;
+      }
+
+      const locationIds = Object.keys(locationUpdatesCount);
+      const dbLocationsPrizes = await db
+        .select()
+        .from(lotteryPrize)
+        .where(inArray(lotteryPrize.locationId, locationIds));
+
+      for (const locId of locationIds) {
+        const expectedCount = dbLocationsPrizes.filter(p => p.locationId === locId).length;
+        const requested = locationUpdatesCount[locId];
+        if (requested !== expectedCount) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Incorrect number of updates submitted for location. Expected: ${expectedCount}, received: ${requested}.`,
+          });
+        }
+      }
+
+      // 4. Perform updates inside a transaction
+      await db.transaction(async (tx) => {
+        for (const item of input) {
+          await tx
+            .update(lotteryPrize)
+            .set({ value: item.value })
+            .where(eq(lotteryPrize.id, item.prizeId));
+        }
+      });
       return { success: true };
     }),
 
