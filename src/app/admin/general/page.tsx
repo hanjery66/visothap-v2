@@ -241,10 +241,10 @@ export default function GeneralPage() {
               <ImageIcon className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold">
+              <CardTitle className="">
                 System Brand Logos
               </CardTitle>
-              <p className="text-[10px] text-zinc-500 font-medium">
+              <p className="text-sm text-zinc-500 font-medium">
                 Manage image source routes for emblem logos and main header
                 displays.
               </p>
@@ -257,11 +257,11 @@ export default function GeneralPage() {
                 <div className="flex justify-between items-center">
                   <Label
                     htmlFor="logo-path"
-                    className="text-[11px]  font-bold uppercase tracking-wide"
+                    className="text-sm  font-bold uppercase tracking-wide"
                   >
                     Mini Emblem Logo
                   </Label>
-                  <span className="text-[9px] text-zinc-600 font-bold uppercase">
+                  <span className="text-xs text-zinc-600 font-bold uppercase">
                     Square Ratio
                   </span>
                 </div>
@@ -320,7 +320,7 @@ export default function GeneralPage() {
                         )}
                       </Button>
                     </div>
-                    <span className="text-[9px] text-zinc-600 leading-normal">
+                    <span className="text-xs text-zinc-600 leading-normal">
                       Accepts standard formats (PNG, SVG, JPG, WEBP).
                     </span>
                   </div>
@@ -332,11 +332,11 @@ export default function GeneralPage() {
                 <div className="flex justify-between items-center">
                   <Label
                     htmlFor="full-logo-path"
-                    className="text-[11px]  font-bold uppercase tracking-wide"
+                    className="text-sm  font-bold uppercase tracking-wide"
                   >
                     Header Full Logo
                   </Label>
-                  <span className="text-[9px] text-zinc-600 font-bold uppercase">
+                  <span className="text-xs text-zinc-600 font-bold uppercase">
                     Horizontal Banner
                   </span>
                 </div>
@@ -395,7 +395,7 @@ export default function GeneralPage() {
                         )}
                       </Button>
                     </div>
-                    <span className="text-[9px] text-zinc-600 leading-normal">
+                    <span className="text-xs text-zinc-600 leading-normal">
                       Optimized for horizontal menu banners.
                     </span>
                   </div>
@@ -413,10 +413,10 @@ export default function GeneralPage() {
               <FileText className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold ">
+              <CardTitle className=" ">
                 Footer HTML Content Markup
               </CardTitle>
-              <p className="text-[10px] text-zinc-500 font-medium">
+              <p className="text-sm text-zinc-500 font-medium">
                 Inject raw HTML text templates into public landing footers
                 (Copyrights and Hotline metadata).
               </p>
@@ -427,7 +427,7 @@ export default function GeneralPage() {
               <div className="flex flex-col gap-1.5 text-left">
                 <Label
                   htmlFor="left-footer-markup"
-                  className="text-[11px] text-zinc-400 font-bold uppercase tracking-wide"
+                  className="text-sm text-foreground font-bold uppercase tracking-wide"
                 >
                   Left Footer Content (HTML)
                 </Label>
@@ -436,7 +436,7 @@ export default function GeneralPage() {
                   value={leftFooterContent}
                   onChange={(e) => setLeftFooterContent(e.target.value)}
                   rows={3}
-                  className="flex w-full rounded-lg border border-primary/30 px-3 py-2 text-xs shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
+                  className="flex w-full rounded-lg border border-primary/30 px-3 py-2 shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
                   placeholder="E.g. <p>© 2026 VISOTHAP. All rights reserved.</p>"
                   required
                 />
@@ -445,7 +445,7 @@ export default function GeneralPage() {
               <div className="flex flex-col gap-1.5 text-left">
                 <Label
                   htmlFor="right-footer-markup"
-                  className="text-[11px] text-zinc-400 font-bold uppercase tracking-wide"
+                  className="text-sm text-foreground font-bold uppercase tracking-wide"
                 >
                   Right Footer Content (HTML)
                 </Label>
@@ -454,7 +454,7 @@ export default function GeneralPage() {
                   value={rightFooterContent}
                   onChange={(e) => setRightFooterContent(e.target.value)}
                   rows={3}
-                  className="flex w-full rounded-lg border border-primary/30 px-3 py-2 text-xs shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
+                  className="flex w-full rounded-lg border border-primary/30 px-3 py-2  shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
                   placeholder="E.g. <p>Contact: info@visothap.net</p>"
                   required
                 />

@@ -399,6 +399,7 @@ export const appRouter = router({
         const locData = sessionLocs.map((loc) => {
           const locPrizes = prizes.filter((p) => p.locationId === loc.id);
           const entry: Record<string, any> = {
+            _id: loc.id,
             location: loc.location,
             code: loc.code,
           };
@@ -416,12 +417,33 @@ export const appRouter = router({
           name: session.name,
           displayTable: session.displayTable,
           displayNumber: session.displayNumber,
+          sessionId: session.id,
+          prizeLabels: session.prizeLabels ? JSON.parse(session.prizeLabels) : null,
           ...Object.fromEntries(PRIZE_KEYS.map((k) => [k, PERIOD_LABELS[k].label])),
           data: locData,
         };
       }
 
       return result as any;
+    }),
+
+  /**
+   * Authed — persist prize label overrides for a session.
+   * labels: string[] ordered by display row index.
+   */
+  updatePrizeLabels: authedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        labels: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db
+        .update(lotterySession)
+        .set({ prizeLabels: JSON.stringify(input.labels), updatedAt: new Date() })
+        .where(eq(lotterySession.id, input.sessionId));
+      return { success: true };
     }),
 
   /**
@@ -508,6 +530,25 @@ export const appRouter = router({
             .where(eq(lotteryPrize.id, item.prizeId));
         }
       });
+      return { success: true };
+    }),
+
+  /**
+   * Authed — update a location's display name and code.
+   */
+  updateLotteryLocation: authedProcedure
+    .input(
+      z.object({
+        locationId: z.string(),
+        location: z.string().min(1, "Location name is required"),
+        code: z.string().min(1, "Code is required"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db
+        .update(lotteryLocation)
+        .set({ location: input.location, code: input.code })
+        .where(eq(lotteryLocation.id, input.locationId));
       return { success: true };
     }),
 

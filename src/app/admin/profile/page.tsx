@@ -152,10 +152,10 @@ export default function ProfilePage() {
                 <User className="h-4 w-4" />
               </div>
               <div>
-                <CardTitle className="text-sm font-bold ">
+                <CardTitle className=" ">
                   Personal Information
                 </CardTitle>
-                <p className="text-[10px]  font-medium">
+                <p className="text-sm  font-medium">
                   Update display name, credentials and registered mail address.
                 </p>
               </div>
@@ -167,7 +167,7 @@ export default function ProfilePage() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5 text-left">
-                    <Label className="text-[11px] font-bold uppercase tracking-wide">
+                    <Label className="text-sm font-bold uppercase tracking-wide">
                       Display Name
                     </Label>
                     <div className="relative">
@@ -183,7 +183,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex flex-col gap-1.5 text-left">
-                    <Label className="text-[11px]  font-bold uppercase tracking-wide">
+                    <Label className="text-sm  font-bold uppercase tracking-wide">
                       Username
                     </Label>
                     <Input
@@ -197,7 +197,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex flex-col gap-1.5 text-left md:col-span-2">
-                    <Label className="text-[11px] text-zinc-400 font-bold uppercase tracking-wide">
+                    <Label className="text-sm text-foreground font-bold uppercase tracking-wide">
                       Email Address
                     </Label>
                     <Input
@@ -235,10 +235,10 @@ export default function ProfilePage() {
                 <KeyRound className="h-4 w-4" />
               </div>
               <div>
-                <CardTitle className="text-sm font-bold ">
+                <CardTitle className=" ">
                   Change Password
                 </CardTitle>
-                <p className="text-[10px]  font-medium">
+                <p className="text-sm  font-medium">
                   Re-encrypt credentials with a strong cryptographic password
                   string.
                 </p>
@@ -250,7 +250,7 @@ export default function ProfilePage() {
                 className="flex flex-col gap-4"
               >
                 <div className="flex flex-col gap-1.5 text-left">
-                  <Label className="text-[11px] text-zinc-400 font-bold uppercase tracking-wide">
+                  <Label className="text-sm text-foreground font-bold uppercase tracking-wide">
                     Current Password
                   </Label>
                   <Input
@@ -264,7 +264,7 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5 text-left">
-                    <Label className="text-[11px] text-zinc-400 font-bold uppercase tracking-wide">
+                    <Label className="text-sm text-foreground font-bold uppercase tracking-wide">
                       New Password
                     </Label>
                     <Input
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="flex flex-col gap-1.5 text-left">
-                    <Label className="text-[11px] text-zinc-400 font-bold uppercase tracking-wide">
+                    <Label className="text-sm text-foreground font-bold uppercase tracking-wide">
                       Confirm New Password
                     </Label>
                     <Input
@@ -324,7 +324,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="mt-4">
-              <h3 className="text-sm font-bold  tracking-tight">
+              <h3 className="  tracking-tight">
                 {profile?.name || "System Administrator"}
               </h3>
               <p className="text-xs  font-mono mt-0.5">
@@ -341,7 +341,7 @@ export default function ProfilePage() {
                   <Mail className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px]  uppercase font-bold tracking-wider">
+                  <span className="text-sm  uppercase font-bold tracking-wider">
                     Mail Account
                   </span>
                   <span className="text-xs font-semibold  truncate max-w-[200px]">
@@ -355,7 +355,7 @@ export default function ProfilePage() {
                   <Calendar className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px]  uppercase font-bold tracking-wider">
+                  <span className="text-sm  uppercase font-bold tracking-wider">
                     Created Date
                   </span>
                   <span className="text-xs font-semibold ">
@@ -371,11 +371,11 @@ export default function ProfilePage() {
                   <Fingerprint className="h-3.5 w-3.5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px]  uppercase font-bold tracking-wider">
+                  <span className="text-sm  uppercase font-bold tracking-wider">
                     Session Key ID
                   </span>
                   <span
-                    className="text-[10px] font-semibold font-mono  truncate max-w-[170px]"
+                    className="text-sm font-semibold font-mono  truncate max-w-[170px]"
                     title={profile?.id}
                   >
                     {profile?.id || "N/A"}
@@ -389,10 +389,10 @@ export default function ProfilePage() {
           <Card className="rounded-xl p-5 text-left flex gap-3 items-start">
             <Lock className="h-4 w-4 shrink-0 text-primary/80 mt-0.5" />
             <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold  uppercase tracking-wide">
+              <span className="  uppercase tracking-wide">
                 Better Auth Cryptography
               </span>
-              <p className="text-[10px] leading-relaxed">
+              <p className="text-sm leading-relaxed">
                 Passwords are securely encrypted using advanced cryptographic
                 scrypt hashing algorithms. Your raw password string is never
                 stored directly, guaranteeing total account safety.

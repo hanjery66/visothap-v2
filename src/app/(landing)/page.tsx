@@ -29,7 +29,7 @@ export default function LandingPage() {
   // Query lottery data from DB (refetch every 30 seconds)
   const { data: lottery } = trpc.getLotteryByDate.useQuery(
     { date: dateParam },
-    { refetchInterval: 30_000 }
+    { refetchInterval: 30_000 },
   ) as { data: LotteryState | null | undefined };
 
   // Query advertisements from database
@@ -108,7 +108,7 @@ export default function LandingPage() {
         </div>
 
         {/* Weekdays */}
-        <div className="grid grid-cols-7 gap-1 text-center font-semibold text-zinc-400 text-xs mb-2">
+        <div className="grid grid-cols-7 gap-1 text-center font-semibold text-foreground text-xs mb-2">
           {weekdays.map((w) => (
             <div key={w} className="py-1">
               {w}
@@ -154,7 +154,7 @@ export default function LandingPage() {
             <AdsCard key={ad.id} ad={ad} className="h-60" />
           ))
         ) : (
-          <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center text-xs text-zinc-400">
+          <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center text-xs text-foreground">
             Left Banner Ad
           </div>
         )}
@@ -228,7 +228,7 @@ export default function LandingPage() {
               <AdsCard key={ad.id} ad={ad} className="h-80" />
             ))
           ) : (
-            <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center text-xs text-zinc-400">
+            <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center text-xs text-foreground">
               Right Banner Ad
             </div>
           )}

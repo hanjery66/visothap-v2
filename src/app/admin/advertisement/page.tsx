@@ -203,7 +203,7 @@ export default function AdvertisementPage() {
                 unoptimized
               />
             ) : (
-              <span className="text-[9px] text-zinc-650 font-bold uppercase">
+              <span className="text-xs text-zinc-650 font-bold uppercase">
                 No Pic
               </span>
             )}
@@ -233,7 +233,7 @@ export default function AdvertisementPage() {
         const colorClass = colorMap[pos] || " border-zinc-700";
         return (
           <span
-            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${colorClass}`}
+            className={`px-2 py-0.5 rounded  uppercase border ${colorClass}`}
           >
             {pos} Column
           </span>
@@ -252,7 +252,7 @@ export default function AdvertisementPage() {
               onCheckedChange={() => handleToggleAdStatus(ad.id, ad.status)}
             />
             <span
-              className={`text-[10px] font-bold w-10 text-left ${ad.status ? "text-primary" : "text-zinc-500"}`}
+              className={` w-10 text-left ${ad.status ? "text-primary" : "text-zinc-500"}`}
             >
               {ad.status ? "Active" : "Hidden"}
             </span>
@@ -308,7 +308,7 @@ export default function AdvertisementPage() {
         <Card className="rounded-xl flex flex-col gap-4">
           <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
           <CardHeader className="px-5 pt-5 pb-0">
-            <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
+            <CardTitle className=" text-primary flex items-center gap-2">
               <ImagePlus className="h-4 w-4 text-primary" />
               {formAd.id
                 ? "Modify Advertisement Banner"
@@ -385,7 +385,7 @@ export default function AdvertisementPage() {
                       {uploading ? (
                         <div className="flex flex-col items-center gap-2">
                           <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                          <span className="text-[11px]  font-medium">
+                          <span className="text-sm  font-medium">
                             Processing file upload...
                           </span>
                         </div>
@@ -397,7 +397,7 @@ export default function AdvertisementPage() {
                           <span className="text-xs font-semibold text-primary">
                             Click to select image file
                           </span>
-                          <span className="text-[10px] text-primary/50">
+                          <span className="text-sm text-primary/50">
                             JPG, PNG, WEBP, GIF up to 5MB
                           </span>
                         </div>
@@ -416,7 +416,7 @@ export default function AdvertisementPage() {
                             unoptimized
                           />
                           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center">
-                            <span className="text-[10px] text-zinc-300 font-bold uppercase truncate max-w-full">
+                            <span className="text-sm text-zinc-300 font-bold uppercase truncate max-w-full">
                               {formAd.image.startsWith("/uploads/")
                                 ? "Uploaded Locally"
                                 : "External URL"}
@@ -426,7 +426,7 @@ export default function AdvertisementPage() {
                       ) : (
                         <div className="flex flex-col items-center gap-1 text-primary/50 text-center p-2">
                           <ImagePlus className="h-7 w-7" />
-                          <span className="text-[10px] font-bold uppercase">
+                          <span className=" uppercase">
                             No Image Loaded
                           </span>
                         </div>

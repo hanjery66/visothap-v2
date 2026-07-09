@@ -163,7 +163,7 @@ export default function AdminLayout({
       {/* ── TOP HEADER BAR ── */}
       <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b border-primary/20 bg-background/80 backdrop-blur-md shadow-sm shrink-0">
         {/* Left: Logo + brand name */}
-        <Link href="/admin" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           {settings?.fullLogo ? (
             <div className="relative h-8 w-auto max-w-35 hidden sm:block ">
               <Image
@@ -176,7 +176,7 @@ export default function AdminLayout({
               />
             </div>
           ) : (
-            <span className="text-sm font-bold tracking-tight text-primary hidden sm:block">
+            <span className=" tracking-tight text-primary hidden sm:block">
               Admin Panel
             </span>
           )}
@@ -201,7 +201,7 @@ export default function AdminLayout({
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* SIDEBAR NAVIGATION PANEL */}
             <aside className="w-full lg:w-56 p-3 rounded-xl flex flex-col gap-1.5 shrink-0">
-              <span className="text-[10px] font-bold px-2 mb-1 tracking-wider uppercase text-muted-foreground">
+              <span className=" px-2 mb-1 tracking-wider uppercase text-muted-foreground">
                 Management
               </span>
 

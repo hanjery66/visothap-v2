@@ -15,6 +15,13 @@
       "when": 1783177790575,
       "tag": "0001_lively_bromley",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783523753581,
+      "tag": "0002_add_prize_labels",
+      "breakpoints": true
     }
   ]
 }

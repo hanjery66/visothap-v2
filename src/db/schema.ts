@@ -95,6 +95,8 @@ export const lotterySession = pgTable("lottery_session", {
   name: text("name").notNull(),          // "Sổ Kết Quả Miền Trung"
   displayTable: text("display_table").notNull(),
   displayNumber: text("display_number").notNull(),
+  /** JSON: Record<string, string> — maps prize row index (as string) to display label override */
+  prizeLabels: text("prize_labels"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });

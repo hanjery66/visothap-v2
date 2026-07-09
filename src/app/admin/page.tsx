@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { trpc } from "@/app/_trpc/client";
-import { Prize, LocationData, LotteryPeriod, LotteryState } from "@/lib/mockData";
+import {
+  Prize,
+  LocationData,
+  LotteryPeriod,
+  LotteryState,
+} from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
@@ -17,9 +22,11 @@ import {
   CheckCircle2,
   Loader2,
   DatabaseZap,
-  Trash2,
-  RefreshCw,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
@@ -27,37 +34,46 @@ import {
 // ---------------------------------------------------------------------------
 interface PeriodEditorProps {
   periodData: LotteryPeriod;
+  sessionId: string;
   onSaved: () => void;
 }
 
-function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
+function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
   if (!periodData?.data?.length) return null;
   const locations: LocationData[] = periodData.data;
   const isNorthern = periodData.displayTable === "fourth";
 
   // Build the list of expected prize labels matching visual table layout exactly
   const getPrizesMeta = () => {
-    const list: { key: string; label: string; digits: number }[] = [];
+    const list: { key: string; label: string }[] = [];
     if (isNorthern) {
-      list.push({ key: "db", label: "Đ. B", digits: 5 });
-      list.push({ key: "gOne", label: "Gi 1", digits: 5 });
-      list.push({ key: "gTwo", label: "Gi 2 (1)", digits: 5 });
-      list.push({ key: "gTwo", label: "Gi 2 (2)", digits: 5 });
-      for (let i = 1; i <= 6; i++) list.push({ key: "gThree", label: `Gi 3 (${i})`, digits: 5 });
-      for (let i = 1; i <= 4; i++) list.push({ key: "gFour", label: `Gi 4 (${i})`, digits: 4 });
-      for (let i = 1; i <= 6; i++) list.push({ key: "gFive", label: `Gi 5 (${i})`, digits: 4 });
-      for (let i = 1; i <= 3; i++) list.push({ key: "gSix", label: `Gi 6 (${i})`, digits: 3 });
-      for (let i = 1; i <= 4; i++) list.push({ key: "gSeven", label: `Gi 7 (${i})`, digits: 2 });
+      list.push({ key: "db", label: "Đ. B" });
+      list.push({ key: "gOne", label: "Gi 1" });
+      list.push({ key: "gTwo", label: "Gi 2 (1)" });
+      list.push({ key: "gTwo", label: "Gi 2 (2)" });
+      for (let i = 1; i <= 6; i++)
+        list.push({ key: "gThree", label: `Gi 3 (${i})` });
+      for (let i = 1; i <= 4; i++)
+        list.push({ key: "gFour", label: `Gi 4 (${i})` });
+      for (let i = 1; i <= 6; i++)
+        list.push({ key: "gFive", label: `Gi 5 (${i})` });
+      for (let i = 1; i <= 3; i++)
+        list.push({ key: "gSix", label: `Gi 6 (${i})` });
+      for (let i = 1; i <= 4; i++)
+        list.push({ key: "gSeven", label: `Gi 7 (${i})` });
     } else {
-      list.push({ key: "gEight", label: "Gi 8", digits: 2 });
-      list.push({ key: "gSeven", label: "Gi 7", digits: 3 });
-      for (let i = 1; i <= 3; i++) list.push({ key: "gSix", label: `Gi 6 (${i})`, digits: 4 });
-      list.push({ key: "gFive", label: "Gi 5", digits: 4 });
-      for (let i = 1; i <= 7; i++) list.push({ key: "gFour", label: `Gi 4 (${i})`, digits: 5 });
-      for (let i = 1; i <= 2; i++) list.push({ key: "gThree", label: `Gi 3 (${i})`, digits: 5 });
-      list.push({ key: "gTwo", label: "Gi 2", digits: 5 });
-      list.push({ key: "gOne", label: "Gi 1", digits: 5 });
-      list.push({ key: "db", label: "Đ. B", digits: 6 });
+      list.push({ key: "gEight", label: "Gi 8" });
+      list.push({ key: "gSeven", label: "Gi 7" });
+      for (let i = 1; i <= 3; i++)
+        list.push({ key: "gSix", label: `Gi 6 (${i})` });
+      list.push({ key: "gFive", label: "Gi 5" });
+      for (let i = 1; i <= 7; i++)
+        list.push({ key: "gFour", label: `Gi 4 (${i})` });
+      for (let i = 1; i <= 2; i++)
+        list.push({ key: "gThree", label: `Gi 3 (${i})` });
+      list.push({ key: "gTwo", label: "Gi 2" });
+      list.push({ key: "gOne", label: "Gi 1" });
+      list.push({ key: "db", label: "Đ. B" });
     }
     return list;
   };
@@ -71,7 +87,17 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
     const prizes: Prize[] = [];
     const keys: (keyof LocationData)[] = isNorthern
       ? ["db", "gOne", "gTwo", "gThree", "gFour", "gFive", "gSix", "gSeven"]
-      : ["gEight", "gSeven", "gSix", "gFive", "gFour", "gThree", "gTwo", "gOne", "db"];
+      : [
+        "gEight",
+        "gSeven",
+        "gSix",
+        "gFive",
+        "gFour",
+        "gThree",
+        "gTwo",
+        "gOne",
+        "db",
+      ];
 
     for (const key of keys) {
       const group = loc[key];
@@ -81,11 +107,31 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
   };
 
   const getInitialText = (loc: LocationData) => {
-    return getOrderedPrizes(loc).map((pz) => pz.value ?? "").join("\n");
+    return getOrderedPrizes(loc)
+      .map((pz) => pz.value ?? "")
+      .join("\n");
   };
 
   const [columnTexts, setColumnTexts] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState(false);
+
+  // ── Inline edit state for location headers ──────────────────────────────
+  type LocationEdit = { location: string; code: string };
+  const [locationEdits, setLocationEdits] = useState<
+    Record<string, LocationEdit>
+  >({});
+  const [editingLocId, setEditingLocId] = useState<string | null>(null);
+
+  // ── Inline edit state for prize labels ─────────────────────────────────
+  // Seed from DB prizeLabels (string[] stored per session) or fall back to static defaults
+  const getInitialLabels = () =>
+    prizeMeta.map(
+      (pm, idx) =>
+        (periodData.prizeLabels as string[] | null)?.[idx] ?? pm.label,
+    );
+  const [labelEdits, setLabelEdits] = useState<string[]>(getInitialLabels);
+  const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
+  const [labelDraft, setLabelDraft] = useState("");
 
   // Sync if parent updates (e.g. on invalidation / refetch)
   useEffect(() => {
@@ -95,23 +141,95 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
     });
     setColumnTexts(initialTexts);
     setDirty(false);
+    // Reset location edits to reflect new data
+    const initLocEdits: Record<string, LocationEdit> = {};
+    locations.forEach((loc: LocationData) => {
+      if (loc._id)
+        initLocEdits[loc._id] = { location: loc.location, code: loc.code };
+    });
+    setLocationEdits(initLocEdits);
+    // Reset label edits — prefer DB values, fall back to static defaults
+    setLabelEdits(
+      prizeMeta.map(
+        (pm, idx) =>
+          (periodData.prizeLabels as string[] | null)?.[idx] ?? pm.label,
+      ),
+    );
   }, [periodData]);
 
-  const { mutate: savePrizes, isPending } = trpc.upsertLotteryPrizes.useMutation({
-    onSuccess: () => {
-      setDirty(false);
-      onSaved();
-      utils.getLotteryByDate.invalidate();
-    },
-  });
+  const { mutate: updateLocation, isPending: isUpdatingLocation } =
+    trpc.updateLotteryLocation.useMutation({
+      onSuccess: () => {
+        utils.getLotteryByDate.invalidate();
+        setEditingLocId(null);
+      },
+    });
+
+  const handleLocationSave = (locId: string) => {
+    const edit = locationEdits[locId];
+    if (!edit || !edit.location.trim() || !edit.code.trim()) return;
+    updateLocation({
+      locationId: locId,
+      location: edit.location.trim(),
+      code: edit.code.trim(),
+    });
+  };
+
+  const handleLocationCancel = (loc: LocationData) => {
+    if (loc._id) {
+      setLocationEdits((prev) => ({
+        ...prev,
+        [loc._id!]: { location: loc.location, code: loc.code },
+      }));
+    }
+    setEditingLocId(null);
+  };
+
+  const handleLabelEdit = (idx: number) => {
+    setLabelDraft(labelEdits[idx]);
+    setEditingLabelIdx(idx);
+  };
+
+  const { mutate: persistLabels, isPending: isSavingLabel } =
+    trpc.updatePrizeLabels.useMutation({
+      onSuccess: () => utils.getLotteryByDate.invalidate(),
+    });
+
+  const handleLabelSave = (idx: number) => {
+    if (!labelDraft.trim()) return;
+    const next = [...labelEdits];
+    next[idx] = labelDraft.trim();
+    setLabelEdits(next);
+    setEditingLabelIdx(null);
+    // Persist full updated array to DB
+    persistLabels({ sessionId, labels: next });
+  };
+
+  const handleLabelCancel = () => setEditingLabelIdx(null);
+
+  const { mutate: savePrizes, isPending } =
+    trpc.upsertLotteryPrizes.useMutation({
+      onSuccess: () => {
+        setDirty(false);
+        onSaved();
+        utils.getLotteryByDate.invalidate();
+        toast.success("success");
+      },
+      onError(error) {
+        toast.error(error.message);
+      },
+    });
 
   const getNormalizedLines = (rawText: string) => {
-    let rawLines = (rawText ?? "").split("\n").filter(Boolean)
+    let rawLines = (rawText ?? "").split("\n").filter(Boolean);
     // If last line is empty and we have one extra line, remove it (typical copy-paste artifact)
-    if (rawLines.length === expectedCount + 1 && rawLines[expectedCount] === "") {
+    if (
+      rawLines.length === expectedCount + 1 &&
+      rawLines[expectedCount] === ""
+    ) {
       rawLines = rawLines.slice(0, expectedCount);
     }
-    return rawLines
+    return rawLines;
   };
 
   const handleCancel = () => {
@@ -153,36 +271,157 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
     return { locKey, isValid, count: currentLines.length };
   });
 
-  type ColumnStatus = { locKey: string | number; isValid: boolean; count: number };
+  type ColumnStatus = {
+    locKey: string | number;
+    isValid: boolean;
+    count: number;
+  };
   const allValid = columnStatus.every((status: ColumnStatus) => status.isValid);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="overflow-x-auto rounded-lg border border-zinc-200 shadow-sm bg-white">
-        <table className="w-full min-w-[600px] border-collapse text-sm">
+        <table className="w-full min-w-150 border-collapse text-sm">
           <thead>
             <tr className="bg-primary/5 border-b border-zinc-200">
-              <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-[140px]">Giải</th>
-              {locations.map((loc: LocationData, i: number) => (
-                <th key={i} className="px-3 py-2.5 text-center font-bold text-zinc-800 border-l border-zinc-100">
-                  <div>{loc.location}</div>
-                  <div className="text-xs font-semibold text-primary uppercase">{loc.code}</div>
-                </th>
-              ))}
+              <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-[140px]">
+                Giải
+              </th>
+              {locations.map((loc: LocationData, i: number) => {
+                const locId = loc._id ?? String(i);
+                const isEditingThis = editingLocId === locId;
+                const draft = locationEdits[locId] ?? {
+                  location: loc.location,
+                  code: loc.code,
+                };
+                return (
+                  <th
+                    key={i}
+                    className="px-3 py-2.5 text-center font-bold text-zinc-800 border-l border-zinc-100"
+                  >
+                    {isEditingThis ? (
+                      <div className="flex flex-col gap-1 min-w-30">
+                        <input
+                          className="w-full text-center text-sm font-bold border border-primary/50 rounded px-1 py-0.5 outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+                          value={draft.location}
+                          onChange={(e) =>
+                            setLocationEdits((prev) => ({
+                              ...prev,
+                              [locId]: { ...draft, location: e.target.value },
+                            }))
+                          }
+                          placeholder="Location name"
+                          autoFocus
+                        />
+                        <input
+                          className="w-full text-center text-xs font-semibold border border-primary/30 rounded px-1 py-0.5 outline-none focus:ring-2 focus:ring-primary/20 bg-white uppercase text-primary"
+                          value={draft.code}
+                          onChange={(e) =>
+                            setLocationEdits((prev) => ({
+                              ...prev,
+                              [locId]: { ...draft, code: e.target.value },
+                            }))
+                          }
+                          placeholder="CODE"
+                        />
+                        <div className="flex items-center justify-center gap-1 mt-0.5">
+                          <button
+                            onClick={() => handleLocationSave(locId)}
+                            disabled={isUpdatingLocation}
+                            className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded bg-primary text-white hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                          >
+                            {isUpdatingLocation ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Check className="w-3 h-3" />
+                            )}
+                            Save
+                          </button>
+                          <button
+                            onClick={() => handleLocationCancel(loc)}
+                            className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="group relative flex flex-col items-center gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <span>{draft.location}</span>
+                          <button
+                            onClick={() => setEditingLocId(locId)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-primary"
+                            title="Edit location"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="text-xs font-semibold text-primary uppercase">
+                          {draft.code}
+                        </div>
+                      </div>
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             <tr>
               {/* Left labels column */}
               <td className="px-3 py-2 border-r border-zinc-200 align-top bg-zinc-50/50">
-                <div className="flex flex-col font-mono text-xs select-none py-2 gap-0">
+                <div className="flex flex-col font-mono text-sm select-none py-2 gap-0">
                   {prizeMeta.map((pm, idx) => (
                     <div
                       key={idx}
-                      className="h-6 flex items-center justify-between text-zinc-500 pr-2 border-b border-zinc-100 last:border-b-0"
+                      className="h-7 flex items-center justify-between text-zinc-500 pr-2 border-b border-zinc-100 last:border-b-0"
                     >
-                      <span className="font-semibold text-zinc-700">{pm.label}</span>
-                      <span className="text-[10px] text-zinc-400">({pm.digits} digits)</span>
+                      {editingLabelIdx === idx ? (
+                        <div className="flex items-center gap-1 w-full">
+                          <input
+                            className="flex-1 min-w-0 text-xs font-semibold border border-primary/50 rounded px-1 py-0 outline-none focus:ring-1 focus:ring-primary/20 bg-white text-zinc-700 h-5"
+                            value={labelDraft}
+                            onChange={(e) => setLabelDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleLabelSave(idx);
+                              if (e.key === "Escape") handleLabelCancel();
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleLabelSave(idx)}
+                            disabled={isSavingLabel}
+                            className="text-primary hover:text-primary/80 transition-colors shrink-0 disabled:opacity-50"
+                          >
+                            {isSavingLabel ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Check className="w-3 h-3" />
+                            )}
+                          </button>
+                          <button
+                            onClick={handleLabelCancel}
+                            className="text-zinc-400 hover:text-zinc-600 transition-colors shrink-0"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="group flex items-center gap-1 w-full">
+                          <span className="font-semibold text-zinc-700 flex-1">
+                            {labelEdits[idx] ?? pm.label}
+                          </span>
+                          <button
+                            onClick={() => handleLabelEdit(idx)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-primary shrink-0"
+                            title="Edit label"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -190,30 +429,62 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
 
               {/* Location textarea columns */}
               {locations.map((loc: LocationData, li: number) => {
+
                 const locKey = loc.code || li;
-                const text = (columnTexts[locKey] || '').trim();
+                let text = columnTexts[locKey];
+                const hasNumber = /\d/.test(text);
+                if (!hasNumber) text = "";
                 const status = columnStatus.find((s) => s.locKey === locKey);
                 const isValid = status?.isValid ?? false;
                 const lineCount = status?.count ?? 0;
 
                 return (
-                  <td key={li} className="p-3 border-r border-border last:border-r-0 align-top">
+                  <td
+                    key={li}
+                    className="p-3 border-r border-border last:border-r-0 align-top"
+                  >
                     <div className="flex flex-col gap-2">
                       <textarea
                         value={text}
                         onChange={(e) => {
-                          const value = e.target.value.replace(/[^\d\n]/g, "").trim()
-                          setColumnTexts((prev) => ({ ...prev, [locKey]: value }));
+
+                          const values = e.target.value.split("\n").filter(Boolean);
+                          const clean = values
+                            .map((value) => Number(value))
+                            .filter((value) => !isNaN(value));
+
+                          // Group into chunks of 18
+                          const groups: string[] = [];
+                          for (let i = 0; i < clean.length; i += 18) {
+                            groups.push(clean.slice(i, i + 18).join("\n"));
+                          }
+                          // If multiple groups were pasted, distribute them
+                          if (groups.length > 1) {
+                            setColumnTexts((prev) => {
+                              const next = { ...prev };
+                              groups.forEach((group, index) => {
+                                if (locations[index]) {
+                                  const key = locations[index].code || index;
+                                  next[key] = group;
+                                }
+                              });
+                              return next;
+                            });
+                          } else {
+                            // Normal typing
+                            const value = groups.join("\n");
+                            setColumnTexts((prev) => ({ ...prev, [locKey]: value }));
+                          }
                           setDirty(true);
                         }}
-                        className="w-full font-mono text-xs leading-6 py-2 px-3 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none bg-zinc-50/30 hover:bg-zinc-50 focus:bg-white transition-all"
+                        className="w-full font-mono text-sm leading-7 py-2 px-3 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none bg-zinc-50/30 hover:bg-zinc-50 focus:bg-white transition-all"
                         style={{
-                          height: `${expectedCount * 24 + 16}px`, // 24px per line + 16px padding
+                          height: `${expectedCount * 28 + 16}px`, // 28px per line + 16px padding
                         }}
                         placeholder="Type or paste column values..."
                       />
 
-                      <div className="text-[11px] mt-1">
+                      <div className="text-sm mt-1">
                         {isValid ? (
                           <span className="text-emerald-600 font-medium">
                             ✓ Valid ({expectedCount}/{expectedCount} lines)
@@ -249,7 +520,9 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
             onClick={handleSave}
             disabled={!allValid || isPending}
           >
-            {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
+            {isPending && (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+            )}
             Save All
           </Button>
         </div>
@@ -262,36 +535,55 @@ function PeriodEditor({ periodData, onSaved }: PeriodEditorProps) {
 // Main admin page
 // ---------------------------------------------------------------------------
 export default function AdminPage() {
-  const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const [activePeriod, setActivePeriod] = useState<"first" | "second" | "third" | "fourth">("first");
-  const [notification, setNotification] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const [selectedDate, setSelectedDate] = useState(
+    dayjs().format("YYYY-MM-DD"),
+  );
+  const [activePeriod, setActivePeriod] = useState<
+    "first" | "second" | "third" | "fourth"
+  >("first");
+  const [notification, setNotification] = useState<{
+    msg: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const utils = trpc.useUtils();
 
   // ── Fetch lottery data for selected date ──────────────────────────────────
-  const { data: lotteryState, isLoading, isFetching } = trpc.getLotteryByDate.useQuery(
+  const {
+    data: lotteryState,
+    isLoading,
+    isFetching,
+  } = trpc.getLotteryByDate.useQuery(
     { date: selectedDate },
-    { refetchOnWindowFocus: false }
+    { refetchOnWindowFocus: false },
   );
 
   // ── Mutations ─────────────────────────────────────────────────────────────
-  const { mutate: seedDate, isPending: isSeeding } = trpc.seedLotteryDate.useMutation({
-    onSuccess: () => {
-      utils.getLotteryByDate.invalidate({ date: selectedDate });
-      showNotification("Date seeded — structure created successfully!", "success");
-    },
-    onError: (e) => showNotification(e.message, "error"),
-  });
+  const { mutate: seedDate, isPending: isSeeding } =
+    trpc.seedLotteryDate.useMutation({
+      onSuccess: () => {
+        utils.getLotteryByDate.invalidate({ date: selectedDate });
+        showNotification(
+          "Date seeded — structure created successfully!",
+          "success",
+        );
+      },
+      onError: (e) => showNotification(e.message, "error"),
+    });
 
-  const { mutate: resetDate, isPending: isResetting } = trpc.resetLotteryDate.useMutation({
-    onSuccess: () => {
-      utils.getLotteryByDate.invalidate({ date: selectedDate });
-      showNotification("All prize values cleared for this date.", "success");
-    },
-    onError: (e) => showNotification(e.message, "error"),
-  });
+  const { mutate: resetDate, isPending: isResetting } =
+    trpc.resetLotteryDate.useMutation({
+      onSuccess: () => {
+        utils.getLotteryByDate.invalidate({ date: selectedDate });
+        showNotification("All prize values cleared for this date.", "success");
+      },
+      onError: (e) => showNotification(e.message, "error"),
+    });
 
-  const showNotification = (msg: string, type: "success" | "error" = "success") => {
+  const showNotification = (
+    msg: string,
+    type: "success" | "error" = "success",
+  ) => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 3500);
   };
@@ -308,16 +600,18 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-6">
-
       {/* ── Floating toast ─────────────────────────────────────────────────── */}
       {notification && (
-        <div className={`
+        <div
+          className={`
           fixed top-4 right-4 z-50 px-4 py-3 rounded-xl font-semibold text-sm shadow-lg border flex items-center gap-2
           transition-all animate-in slide-in-from-right-4 duration-300
           ${notification.type === "success"
-            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-            : "bg-red-50 border-red-200 text-red-800"}
-        `}>
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-red-50 border-red-200 text-red-800"
+            }
+        `}
+        >
           <CheckCircle2 size={16} strokeWidth={2.5} />
           {notification.msg}
         </div>
@@ -328,7 +622,11 @@ export default function AdminPage() {
         {/* Date picker */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="font-semibold min-w-[130px]">
+            <Button
+              variant="outline"
+              size="sm"
+              className="font-semibold min-w-[130px]"
+            >
               {selectedDate}
               <ChevronDownIcon className="ml-1 w-4 h-4" />
             </Button>
@@ -337,7 +635,9 @@ export default function AdminPage() {
             <Calendar
               mode="single"
               selected={dayjs(selectedDate).toDate()}
-              onSelect={(date) => date && setSelectedDate(dayjs(date).format("YYYY-MM-DD"))}
+              onSelect={(date) =>
+                date && setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
+              }
               defaultMonth={dayjs(selectedDate).toDate()}
             />
           </PopoverContent>
@@ -350,39 +650,13 @@ export default function AdminPage() {
           disabled={isWorking}
           className="gap-1.5 text-xs"
         >
-          {isSeeding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <DatabaseZap className="w-3.5 h-3.5" />}
+          {isSeeding ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <DatabaseZap className="w-3.5 h-3.5" />
+          )}
           {hasData ? "Re-initialize" : "Initialize Date"}
         </Button>
-
-        {/* Refresh */}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => utils.getLotteryByDate.invalidate({ date: selectedDate })}
-          disabled={isWorking}
-          className="gap-1.5 text-xs"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-
-        {/* Clear */}
-        {hasData && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              if (confirm(`Clear ALL prize values for ${selectedDate}?`)) {
-                resetDate({ date: selectedDate });
-              }
-            }}
-            disabled={isWorking}
-            className="gap-1.5 text-xs text-destructive border-destructive/30 hover:bg-destructive/10"
-          >
-            {isResetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-            Clear All
-          </Button>
-        )}
       </div>
 
       {/* ── Status hint ─────────────────────────────────────────────────────── */}
@@ -390,12 +664,15 @@ export default function AdminPage() {
         <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center text-zinc-500">
           <DatabaseZap className="mx-auto mb-3 w-8 h-8 text-zinc-300" />
           <p className="font-semibold text-sm">No data for {selectedDate}</p>
-          <p className="text-xs mt-1">Click <strong>Initialize Date</strong> to create the blank structure.</p>
+          <p className="text-xs mt-1">
+            Click <strong>Initialize Date</strong> to create the blank
+            structure.
+          </p>
         </div>
       )}
 
       {isLoading && (
-        <div className="flex items-center justify-center gap-2 py-10 text-zinc-400 text-sm">
+        <div className="flex items-center justify-center gap-2 py-10 text-foreground text-sm">
           <Loader2 className="w-5 h-5 animate-spin" />
           Loading lottery data...
         </div>
@@ -405,7 +682,9 @@ export default function AdminPage() {
       {hasData && !isLoading && (
         <Tabs
           value={activePeriod}
-          onValueChange={(val) => setActivePeriod(val as "first" | "second" | "third" | "fourth")}
+          onValueChange={(val) =>
+            setActivePeriod(val as "first" | "second" | "third" | "fourth")
+          }
         >
           <TabsList className="flex justify-start w-fit bg-transparent p-0 mb-4 h-auto gap-1">
             {PERIOD_TABS.map(({ key, label, time }) => (
@@ -414,34 +693,36 @@ export default function AdminPage() {
                 value={key}
                 className="px-4 py-2 text-xs md:text-sm transition-all whitespace-nowrap rounded-lg"
               >
-                {time} — {label}
+                {time}
               </TabsTrigger>
             ))}
           </TabsList>
 
           {PERIOD_TABS.map(({ key }) => (
-            <TabsContent key={key} value={key} className="focus-visible:ring-0 mt-0">
+            <TabsContent
+              key={key}
+              value={key}
+              className="focus-visible:ring-0 mt-0"
+            >
               {(lotteryState as LotteryState)?.[key] ? (
                 <>
                   {/* Section header */}
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
                       {(lotteryState as LotteryState)[key].name}
-                    </span>
-                    <span className="text-xs text-zinc-300">·</span>
-                    <span className="text-xs text-zinc-400">
-                      {(lotteryState as LotteryState)[key].data?.length} location(s)
                     </span>
                   </div>
 
                   <PeriodEditor
                     periodData={(lotteryState as LotteryState)[key]}
+                    sessionId={
+                      (lotteryState as LotteryState)[key].sessionId ?? ""
+                    }
                     onSaved={() => { }}
                   />
-
                 </>
               ) : (
-                <div className="text-center text-zinc-400 text-sm py-10">
+                <div className="text-center text-foreground text-sm py-10">
                   No data for this period.
                 </div>
               )}

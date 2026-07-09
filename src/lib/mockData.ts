@@ -25,6 +25,8 @@ export interface LotteryPeriod {
   name: string;
   displayTable?: string;
   displayNumber?: string;
+  sessionId?: string;
+  prizeLabels?: string[] | null;
   gEight?: string;
   gSeven?: string;
   gSix?: string;

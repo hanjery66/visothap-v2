@@ -1,0 +1,1 @@
+ALTER TABLE "lottery_session" ADD COLUMN "prize_labels" text;
