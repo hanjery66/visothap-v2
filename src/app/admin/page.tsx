@@ -25,6 +25,7 @@ import {
   Pencil,
   Check,
   X,
+  Pen,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -279,9 +280,10 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
   const allValid = columnStatus.every((status: ColumnStatus) => status.isValid);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 shadow-sm bg-white">
-        <table className="w-full min-w-150 border-collapse text-sm">
+    <div className="flex gap-4">
+
+      <div className="overflow-x-auto rounded-xs flex-col  w-full flex justify-center items-center ">
+        <table className="w-full max-w-4xl border border-zinc-200  min-w-150 border-collapse text-sm">
           <thead>
             <tr className="bg-primary/5 border-b border-zinc-200">
               <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-[140px]">
@@ -441,43 +443,62 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                 return (
                   <td
                     key={li}
-                    className="p-3 border-r border-border last:border-r-0 align-top"
+                    className="p-2 border-r border-border last:border-r-0 align-top"
                   >
                     <div className="flex flex-col gap-2">
+
                       <textarea
                         value={text}
+
+
                         onChange={(e) => {
+                          // Normal typing
+                          setColumnTexts((prev) => ({
+                            ...prev,
+                            [locKey]: e.target.value,
+                          }));
+                          setDirty(true);
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
 
-                          const values = e.target.value.split("\n").filter(Boolean);
-                          const clean = values
-                            .map((value) => Number(value))
-                            .filter((value) => !isNaN(value));
+                          const pasted = e.clipboardData.getData("text");
 
-                          // Group into chunks of 18
+                          const clean = pasted
+                            .split(/\r?\n/)
+                            .map((v) => v.trim())
+                            .filter((v) => /^\d+$/.test(v)); // keep only digit lines, preserve leading zeros
+
                           const groups: string[] = [];
+
                           for (let i = 0; i < clean.length; i += 18) {
                             groups.push(clean.slice(i, i + 18).join("\n"));
                           }
-                          // If multiple groups were pasted, distribute them
+
                           if (groups.length > 1) {
                             setColumnTexts((prev) => {
                               const next = { ...prev };
+
                               groups.forEach((group, index) => {
                                 if (locations[index]) {
                                   const key = locations[index].code || index;
                                   next[key] = group;
                                 }
                               });
+
                               return next;
                             });
                           } else {
-                            // Normal typing
-                            const value = groups.join("\n");
-                            setColumnTexts((prev) => ({ ...prev, [locKey]: value }));
+                            setColumnTexts((prev) => ({
+                              ...prev,
+                              [locKey]: groups[0] ?? "",
+                            }));
                           }
+
                           setDirty(true);
                         }}
-                        className="w-full font-mono text-sm leading-7 py-2 px-3 border border-border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none bg-zinc-50/30 hover:bg-zinc-50 focus:bg-white transition-all"
+
+                        className="w-full font-mono text-sm leading-7 py-2 px-3 border border-border rounded-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
                         style={{
                           height: `${expectedCount * 28 + 16}px`, // 28px per line + 16px padding
                         }}
@@ -502,31 +523,32 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
             </tr>
           </tbody>
         </table>
+
+        {dirty && (
+          <div className="flex justify-end gap-2 self-end mt-2 ">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[90px]"
+              onClick={handleSave}
+              disabled={!allValid || isPending}
+            >
+              {isPending && (
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+              )}
+              Save All
+            </Button>
+          </div>
+        )}
       </div>
 
-      {dirty && (
-        <div className="flex justify-end gap-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl animate-in fade-in duration-200">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            disabled={isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[90px]"
-            onClick={handleSave}
-            disabled={!allValid || isPending}
-          >
-            {isPending && (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-            )}
-            Save All
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
@@ -571,14 +593,6 @@ export default function AdminPage() {
       onError: (e) => showNotification(e.message, "error"),
     });
 
-  const { mutate: resetDate, isPending: isResetting } =
-    trpc.resetLotteryDate.useMutation({
-      onSuccess: () => {
-        utils.getLotteryByDate.invalidate({ date: selectedDate });
-        showNotification("All prize values cleared for this date.", "success");
-      },
-      onError: (e) => showNotification(e.message, "error"),
-    });
 
   const showNotification = (
     msg: string,
@@ -589,7 +603,7 @@ export default function AdminPage() {
   };
 
   const hasData = !!lotteryState;
-  const isWorking = isSeeding || isResetting || isFetching;
+  const isWorking = isSeeding || isFetching;
 
   const PERIOD_TABS = [
     { key: "first", label: "Miền Trung", time: "10:50 AM" },
@@ -599,12 +613,12 @@ export default function AdminPage() {
   ] as const;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {/* ── Floating toast ─────────────────────────────────────────────────── */}
       {notification && (
         <div
           className={`
-          fixed top-4 right-4 z-50 px-4 py-3 rounded-xl font-semibold text-sm shadow-lg border flex items-center gap-2
+          fixed top-4 right-4 z-50 px-4 py-2 rounded-xl font-semibold text-sm shadow-lg border flex items-center gap-2
           transition-all animate-in slide-in-from-right-4 duration-300
           ${notification.type === "success"
               ? "bg-emerald-50 border-emerald-200 text-emerald-800"
@@ -648,7 +662,7 @@ export default function AdminPage() {
           size="sm"
           onClick={() => seedDate({ date: selectedDate })}
           disabled={isWorking}
-          className="gap-1.5 text-xs"
+          className="gap-1.5 "
         >
           {isSeeding ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -662,7 +676,7 @@ export default function AdminPage() {
       {/* ── Status hint ─────────────────────────────────────────────────────── */}
       {!hasData && !isLoading && (
         <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center text-zinc-500">
-          <DatabaseZap className="mx-auto mb-3 w-8 h-8 text-zinc-300" />
+          <DatabaseZap className="mx-auto mb-2 w-8 h-8 text-zinc-300" />
           <p className="font-semibold text-sm">No data for {selectedDate}</p>
           <p className="text-xs mt-1">
             Click <strong>Initialize Date</strong> to create the blank
@@ -686,12 +700,12 @@ export default function AdminPage() {
             setActivePeriod(val as "first" | "second" | "third" | "fourth")
           }
         >
-          <TabsList className="flex justify-start w-fit bg-transparent p-0 mb-4 h-auto gap-1">
+          <TabsList className="flex justify-start w-fit bg-transparent p-0 mb-2 h-auto gap-1">
             {PERIOD_TABS.map(({ key, label, time }) => (
               <TabsTrigger
                 key={key}
                 value={key}
-                className="px-4 py-2 text-xs md:text-sm transition-all whitespace-nowrap rounded-lg"
+                className="text-xs md:text-sm transition-all whitespace-nowrap rounded-lg"
               >
                 {time}
               </TabsTrigger>
@@ -707,12 +721,14 @@ export default function AdminPage() {
               {(lotteryState as LotteryState)?.[key] ? (
                 <>
                   {/* Section header */}
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                  <div className="mb-2 flex items-center justify-center gap-2">
+                    <span className="font-semibold text-foreground uppercase tracking-wide">
                       {(lotteryState as LotteryState)[key].name}
                     </span>
+                    <Button size="sm" variant="ghost">
+                      <Pen size={8} className="text-primary" />
+                    </Button>
                   </div>
-
                   <PeriodEditor
                     periodData={(lotteryState as LotteryState)[key]}
                     sessionId={

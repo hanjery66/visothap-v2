@@ -372,7 +372,7 @@ export default function AdvertisementPage() {
                     {/* Visual Dropzone / File Picker */}
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="md:col-span-2 border border-primary/30 border-dashed hover:border-primary/50  rounded-lg p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all min-h-[120px] group relative"
+                      className="md:col-span-2 border border-primary/30 border-dashed hover:border-primary/50  rounded-xs p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all min-h-[120px] group relative"
                     >
                       <input
                         type="file"
@@ -405,7 +405,7 @@ export default function AdvertisementPage() {
                     </div>
 
                     {/* Image Preview Block */}
-                    <div className="w-full h-[120px] rounded-lg border border-primary/30  overflow-hidden flex items-center justify-center relative group">
+                    <div className="w-full h-[120px] rounded-xs border border-primary/30  overflow-hidden flex items-center justify-center relative group">
                       {formAd.image ? (
                         <>
                           <Image
@@ -462,7 +462,7 @@ export default function AdvertisementPage() {
                   <Label htmlFor="form-status" className="text-xs  font-bold">
                     Visibility Status
                   </Label>
-                  <div className="flex items-center gap-2  border border-primary/30  px-3 py-1.5 rounded-lg shadow-sm">
+                  <div className="flex items-center gap-2  border border-primary/30  px-3 py-1.5 rounded-xs shadow-sm">
                     <Switch
                       id="form-status"
                       checked={formAd.status ?? true}

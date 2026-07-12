@@ -87,7 +87,7 @@ export default function LandingPage() {
     const weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
     return (
-      <div className=" rounded-lg shadow-md border border-zinc-100 p-4 transition-all hover:shadow-lg">
+      <div className=" rounded-xs  shadow-md border border-zinc-100 p-4 transition-all hover:shadow-lg">
         {/* Month selector */}
         <div className="flex justify-between items-center mb-4">
           <button
@@ -128,13 +128,12 @@ export default function LandingPage() {
               <button
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
-                className={`min-h-8 min-w-8 font-semibold rounded-md transition-all flex items-center justify-center ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : isToday
-                      ? "bg-red-50 text-primary border border-primary/50"
-                      : "hover:bg-zinc-100 "
-                }`}
+                className={`min-h-8 min-w-8 font-semibold rounded-md transition-all flex items-center justify-center ${isSelected
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : isToday
+                    ? "bg-red-50 text-primary border border-primary/50"
+                    : "hover:bg-zinc-100 "
+                  }`}
               >
                 {day.date()}
               </button>
@@ -146,27 +145,31 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-6 items-start w-full">
+    <div className="grid grid-cols-12 gap-4 items-start w-full">
       {/* LEFT AD COLUMN (Span 2) */}
-      <div className="flex col-span-2 flex-col gap-4">
+
+
+      <div className="flex col-span-3 flex-col gap-4">
         {adsByPosition.Left && adsByPosition.Left.length > 0 ? (
           adsByPosition.Left.map((ad: Ads) => (
-            <AdsCard key={ad.id} ad={ad} className="h-60" />
+            <AdsCard key={ad.id} ad={ad} className="h-80" />
           ))
         ) : (
-          <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center text-xs text-foreground">
+          <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs  text-center text-xs text-foreground">
             Left Banner Ad
           </div>
         )}
       </div>
 
+
+
       {/* CENTER CONTENT COLUMN (Span 7) */}
-      <div className="col-span-7 flex flex-col gap-2">
+      <div className="col-span-6 flex flex-col gap-2">
         {/* Center Banner Advertisement */}
         {adsByPosition.Center && adsByPosition.Center.length > 0 && (
           <div className="flex flex-col gap-4 mb-2">
             {adsByPosition.Center.map((ad: Ads) => (
-              <AdsCard key={ad.id} ad={ad} className="h-40" />
+              <AdsCard key={ad.id} ad={ad} className="h-30" />
             ))}
           </div>
         )}
@@ -203,21 +206,21 @@ export default function LandingPage() {
               !shouldRenderPeriod(lottery.second.name) &&
               !shouldRenderPeriod(lottery.third.name) &&
               !shouldRenderPeriod(lottery.fourth.name) && (
-                <div className=" rounded-lg shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
+                <div className=" rounded-xs shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
                   No matching results table found.
                 </div>
               )}
           </>
         ) : (
-          <div className=" rounded-lg shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#15bece]"></div>
+          <div className=" rounded-xs shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
             Loading data...
           </div>
         )}
       </div>
 
       {/* RIGHT COLUMN: Calendar + Ads (Span 3) */}
-      <div className="col-span-3 flex flex-col gap-6">
+      <div className="col-span-3 flex flex-col gap-4">
         {/* Interactive Calendar */}
         {renderCalendar()}
 
@@ -228,7 +231,7 @@ export default function LandingPage() {
               <AdsCard key={ad.id} ad={ad} className="h-80" />
             ))
           ) : (
-            <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-lg text-center text-xs text-foreground">
+            <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs text-center text-xs text-foreground">
               Right Banner Ad
             </div>
           )}

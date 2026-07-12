@@ -204,11 +204,7 @@ export default function AdminLayout({
               <span className=" px-2 mb-1 tracking-wider uppercase text-muted-foreground">
                 Management
               </span>
-
-              {
-                menus.map((menu) => renderSidebarItem(menu.href, menu.title, menu.icon))
-              }
-
+              {menus.map((menu) => renderSidebarItem(menu.href, menu.title, menu.icon))}
             </aside>
 
             {/* MAIN DYNAMIC CONTENT WORKSPACE */}

@@ -52,7 +52,7 @@ function LoginForm() {
       if (signInError) {
         setError(
           signInError.message ||
-            "Login failed. Please verify your credentials.",
+          "Login failed. Please verify your credentials.",
         );
       } else {
         router.refresh();
@@ -85,7 +85,7 @@ function LoginForm() {
       {/* Form content */}
       <form onSubmit={handleLogin} className="flex flex-col gap-5">
         {error && (
-          <div className="p-3 bg-primary/10 border border-primary/30 text-primary rounded-lg flex items-center gap-2">
+          <div className="p-3 bg-primary/10 border border-primary/30 text-primary rounded-xs flex items-center gap-2">
             <AlertCircle size={14} strokeWidth={2} />
             <span>{error}</span>
           </div>

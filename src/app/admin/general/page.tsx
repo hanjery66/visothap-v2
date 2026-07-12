@@ -237,7 +237,7 @@ export default function GeneralPage() {
         <Card className="rounded-xl flex flex-col gap-4">
           <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
           <CardHeader className="px-6 pt-5 pb-0 flex flex-row items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2 rounded-xs bg-primary/10 text-primary">
               <ImageIcon className="h-4 w-4" />
             </div>
             <div>
@@ -268,7 +268,7 @@ export default function GeneralPage() {
 
                 <div className="flex gap-4 items-center">
                   {/* Live circular/rounded-square preview box */}
-                  <div className="h-14 w-14 rounded-lg border border-primary/30 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
+                  <div className="h-14 w-14 rounded-xs border border-primary/30 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
                     {logo ? (
                       <Image
                         src={logo}
@@ -343,7 +343,7 @@ export default function GeneralPage() {
 
                 <div className="flex gap-4 items-center">
                   {/* Live rectangular preview box */}
-                  <div className="h-14 w-28 rounded-lg border border-primary/30 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
+                  <div className="h-14 w-28 rounded-xs border border-primary/30 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
                     {fullLogo ? (
                       <Image
                         src={fullLogo}
@@ -409,7 +409,7 @@ export default function GeneralPage() {
         <Card className="rounded-xl flex flex-col gap-4">
           <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
           <CardHeader className="px-6 pt-5 pb-0 flex flex-row items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2 rounded-xs bg-primary/10 text-primary">
               <FileText className="h-4 w-4" />
             </div>
             <div>
@@ -436,7 +436,7 @@ export default function GeneralPage() {
                   value={leftFooterContent}
                   onChange={(e) => setLeftFooterContent(e.target.value)}
                   rows={3}
-                  className="flex w-full rounded-lg border border-primary/30 px-3 py-2 shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
+                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2 shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
                   placeholder="E.g. <p>© 2026 VISOTHAP. All rights reserved.</p>"
                   required
                 />
@@ -454,7 +454,7 @@ export default function GeneralPage() {
                   value={rightFooterContent}
                   onChange={(e) => setRightFooterContent(e.target.value)}
                   rows={3}
-                  className="flex w-full rounded-lg border border-primary/30 px-3 py-2  shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
+                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2  shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
                   placeholder="E.g. <p>Contact: info@visothap.net</p>"
                   required
                 />

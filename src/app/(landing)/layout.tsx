@@ -22,9 +22,9 @@ function LandingHeaderAndNav({
   const tableParam = searchParams.get("table") || "Thông Tin Kết Quả";
 
   const navigations = [
-    { label: "Home", value: "Thông Tin Kết Quả" },
-    { label: "Sổ Kết Quả Miền Trung", value: "Sổ Kết Quả Miền Trung" },
+    { label: "Xổ Số Trực Tiếp", value: "Thông Tin Kết Quả" },
     { label: "Sổ Kết Quả Miền Đông", value: "Sổ Kết Quả Miền Đông" },
+    { label: "Sổ Kết Quả Miền Trung", value: "Sổ Kết Quả Miền Trung" },
     { label: "Sổ Kết Quả Miền Nam", value: "Sổ Kết Quả Miền Nam" },
     { label: "Sổ Kết Quả Miền Bắc", value: "Sổ Kết Quả Miền Bắc" },
   ];
@@ -75,7 +75,7 @@ function LandingHeaderAndNav({
         </div>
       </header>
 
-      <nav className="border border-primary backdrop-blur-2xl sticky top-0 z-50 rounded-lg overflow-hidden">
+      <nav className="border border-primary backdrop-blur-2xl sticky top-0 z-50 rounded-xs  overflow-hidden">
         <div className="w-[1170px] mx-auto">
           <ul className="flex flex-row w-full justify-between items-stretch">
             {navigations.map((nav, index) => {
@@ -86,7 +86,6 @@ function LandingHeaderAndNav({
                   onClick={() => handleNavClick(nav.value)}
                   className={`text-primary-foreground flex-1 text-center py-2 cursor-pointer text-base font-semibold transition-all duration-200  flex items-center justify-center gap-2  last:border-0 ${isSelected ? "bg-primary" : "!text-primary hover:bg-primary/10"}`}
                 >
-                  {index === 0 && <Home size={18} strokeWidth={2.5} />}
                   {nav.label}
                 </li>
               );
@@ -199,7 +198,7 @@ export default function LandingLayout({
           <main className="flex-1 w-[1170px] mx-auto py-6">
             <Suspense
               fallback={
-                <div className="bg-white rounded-lg shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
+                <div className="bg-white rounded-xs  shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#15bece]"></div>
                   Loading data...
                 </div>

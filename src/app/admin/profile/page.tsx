@@ -148,7 +148,7 @@ export default function ProfilePage() {
           <Card className="rounded-xl flex flex-col gap-4">
             <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
             <CardHeader className="px-6 pt-5 pb-0 flex flex-row items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <div className="p-2 rounded-xs bg-primary/10 text-primary">
                 <User className="h-4 w-4" />
               </div>
               <div>
@@ -231,7 +231,7 @@ export default function ProfilePage() {
           <Card className="rounded-xl flex flex-col gap-4">
             <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse bg-destructive/40" />
             <CardHeader className="px-6 pt-5 pb-0 flex flex-row items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
+              <div className="p-2 rounded-xs bg-destructive/10 text-destructive">
                 <KeyRound className="h-4 w-4" />
               </div>
               <div>
