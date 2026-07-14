@@ -26,8 +26,10 @@ import {
   Check,
   X,
   Pen,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
+import LotterySettingDialog from "./_component/lottery-setting-dialog";
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
@@ -449,8 +451,6 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                       <textarea
                         value={text}
-
-
                         onChange={(e) => {
                           // Normal typing
                           setColumnTexts((prev) => ({
@@ -497,7 +497,6 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                           setDirty(true);
                         }}
-
                         className="w-full font-mono text-sm leading-7 py-2 px-3 border border-border rounded-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
                         style={{
                           height: `${expectedCount * 28 + 16}px`, // 28px per line + 16px padding
@@ -563,12 +562,29 @@ export default function AdminPage() {
   const [activePeriod, setActivePeriod] = useState<
     "first" | "second" | "third" | "fourth"
   >("first");
-  const [notification, setNotification] = useState<{
-    msg: string;
-    type: "success" | "error";
-  } | null>(null);
 
   const utils = trpc.useUtils();
+
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [sessionNameDraft, setSessionNameDraft] = useState("");
+
+  const { mutate: updateSessionName, isPending: isUpdatingSessionName } =
+    trpc.updateLotterySessionName.useMutation({
+      onSuccess: () => {
+        utils.getLotteryByDate.invalidate();
+        setEditingSessionId(null);
+        toast.success("Session name updated!")
+      },
+      onError: (e) => toast.error(e.message),
+    });
+
+  const handleSessionNameSave = (sessId: string | undefined) => {
+    if (!sessId || !sessionNameDraft.trim()) return;
+    updateSessionName({
+      sessionId: sessId,
+      name: sessionNameDraft.trim(),
+    });
+  };
 
   // ── Fetch lottery data for selected date ──────────────────────────────────
   const {
@@ -585,22 +601,11 @@ export default function AdminPage() {
     trpc.seedLotteryDate.useMutation({
       onSuccess: () => {
         utils.getLotteryByDate.invalidate({ date: selectedDate });
-        showNotification(
-          "Date seeded — structure created successfully!",
-          "success",
-        );
+        toast.success("Date seeded !")
       },
-      onError: (e) => showNotification(e.message, "error"),
+      onError: (e) => toast.error(e.message),
     });
 
-
-  const showNotification = (
-    msg: string,
-    type: "success" | "error" = "success",
-  ) => {
-    setNotification({ msg, type });
-    setTimeout(() => setNotification(null), 3500);
-  };
 
   const hasData = !!lotteryState;
   const isWorking = isSeeding || isFetching;
@@ -614,25 +619,10 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Floating toast ─────────────────────────────────────────────────── */}
-      {notification && (
-        <div
-          className={`
-          fixed top-4 right-4 z-50 px-4 py-2 rounded-xl font-semibold text-sm shadow-lg border flex items-center gap-2
-          transition-all animate-in slide-in-from-right-4 duration-300
-          ${notification.type === "success"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-              : "bg-red-50 border-red-200 text-red-800"
-            }
-        `}
-        >
-          <CheckCircle2 size={16} strokeWidth={2.5} />
-          {notification.msg}
-        </div>
-      )}
 
       {/* ── Toolbar ────────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2">
+
         {/* Date picker */}
         <Popover>
           <PopoverTrigger asChild>
@@ -671,6 +661,10 @@ export default function AdminPage() {
           )}
           {hasData ? "Re-initialize" : "Initialize Date"}
         </Button>
+
+
+        <LotterySettingDialog />
+
       </div>
 
       {/* ── Status hint ─────────────────────────────────────────────────────── */}
@@ -688,7 +682,7 @@ export default function AdminPage() {
       {isLoading && (
         <div className="flex items-center justify-center gap-2 py-10 text-foreground text-sm">
           <Loader2 className="w-5 h-5 animate-spin" />
-          Loading lottery data...
+          Loading ...
         </div>
       )}
 
@@ -718,30 +712,85 @@ export default function AdminPage() {
               value={key}
               className="focus-visible:ring-0 mt-0"
             >
-              {(lotteryState as LotteryState)?.[key] ? (
-                <>
-                  {/* Section header */}
-                  <div className="mb-2 flex items-center justify-center gap-2">
-                    <span className="font-semibold text-foreground uppercase tracking-wide">
-                      {(lotteryState as LotteryState)[key].name}
-                    </span>
-                    <Button size="sm" variant="ghost">
-                      <Pen size={8} className="text-primary" />
-                    </Button>
-                  </div>
-                  <PeriodEditor
-                    periodData={(lotteryState as LotteryState)[key]}
-                    sessionId={
-                      (lotteryState as LotteryState)[key].sessionId ?? ""
-                    }
-                    onSaved={() => { }}
-                  />
-                </>
-              ) : (
-                <div className="text-center text-foreground text-sm py-10">
-                  No data for this period.
-                </div>
-              )}
+              {(() => {
+                const session = (lotteryState as LotteryState)?.[key];
+                if (!session) {
+                  return (
+                    <div className="text-center text-foreground text-sm py-10">
+                      No data for this period.
+                    </div>
+                  );
+                }
+                return (
+                  <>
+                    {/* Section header */}
+                    <div className="mb-2 flex items-center justify-center gap-2 h-9">
+                      {editingSessionId === session.sessionId ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={sessionNameDraft}
+                            onChange={(e) => setSessionNameDraft(e.target.value)}
+                            className="px-2 py-1 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-64 text-center font-semibold uppercase text-foreground bg-white"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleSessionNameSave(session.sessionId);
+                              } else if (e.key === "Escape") {
+                                setEditingSessionId(null);
+                              }
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleSessionNameSave(session.sessionId)}
+                            disabled={isUpdatingSessionName || !sessionNameDraft.trim()}
+                            className="h-8 w-8 p-0"
+                          >
+                            {isUpdatingSessionName ? (
+                              <Loader2 size={12} className="animate-spin text-primary" />
+                            ) : (
+                              <Check size={14} className="text-emerald-600" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingSessionId(null)}
+                            disabled={isUpdatingSessionName}
+                            className="h-8 w-8 p-0"
+                          >
+                            <X size={14} className="text-rose-600" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-semibold text-foreground uppercase tracking-wide">
+                            {session.name}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSessionNameDraft(session.name);
+                              setEditingSessionId(session.sessionId || "");
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Pen size={12} className="text-primary" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    <PeriodEditor
+                      periodData={session}
+                      sessionId={session.sessionId ?? ""}
+                      onSaved={() => { }}
+                    />
+                  </>
+                );
+              })()}
             </TabsContent>
           ))}
         </Tabs>

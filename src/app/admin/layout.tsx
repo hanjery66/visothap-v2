@@ -200,8 +200,8 @@ export default function AdminLayout({
         <main className="flex-1 p-6">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* SIDEBAR NAVIGATION PANEL */}
-            <aside className="w-full lg:w-56 p-3 rounded-xl flex flex-col gap-1.5 shrink-0">
-              <span className=" px-2 mb-1 tracking-wider uppercase text-muted-foreground">
+            <aside className="w-full lg:w-56 rounded-xl flex flex-col gap-1.5 shrink-0">
+              <span className="font-bold mb-1 tracking-wider uppercase">
                 Management
               </span>
               {menus.map((menu) => renderSidebarItem(menu.href, menu.title, menu.icon))}

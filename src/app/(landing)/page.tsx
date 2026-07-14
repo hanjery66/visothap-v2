@@ -87,7 +87,7 @@ export default function LandingPage() {
     const weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
     return (
-      <div className=" rounded-xs  shadow-md border border-zinc-100 p-4 transition-all hover:shadow-lg">
+      <div className=" rounded-xs shadow-md border border-zinc-100 p-4 transition-all hover:shadow-lg">
         {/* Month selector */}
         <div className="flex justify-between items-center mb-4">
           <button

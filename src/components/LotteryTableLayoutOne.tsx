@@ -17,50 +17,83 @@ export function LotteryTableLayoutOne({
     return null;
   const locations = periodData.data as LocationData[];
 
+  const getPrizesMeta = () => {
+    const list: { key: string; label: string }[] = [];
+    list.push({ key: "gEight", label: "Gi 8" });
+    list.push({ key: "gSeven", label: "Gi 7" });
+    for (let i = 1; i <= 3; i++)
+      list.push({ key: "gSix", label: `Gi 6 (${i})` });
+    list.push({ key: "gFive", label: "Gi 5" });
+    for (let i = 1; i <= 7; i++)
+      list.push({ key: "gFour", label: `Gi 4 (${i})` });
+    for (let i = 1; i <= 2; i++)
+      list.push({ key: "gThree", label: `Gi 3 (${i})` });
+    list.push({ key: "gTwo", label: "Gi 2" });
+    list.push({ key: "gOne", label: "Gi 1" });
+    list.push({ key: "db", label: "Đ. B" });
+    return list;
+  };
+
+  const getRowLabel = (key: string, defaultLabel: string) => {
+    if (!periodData.prizeLabels || !Array.isArray(periodData.prizeLabels)) {
+      return defaultLabel;
+    }
+    const list = getPrizesMeta();
+    const idx = list.findIndex((item) => item.key === key);
+    if (idx !== -1 && periodData.prizeLabels[idx]) {
+      let label = periodData.prizeLabels[idx];
+      if (["gSix", "gFour", "gThree"].includes(key)) {
+        label = label.replace(/\s*\(\d+\)$/, "");
+      }
+      return label;
+    }
+    return defaultLabel;
+  };
+
   const rows = [
     {
       key: "gEight",
-      label: "Gi 8",
+      label: getRowLabel("gEight", "Gi 8"),
       color: "text-red-600 font-extrabold text-[30px] md:text-[40px]",
     },
     {
       key: "gSeven",
-      label: "Gi 7",
+      label: getRowLabel("gSeven", "Gi 7"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "gSix",
-      label: "Gi 6",
+      label: getRowLabel("gSix", "Gi 6"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "gFive",
-      label: "Gi 5",
+      label: getRowLabel("gFive", "Gi 5"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "gFour",
-      label: "Gi 4",
+      label: getRowLabel("gFour", "Gi 4"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "gThree",
-      label: "Gi 3",
+      label: getRowLabel("gThree", "Gi 3"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "gTwo",
-      label: "Gi 2",
+      label: getRowLabel("gTwo", "Gi 2"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "gOne",
-      label: "Gi 1",
+      label: getRowLabel("gOne", "Gi 1"),
       color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
     },
     {
       key: "db",
-      label: "Đ. B",
+      label: getRowLabel("db", "Đ. B"),
       color: "text-red-600 font-extrabold text-[30px] md:text-[35px]",
     },
   ];

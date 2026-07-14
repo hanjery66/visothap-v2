@@ -18,15 +18,50 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
   if (!periodData || !periodData.data || periodData.data.length === 0) return null;
   const mainData = periodData.data[0] as LocationData;
 
+  const getPrizesMeta = () => {
+    const list: { key: string; label: string }[] = [];
+    list.push({ key: "db", label: "Đ. B" });
+    list.push({ key: "gOne", label: "Gi 1" });
+    list.push({ key: "gTwo", label: "Gi 2 (1)" });
+    list.push({ key: "gTwo", label: "Gi 2 (2)" });
+    for (let i = 1; i <= 6; i++)
+      list.push({ key: "gThree", label: `Gi 3 (${i})` });
+    for (let i = 1; i <= 4; i++)
+      list.push({ key: "gFour", label: `Gi 4 (${i})` });
+    for (let i = 1; i <= 6; i++)
+      list.push({ key: "gFive", label: `Gi 5 (${i})` });
+    for (let i = 1; i <= 3; i++)
+      list.push({ key: "gSix", label: `Gi 6 (${i})` });
+    for (let i = 1; i <= 4; i++)
+      list.push({ key: "gSeven", label: `Gi 7 (${i})` });
+    return list;
+  };
+
+  const getRowLabel = (key: string, defaultLabel: string) => {
+    if (!periodData.prizeLabels || !Array.isArray(periodData.prizeLabels)) {
+      return defaultLabel;
+    }
+    const list = getPrizesMeta();
+    const idx = list.findIndex((item) => item.key === key);
+    if (idx !== -1 && periodData.prizeLabels[idx]) {
+      let label = periodData.prizeLabels[idx];
+      if (["gTwo", "gThree", "gFour", "gFive", "gSix", "gSeven"].includes(key)) {
+        label = label.replace(/\s*\(\d+\)$/, "");
+      }
+      return label;
+    }
+    return defaultLabel;
+  };
+
   const rows = [
-    { key: "db", label: "Đ. B" },
-    { key: "gOne", label: "Gi 1" },
-    { key: "gTwo", label: "Gi 2" },
-    { key: "gThree", label: "Gi 3" },
-    { key: "gFour", label: "Gi 4" },
-    { key: "gFive", label: "Gi 5" },
-    { key: "gSix", label: "Gi 6" },
-    { key: "gSeven", label: "Gi 7" },
+    { key: "db", label: getRowLabel("db", "Đ. B") },
+    { key: "gOne", label: getRowLabel("gOne", "Gi 1") },
+    { key: "gTwo", label: getRowLabel("gTwo", "Gi 2") },
+    { key: "gThree", label: getRowLabel("gThree", "Gi 3") },
+    { key: "gFour", label: getRowLabel("gFour", "Gi 4") },
+    { key: "gFive", label: getRowLabel("gFive", "Gi 5") },
+    { key: "gSix", label: getRowLabel("gSix", "Gi 6") },
+    { key: "gSeven", label: getRowLabel("gSeven", "Gi 7") },
   ];
 
   const renderNorthernPrizeCell = (key: string, prizes: Prize[]) => {

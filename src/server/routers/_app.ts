@@ -446,6 +446,21 @@ export const appRouter = router({
       return { success: true };
     }),
 
+  updateLotterySessionName: authedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        name: z.string().min(1, "Session name is required"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await db
+        .update(lotterySession)
+        .set({ name: input.name, updatedAt: new Date() })
+        .where(eq(lotterySession.id, input.sessionId));
+      return { success: true };
+    }),
+
   /**
    * Authed — upsert a single prize value by its DB id.
    */

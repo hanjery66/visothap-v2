@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { trpc } from "@/app/_trpc/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Home } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import type { GeneralSettings } from "@/types";
 
 function LandingHeaderAndNav({
@@ -14,6 +14,7 @@ function LandingHeaderAndNav({
 }: {
   settings: GeneralSettings | undefined;
 }) {
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -23,8 +24,8 @@ function LandingHeaderAndNav({
 
   const navigations = [
     { label: "Xổ Số Trực Tiếp", value: "Thông Tin Kết Quả" },
-    { label: "Sổ Kết Quả Miền Đông", value: "Sổ Kết Quả Miền Đông" },
     { label: "Sổ Kết Quả Miền Trung", value: "Sổ Kết Quả Miền Trung" },
+    { label: "Sổ Kết Quả Miền Đông", value: "Sổ Kết Quả Miền Đông" },
     { label: "Sổ Kết Quả Miền Nam", value: "Sổ Kết Quả Miền Nam" },
     { label: "Sổ Kết Quả Miền Bắc", value: "Sổ Kết Quả Miền Bắc" },
   ];
@@ -84,7 +85,7 @@ function LandingHeaderAndNav({
                 <li
                   key={nav.value}
                   onClick={() => handleNavClick(nav.value)}
-                  className={`text-primary-foreground flex-1 text-center py-2 cursor-pointer text-base font-semibold transition-all duration-200  flex items-center justify-center gap-2  last:border-0 ${isSelected ? "bg-primary" : "!text-primary hover:bg-primary/10"}`}
+                  className={`text-primary-foreground flex-1 text-center py-2 cursor-pointer text-base font-semibold transition-all duration-200  flex items-center justify-center gap-2  last:border-0 ${isSelected ? "bg-primary" : "text-primary! hover:bg-primary/10"}`}
                 >
                   {nav.label}
                 </li>
@@ -125,8 +126,9 @@ export default function LandingLayout({
     // Dynamic scale calculator
     const handleResize = () => {
       const width = window.innerWidth;
-      if (width < 1170) {
-        setScale(width / 1170);
+      const horizontalPadding = 32; // 16px padding on left/right
+      if (width < 1170 + horizontalPadding) {
+        setScale((width - horizontalPadding) / 1170);
       } else {
         setScale(1);
       }
