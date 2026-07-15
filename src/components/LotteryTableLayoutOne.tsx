@@ -166,11 +166,6 @@ export function LotteryTableLayoutOne({
         </span>
       </div>
 
-      {/*
-        Column-first layout.
-        Each location is its own vertical flex container with `user-select: contain`.
-        This means dragging vertically inside a column stays within that column only.
-      */}
       <div className="overflow-x-auto">
         <div className="flex w-full min-w-[500px]">
           {/* ── Label column (not selectable) ── */}

@@ -27,13 +27,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased w-full overflow-x-clip`}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       suppressHydrationWarning={true}
     >
-      <head>
-        <meta name="viewport" content="width=1170" />
-      </head>
-      <body className="min-h-full flex flex-col w-full overflow-x-clip">
+      <body className="min-h-full flex flex-col w-full">
         <TRPCProvider>
           {children}
         </TRPCProvider>

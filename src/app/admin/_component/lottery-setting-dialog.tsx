@@ -6,9 +6,7 @@ import { Settings } from "lucide-react";
 import { useState } from "react";
 
 export default function LotterySettingDialog() {
-
     const [open, setOpen] = useState(false)
-
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -21,10 +19,6 @@ export default function LotterySettingDialog() {
                     <DialogTitle>Setting</DialogTitle>
                     <DialogDescription>Setting for how lottery show on page</DialogDescription>
                 </DialogHeader>
-
-
-
-
             </DialogContent>
         </Dialog>
     );

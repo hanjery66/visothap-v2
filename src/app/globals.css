@@ -139,3 +139,9 @@ body {
   height: 100%;
 }
 
+
+@layer base {
+  .container {
+    @apply mx-auto px-4 min-w-5xl max-w-7xl!;
+  }
+}

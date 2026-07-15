@@ -283,7 +283,6 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
   return (
     <div className="flex gap-4">
-
       <div className="overflow-x-auto rounded-xs flex-col  w-full flex justify-center items-center ">
         <table className="w-full max-w-4xl border border-zinc-200  min-w-150 border-collapse text-sm">
           <thead>
@@ -661,7 +660,6 @@ export default function AdminPage() {
           )}
           {hasData ? "Re-initialize" : "Initialize Date"}
         </Button>
-
 
         <LotterySettingDialog />
 

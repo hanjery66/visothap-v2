@@ -161,7 +161,7 @@ export default function AdminLayout({
       <Toaster theme="dark" closeButton position="top-right" richColors />
 
       {/* ── TOP HEADER BAR ── */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 border-b border-primary/20 bg-background/80 backdrop-blur-md shadow-sm shrink-0">
+      <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 mt-4 border border-primary/30 rounded">
         {/* Left: Logo + brand name */}
         <Link href="/" className="flex items-center gap-3">
           {settings?.fullLogo ? (
@@ -197,7 +197,7 @@ export default function AdminLayout({
 
       {/* ── BODY (sidebar + content) ── */}
       <div className="flex-1 flex overflow-y-auto">
-        <main className="flex-1 p-6">
+        <main className="flex-1 mt-4">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* SIDEBAR NAVIGATION PANEL */}
             <aside className="w-full lg:w-56 rounded-xl flex flex-col gap-1.5 shrink-0">

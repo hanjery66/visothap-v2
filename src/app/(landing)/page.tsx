@@ -148,7 +148,6 @@ export default function LandingPage() {
     <div className="grid grid-cols-12 gap-4 items-start w-full">
       {/* LEFT AD COLUMN (Span 2) */}
 
-
       <div className="flex col-span-3 flex-col gap-4">
         {adsByPosition.Left && adsByPosition.Left.length > 0 ? (
           adsByPosition.Left.map((ad: Ads) => (
@@ -160,8 +159,6 @@ export default function LandingPage() {
           </div>
         )}
       </div>
-
-
 
       {/* CENTER CONTENT COLUMN (Span 7) */}
       <div className="col-span-6 flex flex-col gap-2">
