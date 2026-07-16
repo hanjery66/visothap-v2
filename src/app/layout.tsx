@@ -1,22 +1,22 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Kantumruy_Pro } from "next/font/google";
 import "./globals.css";
 import TRPCProvider from "./_trpc/Provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const kantum = Kantumruy_Pro({
+  variable: "--font-kantum",
+  subsets: ["khmer"],
+  // weight: ["400", "500", "600", "700"],
 });
 
 
 export const metadata: Metadata = {
   title: "Visothap",
   description: "Visothap - The place where you can find the best products",
+};
+
+export const viewport: Viewport = {
+  width: 1170,
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${kantum.className} antialiased`}
       suppressHydrationWarning={true}
     >
       <body className="min-h-full flex flex-col w-full">

@@ -1,9 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,300..700;1,300..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 @import "tailwindcss";
 
 :root {
   /* Fonts & Brand Fallback */
-  --font-kantumruy: 'Kantumruy Pro', sans-serif;
   --font-roboto: 'Roboto', sans-serif;
   --base2: #15bece;
 
@@ -77,9 +75,6 @@
 }
 
 @theme {
-  --font-sans: var(--font-kantumruy);
-  --font-mono: var(--font-roboto);
-
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -110,7 +105,6 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-kantumruy);
   min-height: 100vh;
 }
 
@@ -142,6 +136,6 @@ body {
 
 @layer base {
   .container {
-    @apply mx-auto px-4 min-w-5xl max-w-7xl!;
+    @apply mx-auto px-4 min-w-5xl max-w-6xl!;
   }
 }

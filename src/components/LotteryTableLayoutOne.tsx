@@ -54,47 +54,47 @@ export function LotteryTableLayoutOne({
     {
       key: "gEight",
       label: getRowLabel("gEight", "Gi 8"),
-      color: "text-red-600 font-extrabold text-[30px] md:text-[40px]",
+      color: "text-red-600 font-extrabold text-[35px] md:text-[40px]",
     },
     {
       key: "gSeven",
       label: getRowLabel("gSeven", "Gi 7"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "gSix",
       label: getRowLabel("gSix", "Gi 6"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "gFive",
       label: getRowLabel("gFive", "Gi 5"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "gFour",
       label: getRowLabel("gFour", "Gi 4"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "gThree",
       label: getRowLabel("gThree", "Gi 3"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "gTwo",
       label: getRowLabel("gTwo", "Gi 2"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "gOne",
       label: getRowLabel("gOne", "Gi 1"),
-      color: "text-zinc-800 text-[20px] md:text-[24px] font-[900]",
+      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
     },
     {
       key: "db",
       label: getRowLabel("db", "Đ. B"),
-      color: "text-red-600 font-extrabold text-[30px] md:text-[35px]",
+      color: "text-red-600 font-extrabold text-[35px] md:text-[40px]",
     },
   ];
 
@@ -177,7 +177,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[0] = el;
               }}
-              className="flex items-center justify-center  font-bold  md:text-xl border-b border-zinc-200 bg-white text-center"
+              className="flex items-center justify-center  font-bold  md:text-lg border-b border-zinc-200 bg-white text-center"
             >
               {dayjs(dateParam).format("dddd")}
             </div>
@@ -185,7 +185,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[1] = el;
               }}
-              className="flex items-center justify-center  font-extrabold  md:text-xl border-b border-zinc-200 bg-white text-center"
+              className="flex items-center justify-center  font-extrabold  md:text-lg border-b border-zinc-200 bg-white text-center"
             >
               {dayjs(dateParam).format("DD/MM/YYYY")}
             </div>
@@ -195,7 +195,7 @@ export function LotteryTableLayoutOne({
                 ref={(el) => {
                   lblRowRefs.current[i] = el;
                 }}
-                className="flex items-center justify-center font-bold text-muted-foreground md:text-xl border-b border-zinc-200 last:border-b-0"
+                className="flex items-center justify-center font-bold text-muted-foreground md:text-lg border-b border-zinc-200 last:border-b-0"
               >
                 {row.label}
               </div>
@@ -214,7 +214,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][0] = el;
                 }}
-                className="flex items-center justify-center  text-black font-bold  md:text-xl border-b border-zinc-200 bg-white text-center"
+                className="flex items-center justify-center  text-black font-bold  md:text-lg border-b border-zinc-200 bg-white text-center"
               >
                 {loc.location}
               </div>
@@ -224,7 +224,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][1] = el;
                 }}
-                className="flex items-center justify-center text-black font-extrabold  md:text-xl border-b border-zinc-200 bg-white text-center uppercase"
+                className="flex items-center justify-center text-black font-extrabold  md:text-lg border-b border-zinc-200 bg-white text-center uppercase"
               >
                 {loc.code}
               </div>

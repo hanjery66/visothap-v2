@@ -44,18 +44,18 @@ export default function AdminLayout({
   }, [sessionState.data, sessionState.error]);
 
   // Dynamically update site favicon based on custom database settings
-  useEffect(() => {
-    if (settings?.logo) {
-      let link: HTMLLinkElement | null =
-        document.querySelector("link[rel*='icon']");
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "icon";
-        document.head.appendChild(link);
-      }
-      link.href = settings.logo;
-    }
-  }, [settings?.logo]);
+  // useEffect(() => {
+  //   if (settings?.logo) {
+  //     let link: HTMLLinkElement | null =
+  //       document.querySelector("link[rel*='icon']");
+  //     if (!link) {
+  //       link = document.createElement("link");
+  //       link.rel = "icon";
+  //       document.head.appendChild(link);
+  //     }
+  //     link.href = settings.logo;
+  //   }
+  // }, [settings?.logo]);
 
   const handleSignOut = async () => {
     setLoggingOut(true);
@@ -136,7 +136,7 @@ export default function AdminLayout({
 
   if (pathname === "/admin/login") {
     return (
-      <div className="min-h-screen w-full  font-sans flex items-center justify-center">
+      <div className="min-h-screen w-full  flex items-center justify-center">
         {children}
       </div>
     );
@@ -157,11 +157,11 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col container">
       <Toaster theme="dark" closeButton position="top-right" richColors />
 
       {/* ── TOP HEADER BAR ── */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 mt-4 border border-primary/30 rounded">
+      <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 mt-4 border border-primary/30 rounded-sm">
         {/* Left: Logo + brand name */}
         <Link href="/" className="flex items-center gap-3">
           {settings?.fullLogo ? (
@@ -200,7 +200,7 @@ export default function AdminLayout({
         <main className="flex-1 mt-4">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* SIDEBAR NAVIGATION PANEL */}
-            <aside className="w-full lg:w-56 rounded-xl flex flex-col gap-1.5 shrink-0">
+            <aside className="w-full lg:w-56 rounded-sm flex flex-col gap-1.5 shrink-0">
               <span className="font-bold mb-1 tracking-wider uppercase">
                 Management
               </span>
@@ -208,7 +208,7 @@ export default function AdminLayout({
             </aside>
 
             {/* MAIN DYNAMIC CONTENT WORKSPACE */}
-            <Card className="flex-1 w-full rounded-xl shadow-lg min-h-[500px]">
+            <Card className="flex-1 w-full rounded-sm shadow-lg min-h-[500px]">
               <CardHeader>
                 <CardTitle>
                   {menus.find((m) => m.href === pathname)?.title}

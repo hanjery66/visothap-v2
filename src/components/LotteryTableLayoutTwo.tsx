@@ -61,8 +61,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
     { key: "gFour", label: getRowLabel("gFour", "Gi 4") },
     { key: "gFive", label: getRowLabel("gFive", "Gi 5") },
     { key: "gSix", label: getRowLabel("gSix", "Gi 6") },
-    { key: "gSeven", label: getRowLabel("gSeven", "Gi 7") },
-  ];
+    { key: "gSeven", label: getRowLabel("gSeven", "Gi 7") }];
 
   const renderNorthernPrizeCell = (key: string, prizes: Prize[]) => {
     if (!prizes || prizes.length === 0) return <div className="text-zinc-300 font-normal">--</div>;
@@ -70,19 +69,19 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
     switch (key) {
       case "db":
         return (
-          <div className=" hover:bg-primary transition-all hover:text-primary-foreground rounded-xs cursor-pointer  text-red-650 font-extrabold text-[30px] md:text-[40px] tracking-wider text-center w-full">
-            {prizes[0]?.value || <span className="text-zinc-300 font-normal ">X</span>}
+          <div className=" hover:bg-primary transition-all hover:text-primary-foreground rounded-xs cursor-pointer  text-red-655 text-[35px] md:text-[40px] tracking-wider text-center w-full">
+            {prizes[0]?.value || <span className="">X</span>}
           </div>
         );
       case "gOne":
         return (
-          <div className=" hover:bg-primary transition-all hover:text-primary-foreground rounded-xs cursor-pointer text-zinc-800 font-bold text-[20px] md:text-[24px] tracking-wider text-center w-full">
+          <div className=" hover:bg-primary transition-all hover:text-primary-foreground rounded-xs cursor-pointer text-zinc-800 font-bold text-[20px] md:text-[25px] tracking-wider text-center w-full">
             {prizes[0]?.value || <span className="text-zinc-300 font-normal">X</span>}
           </div>
         );
       case "gTwo":
         return (
-          <div className="flex justify-around items-center w-full  text-zinc-800 font-bold text-[20px] md:text-[24px] tracking-wider px-1">
+          <div className="flex justify-around items-center w-full  text-zinc-800 font-bold text-[20px] md:text-[25px] tracking-wider px-1">
             {prizes.map((pz, idx) => (
               <span key={idx} className="hover:bg-primary transition-all hover:text-primary-foreground w-full rounded-xs cursor-pointer">
                 {pz.value || <span className="text-zinc-300 font-normal">X</span>}
@@ -93,7 +92,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
       case "gThree":
       case "gFive":
         return (
-          <div className="grid grid-cols-3 gap-y-2 gap-x-4 justify-center items-center w-full text-center  text-zinc-800 font-bold text-[20px] md:text-[24px] tracking-wider px-4">
+          <div className="grid grid-cols-3 gap-y-2 gap-x-4 justify-center items-center w-full text-center  text-zinc-800 font-bold text-[20px] md:text-[25px] tracking-wider px-4">
             {prizes.map((pz, idx) => (
               <span key={idx} className="hover:bg-primary transition-all hover:text-primary-foreground w-full rounded-xs cursor-pointer">{pz.value || <span className="text-muted-foreground font-normal">X</span>}</span>
             ))}
@@ -101,7 +100,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
         );
       case "gFour":
         return (
-          <div className="grid grid-cols-2 gap-y-2 gap-x-4 justify-center items-center w-full text-center  text-zinc-800 font-bold text-[20px] md:text-[24px] tracking-wider px-12">
+          <div className="grid grid-cols-2 gap-y-2 gap-x-4 justify-center items-center w-full text-center  text-zinc-800 font-bold text-[20px] md:text-[25px] tracking-wider px-12">
             {prizes.map((pz, idx) => (
               <span key={idx} className="hover:bg-primary p-0! transition-all hover:text-primary-foreground w-full rounded-xs cursor-pointer">{pz.value || <span className="text-muted-foreground font-normal">X</span>}</span>
             ))}
@@ -109,7 +108,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
         );
       case "gSix":
         return (
-          <div className="grid grid-cols-3 gap-x-4 justify-center items-center w-full text-center  text-zinc-800 font-bold text-[20px] md:text-[24px] tracking-wider px-4">
+          <div className="grid grid-cols-3 gap-x-4 justify-center items-center w-full text-center  text-zinc-800 font-bold text-[20px] md:text-[25px] tracking-wider px-4">
             {prizes.map((pz, idx) => (
               <span key={idx} className="hover:bg-primary transition-all hover:text-primary-foreground w-full rounded-xs cursor-pointer">{pz.value || <span className="text-muted-foreground font-normal">X</span>}</span>
             ))}
@@ -117,7 +116,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
         );
       case "gSeven":
         return (
-          <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center  text-red-650 font-extrabold tracking-wider text-[30px] md:text-[35px]">
+          <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center  text-red-655 font-extrabold tracking-wider text-[30px] md:text-[35px]">
             {prizes.map((pz, idx) => (
               <span key={idx} className="hover:bg-primary transition-all hover:text-primary-foreground w-full rounded-xs cursor-pointer">{pz.value || <span className="text-muted-foreground font-normal">X</span>}</span>
             ))}

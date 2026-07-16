@@ -107,8 +107,7 @@ export default function LandingLayout({
 
   return (
     <section >
-      <div className="mx-auto px-4 max-w-7xl min-w-5xl  ">
-
+      <div className="container">
         <Suspense
           fallback={
             <div className="border-b py-4 shadow-sm">
@@ -140,8 +139,8 @@ export default function LandingLayout({
 
 
       {/* full-bleed breaks out of the body's container max-width → true full viewport width */}
-      {/* <div className="border">
-        <div className="">
+      <div className=" bg-primary text-primary-foreground mx-auto ">
+        <div className=" flex items-center justify-between p-8">
           <div
             className="text-xs md:text-base"
             dangerouslySetInnerHTML={{
@@ -159,7 +158,7 @@ export default function LandingLayout({
             }}
           />
         </div>
-      </div> */}
+      </div>
     </section>
   );
 }
