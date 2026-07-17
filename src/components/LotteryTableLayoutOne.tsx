@@ -114,19 +114,18 @@ export function LotteryTableLayoutOne({
   useLayoutEffect(() => {
     // ── header rows ──────────────────────────────────────────────
     for (let i = 0; i < 2; i++) {
-      // Find max height across all data columns for this header row
       let maxH = 0;
       allHeadRefs.current.forEach((colRefs) => {
         const el = colRefs?.[i];
         if (el) maxH = Math.max(maxH, el.getBoundingClientRect().height);
       });
+
+      const lbl = lblHeadRefs.current[i];
+      if (lbl) maxH = Math.max(maxH, lbl.getBoundingClientRect().height);
+
       if (maxH === 0) continue;
 
-      // Apply to label column
-      const lbl = lblHeadRefs.current[i];
       if (lbl) lbl.style.minHeight = `${maxH}px`;
-
-      // Apply to every data column so all headers are the same height
       allHeadRefs.current.forEach((colRefs) => {
         const el = colRefs?.[i];
         if (el) el.style.minHeight = `${maxH}px`;
@@ -136,13 +135,18 @@ export function LotteryTableLayoutOne({
     // ── prize rows ───────────────────────────────────────────────
     for (let i = 0; i < rows.length; i++) {
       let maxH = 0;
+
       allRowRefs.current.forEach((colRefs) => {
         const el = colRefs?.[i];
         if (el) maxH = Math.max(maxH, el.getBoundingClientRect().height);
       });
+
+      // also account for the label column's own natural height
+      const lbl = lblRowRefs.current[i];
+      if (lbl) maxH = Math.max(maxH, lbl.getBoundingClientRect().height);
+
       if (maxH === 0) continue;
 
-      const lbl = lblRowRefs.current[i];
       if (lbl) lbl.style.minHeight = `${maxH}px`;
 
       allRowRefs.current.forEach((colRefs) => {
@@ -150,6 +154,8 @@ export function LotteryTableLayoutOne({
         if (el) el.style.minHeight = `${maxH}px`;
       });
     }
+
+
   });
 
   const formattedName = periodData.name
@@ -167,7 +173,7 @@ export function LotteryTableLayoutOne({
       </div>
 
       <div className="overflow-x-auto">
-        <div className="flex w-full min-w-[500px]">
+        <div className="flex w-full min-w-[500px] py-2">
           {/* ── Label column (not selectable) ── */}
           <div
             className="flex flex-col shrink-0 w-1/5 border-r border-zinc-200"
@@ -228,7 +234,7 @@ export function LotteryTableLayoutOne({
               >
                 {loc.code}
               </div>
-              {/* Prize rows */}
+
               {rows.map((row, rowIdx) => {
                 const prizes = loc[row.key] as Prize[];
                 return (
@@ -238,13 +244,13 @@ export function LotteryTableLayoutOne({
                       if (!allRowRefs.current[colIdx]) allRowRefs.current[colIdx] = [];
                       allRowRefs.current[colIdx][rowIdx] = el;
                     }}
-                    className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-tight ${row.color}`}
+                    className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-none space-y-0 ${row.color}`}
                   >
                     {prizes && prizes.length > 0 ? (
                       prizes.map((pz, idx) => (
                         <p
                           key={idx}
-                          className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer"
+                          className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 p-0 leading-none"
                         >
                           {pz.value || <span className="font-normal">XX</span>}
                         </p>
@@ -255,6 +261,8 @@ export function LotteryTableLayoutOne({
                   </div>
                 );
               })}
+
+
             </div>
           ))}
         </div>
