@@ -173,25 +173,25 @@ export default function LandingPage() {
 
         {lottery ? (
           <>
-            {shouldRenderPeriod(lottery.first.name) && (
+            {lottery.first && shouldRenderPeriod(lottery.first.name) && (
               <LotteryTableLayoutOne
                 periodData={lottery.first}
                 dateParam={dateParam}
               />
             )}
-            {shouldRenderPeriod(lottery.second.name) && (
+            {lottery.second && shouldRenderPeriod(lottery.second.name) && (
               <LotteryTableLayoutOne
                 periodData={lottery.second}
                 dateParam={dateParam}
               />
             )}
-            {shouldRenderPeriod(lottery.third.name) && (
+            {lottery.third && shouldRenderPeriod(lottery.third.name) && (
               <LotteryTableLayoutOne
                 periodData={lottery.third}
                 dateParam={dateParam}
               />
             )}
-            {shouldRenderPeriod(lottery.fourth.name) && (
+            {lottery.fourth && shouldRenderPeriod(lottery.fourth.name) && (
               <LotteryTableLayoutTwo
                 periodData={lottery.fourth}
                 dateParam={dateParam}
@@ -199,10 +199,10 @@ export default function LandingPage() {
             )}
 
             {/* In case no periods matched search filter */}
-            {!shouldRenderPeriod(lottery.first.name) &&
-              !shouldRenderPeriod(lottery.second.name) &&
-              !shouldRenderPeriod(lottery.third.name) &&
-              !shouldRenderPeriod(lottery.fourth.name) && (
+            {!(lottery.first && shouldRenderPeriod(lottery.first.name)) &&
+              !(lottery.second && shouldRenderPeriod(lottery.second.name)) &&
+              !(lottery.third && shouldRenderPeriod(lottery.third.name)) &&
+              !(lottery.fourth && shouldRenderPeriod(lottery.fourth.name)) && (
                 <div className=" rounded-xs shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
                   No matching results table found.
                 </div>

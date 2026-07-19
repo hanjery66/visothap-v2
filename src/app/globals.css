@@ -2,7 +2,7 @@
 
 :root {
   /* Fonts & Brand Fallback */
-  --font-roboto: 'Roboto', sans-serif;
+  --font-san: "Open Sans", sans-serif;
   --base2: #15bece;
 
   /* User OKLCH Colors */

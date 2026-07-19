@@ -3,6 +3,11 @@
 import { useRef, useLayoutEffect } from "react";
 import dayjs from "dayjs";
 import { LocationData, Prize } from "@/lib/mockData";
+import { useDrawStatuses } from "@/hooks/useDrawStatus";
+import useSplashNumber from "@/hooks/use-splash-number";
+import { formatDisplayDateTime } from "@/lib/utils";
+import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
+import { trpc } from "@/app/_trpc/client";
 
 interface LotteryTableLayoutOneProps {
   periodData: any;
@@ -13,6 +18,18 @@ export function LotteryTableLayoutOne({
   periodData,
   dateParam,
 }: LotteryTableLayoutOneProps) {
+  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
+  const displayConfig = displaySettings ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS;
+  const locationCount = periodData?.data?.length ?? 0;
+
+  const { columnStatuses, isPending, isSpinning } = useDrawStatuses(
+    dateParam,
+    periodData?.displayNumber,
+    locationCount,
+    displayConfig,
+  );
+  const splashNumber = useSplashNumber({ length: 5, intervalMs: 100 });
+
   if (!periodData || !periodData.data || periodData.data.length === 0)
     return null;
   const locations = periodData.data as LocationData[];
@@ -162,15 +179,36 @@ export function LotteryTableLayoutOne({
     .toUpperCase()
     .replace("SỔ KẾT QUẢ", "KẾT QUẢ XỔ SỐ");
 
+  const drawDateTimeLabel = formatDisplayDateTime(
+    dateParam,
+    periodData.displayNumber,
+    "hh:mm A"
+  );
+
   return (
     <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg ">
       {/* Banner */}
       <div className="bg-primary text-primary-foreground  font-bold   text-center flex flex-col sm:flex-row justify-center items-center gap-1  uppercase py-1">
         <span>
-          {periodData.displayNumber} - {dayjs(dateParam).format("DD/MM/YYYY")}{" "}
+          {drawDateTimeLabel}{" "}
           {formattedName}
         </span>
       </div>
+
+      {/* Pending notice */}
+      {isPending && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-700 text-xs text-center font-medium">
+          Chưa đến giờ quay · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
+        </div>
+      )}
+
+      {/* Spinning notice */}
+      {isSpinning && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-red-600 text-xs text-center font-semibold flex items-center justify-center gap-2 animate-pulse">
+          <span className="inline-block w-3 h-3 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+          Đang quay số · Kết quả sắp có · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <div className="flex w-full min-w-[500px] py-2">
@@ -193,7 +231,7 @@ export function LotteryTableLayoutOne({
               }}
               className="flex items-center justify-center  font-extrabold  md:text-lg border-b border-zinc-200 bg-white text-center"
             >
-              {dayjs(dateParam).format("DD/MM/YYYY")}
+              {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
             </div>
             {rows.map((row, i) => (
               <div
@@ -237,6 +275,7 @@ export function LotteryTableLayoutOne({
 
               {rows.map((row, rowIdx) => {
                 const prizes = loc[row.key] as Prize[];
+                const colStatus = columnStatuses[colIdx] ?? "done";
                 return (
                   <div
                     key={row.key}
@@ -246,13 +285,26 @@ export function LotteryTableLayoutOne({
                     }}
                     className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-none space-y-0 ${row.color}`}
                   >
-                    {prizes && prizes.length > 0 ? (
+                    {colStatus === "spinning" ? (
+                      prizes && prizes.length > 0
+                        ? prizes.map((_, idx) => (
+                              <p
+                                key={idx}
+                                className="w-full m-0 p-0 leading-none font-mono  select-none animate-pulse"
+                              >
+                                <span className="inline-block">{splashNumber}</span>
+                              </p>
+                            ))
+                        : <span className="font-normal text-primary animate-pulse">...</span>
+                    ) : prizes && prizes.length > 0 ? (
                       prizes.map((pz, idx) => (
                         <p
                           key={idx}
                           className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 p-0 leading-none"
                         >
-                          {pz.value || <span className="font-normal">XX</span>}
+                          {colStatus === "done" && pz.value
+                            ? pz.value
+                            : <span className="font-normal">X</span>}
                         </p>
                       ))
                     ) : (

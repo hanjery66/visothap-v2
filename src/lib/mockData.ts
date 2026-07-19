@@ -43,10 +43,10 @@ export interface LotteryPeriod {
 export interface LotteryState {
   _id: string;
   date: string;
-  first: LotteryPeriod;
-  second: LotteryPeriod;
-  third: LotteryPeriod;
-  fourth: LotteryPeriod;
+  first: LotteryPeriod | null;
+  second: LotteryPeriod | null;
+  third: LotteryPeriod | null;
+  fourth: LotteryPeriod | null;
 }
 
 export interface Advertisement {

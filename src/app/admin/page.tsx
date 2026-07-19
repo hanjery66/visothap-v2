@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { trpc } from "@/app/_trpc/client";
+import { formatDisplayDateTime } from "@/lib/utils";
 import {
   Prize,
   LocationData,
@@ -609,12 +610,7 @@ export default function AdminPage() {
   const hasData = !!lotteryState;
   const isWorking = isSeeding || isFetching;
 
-  const PERIOD_TABS = [
-    { key: "first", label: "Miền Trung", time: "10:50 AM" },
-    { key: "second", label: "Miền Đông", time: "1:50 PM" },
-    { key: "third", label: "Miền Nam", time: "4:50 PM" },
-    { key: "fourth", label: "Miền Bắc", time: "6:45 PM" },
-  ] as const;
+  const PERIOD_KEYS = ["first", "second", "third", "fourth"] as const;
 
   return (
     <div className="flex flex-col gap-4">
@@ -630,7 +626,7 @@ export default function AdminPage() {
               size="sm"
               className="font-semibold min-w-[130px]"
             >
-              {selectedDate}
+              {formatDisplayDateTime(selectedDate, undefined, "DD/MM/YYYY")}
               <ChevronDownIcon className="ml-1 w-4 h-4" />
             </Button>
           </PopoverTrigger>
@@ -669,7 +665,7 @@ export default function AdminPage() {
       {!hasData && !isLoading && (
         <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center text-zinc-500">
           <DatabaseZap className="mx-auto mb-2 w-8 h-8 text-zinc-300" />
-          <p className="font-semibold text-sm">No data for {selectedDate}</p>
+          <p className="font-semibold text-sm">No data for {formatDisplayDateTime(selectedDate)}</p>
           <p className="text-xs mt-1">
             Click <strong>Initialize Date</strong> to create the blank
             structure.
@@ -693,18 +689,24 @@ export default function AdminPage() {
           }
         >
           <TabsList className="flex justify-start w-fit bg-transparent p-0 mb-2 h-auto gap-1">
-            {PERIOD_TABS.map(({ key, label, time }) => (
-              <TabsTrigger
-                key={key}
-                value={key}
-                className="text-xs md:text-sm transition-all whitespace-nowrap rounded-lg"
-              >
-                {time}
-              </TabsTrigger>
-            ))}
+            {PERIOD_KEYS.map((key) => {
+              const session = (lotteryState as LotteryState)?.[key];
+              const displayTime = session
+                ? formatDisplayDateTime(selectedDate, session.displayNumber, "hh:mm A")
+                : "";
+              return (
+                <TabsTrigger
+                  key={key}
+                  value={key}
+                  className="text-xs md:text-sm transition-all whitespace-nowrap rounded-lg"
+                >
+                  {displayTime}
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
-          {PERIOD_TABS.map(({ key }) => (
+          {PERIOD_KEYS.map((key) => (
             <TabsContent
               key={key}
               value={key}

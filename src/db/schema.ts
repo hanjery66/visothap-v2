@@ -130,6 +130,29 @@ export const lotteryPrize = pgTable("lottery_prize", {
   sortOrder: integer("sort_order").notNull().default(0),
 });
 
+export const lotterySchedule = pgTable("lottery_schedule", {
+  id: text("id").primaryKey(), // "mon-first", etc.
+  dayOfWeek: text("day_of_week").notNull(), // "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
+  period: text("period").notNull(), // "first" | "second" | "third" | "fourth"
+  name: text("name").notNull(),
+  drawTime: text("draw_time").notNull(), // e.g. "17:15"
+  enabled: boolean("enabled").default(true).notNull(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+/** Global lottery UI timing — splash window and staggered column reveal. */
+export const lotteryDisplaySetting = pgTable("lottery_display_setting", {
+  id: text("id").primaryKey(),
+  splashMinutesBefore: integer("splash_minutes_before").notNull().default(2),
+  columnRevealIntervalMinutes: integer("column_reveal_interval_minutes")
+    .notNull()
+    .default(1),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
 export type LotterySession   = typeof lotterySession.$inferSelect;
 export type LotteryLocation  = typeof lotteryLocation.$inferSelect;
 export type LotteryPrize     = typeof lotteryPrize.$inferSelect;
+export type LotterySchedule  = typeof lotterySchedule.$inferSelect;
+export type LotteryDisplaySetting = typeof lotteryDisplaySetting.$inferSelect;

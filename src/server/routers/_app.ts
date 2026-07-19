@@ -1,13 +1,21 @@
 import { router, publicProcedure, authedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/db";
-import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize } from "@/db/schema";
+import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize, lotterySchedule, lotteryDisplaySetting } from "@/db/schema";
 import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
 import { deleteFileFromS3 } from "@/lib/s3";
 import { ensureError } from "@/lib/utils";
+import {
+  ensureLotterySessionsForDate,
+  ensureScheduleSeeded,
+  getSchedulesForDate,
+  LOTTERY_PERIODS,
+  resolvePeriodSchedule,
+} from "@/server/lottery-seed";
+import { ensureDisplaySettingsSeeded } from "@/server/lottery-display";
 
 export const appRouter = router({
   getUsers: publicProcedure.query(async () => {
@@ -331,6 +339,107 @@ export const appRouter = router({
       }
     }),
 
+  // Get dynamic lottery schedule (with smart auto-seed)
+  getLotterySchedule: publicProcedure.query(async () => {
+    try {
+      return await ensureScheduleSeeded();
+    } catch (error) {
+      console.error("tRPC getLotterySchedule database error:", error);
+      throw new Error("Failed to fetch lottery schedule.");
+    }
+  }),
+
+  // Save/update entire weekly lottery schedule settings
+  saveLotterySchedule: authedProcedure
+    .input(
+      z.array(
+        z.object({
+          id: z.string(),
+          dayOfWeek: z.string(),
+          period: z.string(),
+          name: z.string(),
+          drawTime: z.string(),
+          enabled: z.boolean(),
+        })
+      )
+    )
+    .mutation(async ({ input }) => {
+      try {
+        for (const item of input) {
+          const [existing] = await db
+            .select()
+            .from(lotterySchedule)
+            .where(eq(lotterySchedule.id, item.id))
+            .limit(1);
+
+          if (existing) {
+            await db
+              .update(lotterySchedule)
+              .set({
+                name: item.name,
+                drawTime: item.drawTime,
+                enabled: item.enabled,
+                updatedAt: new Date(),
+              })
+              .where(eq(lotterySchedule.id, item.id));
+          } else {
+            await db.insert(lotterySchedule).values({
+              id: item.id,
+              dayOfWeek: item.dayOfWeek,
+              period: item.period,
+              name: item.name,
+              drawTime: item.drawTime,
+              enabled: item.enabled,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+        }
+        return { success: true };
+      } catch (error) {
+        console.error("tRPC saveLotterySchedule database error:", error);
+        throw new Error("Failed to save lottery schedule settings.");
+      }
+    }),
+
+  getLotteryDisplaySettings: publicProcedure.query(async () => {
+    try {
+      const settings = await ensureDisplaySettingsSeeded();
+      return {
+        splashMinutesBefore: settings.splashMinutesBefore,
+        columnRevealIntervalMinutes: settings.columnRevealIntervalMinutes,
+      };
+    } catch (error) {
+      console.error("tRPC getLotteryDisplaySettings error:", error);
+      throw new Error("Failed to fetch lottery display settings.");
+    }
+  }),
+
+  saveLotteryDisplaySettings: authedProcedure
+    .input(
+      z.object({
+        splashMinutesBefore: z.number().int().min(0).max(60),
+        columnRevealIntervalMinutes: z.number().int().min(0).max(60),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        await ensureDisplaySettingsSeeded();
+        await db
+          .update(lotteryDisplaySetting)
+          .set({
+            splashMinutesBefore: input.splashMinutesBefore,
+            columnRevealIntervalMinutes: input.columnRevealIntervalMinutes,
+            updatedAt: new Date(),
+          })
+          .where(eq(lotteryDisplaySetting.id, "default"));
+        return { success: true };
+      } catch (error) {
+        console.error("tRPC saveLotteryDisplaySettings error:", error);
+        throw new Error("Failed to save lottery display settings.");
+      }
+    }),
+
   // ---------------------------------------------------------------------------
   // LOTTERY PROCEDURES
   // ---------------------------------------------------------------------------
@@ -343,13 +452,20 @@ export const appRouter = router({
   getLotteryByDate: publicProcedure
     .input(z.object({ date: z.string() }))
     .query(async ({ input }) => {
-      const PERIODS = ["first", "second", "third", "fourth"] as const;
+      const daySchedules = await getSchedulesForDate(input.date);
 
-      // Fetch all sessions for this date
-      const sessions = await db
+      let sessions = await db
         .select()
         .from(lotterySession)
         .where(eq(lotterySession.date, input.date));
+
+      if (sessions.length === 0) {
+        await ensureLotterySessionsForDate(input.date);
+        sessions = await db
+          .select()
+          .from(lotterySession)
+          .where(eq(lotterySession.date, input.date));
+      }
 
       if (sessions.length === 0) return null;
 
@@ -387,7 +503,13 @@ export const appRouter = router({
 
       const result: Record<string, any> = { _id: `lottery-${input.date}`, date: input.date };
 
-      for (const period of PERIODS) {
+      for (const period of LOTTERY_PERIODS) {
+        const schedule = resolvePeriodSchedule(daySchedules, period);
+        if (schedule && !schedule.enabled) {
+          result[period] = null;
+          continue;
+        }
+
         const session = sessions.find((s) => s.period === period);
         if (!session) {
           result[period] = null;
@@ -414,9 +536,9 @@ export const appRouter = router({
         });
 
         result[period] = {
-          name: session.name,
+          name: schedule?.name ?? session.name,
           displayTable: session.displayTable,
-          displayNumber: session.displayNumber,
+          displayNumber: schedule?.drawTime ?? session.displayNumber,
           sessionId: session.id,
           prizeLabels: session.prizeLabels ? JSON.parse(session.prizeLabels) : null,
           ...Object.fromEntries(PRIZE_KEYS.map((k) => [k, PERIOD_LABELS[k].label])),
@@ -574,103 +696,13 @@ export const appRouter = router({
   seedLotteryDate: authedProcedure
     .input(z.object({ date: z.string() }))
     .mutation(async ({ input }) => {
-      const { date } = input;
-
-      // Static period definitions (mirrors mockData structure)
-      const PERIOD_DEFS = [
-        {
-          period: "first",
-          name: "Sổ Kết Quả Miền Trung",
-          displayTable: "first",
-          displayNumber: "10:50 AM",
-          locations: [
-            { location: "TP. Đà Nẵng", code: "XSDNG", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-            { location: "Khánh Hòa", code: "XSKH", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-            { location: "Kon Tum", code: "XSKT", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-          ],
-        },
-        {
-          period: "second",
-          name: "Sổ Kết Quả Miền Đông",
-          displayTable: "second",
-          displayNumber: "1:50 PM",
-          locations: [
-            { location: "Bình Dương", code: "XSBD", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-            { location: "Tây Ninh", code: "XSTN", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-            { location: "An Giang", code: "XSAG", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-          ],
-        },
-        {
-          period: "third",
-          name: "Sổ Kết Quả Miền Nam",
-          displayTable: "third",
-          displayNumber: "4:50 PM",
-          locations: [
-            { location: "TP. HCM", code: "XSHCM", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-            { location: "Đồng Tháp", code: "XSDT", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-            { location: "Cà Mau", code: "XSCM", prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 } },
-          ],
-        },
-        {
-          period: "fourth",
-          name: "Sổ Kết Quả Miền Bắc",
-          displayTable: "fourth",
-          displayNumber: "6:45 PM",
-          locations: [
-            { location: "Miền Bắc", code: "XSMB", prizes: { gEight: 0, gSeven: 4, gSix: 3, gFive: 6, gFour: 4, gThree: 6, gTwo: 2, gOne: 1, db: 1 } },
-          ],
-        },
-      ];
-
-      for (const def of PERIOD_DEFS) {
-        const sessionId = `${date}-${def.period}`;
-        const existing = await db
-          .select({ id: lotterySession.id })
-          .from(lotterySession)
-          .where(eq(lotterySession.id, sessionId))
-          .limit(1);
-
-        if (existing.length > 0) continue; // Already seeded
-
-        // Insert session
-        await db.insert(lotterySession).values({
-          id: sessionId,
-          date,
-          period: def.period,
-          name: def.name,
-          displayTable: def.displayTable,
-          displayNumber: def.displayNumber,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-
-        // Insert locations + prizes
-        for (let li = 0; li < def.locations.length; li++) {
-          const loc = def.locations[li];
-          const locationId = crypto.randomUUID();
-          await db.insert(lotteryLocation).values({
-            id: locationId,
-            sessionId,
-            location: loc.location,
-            code: loc.code,
-            sortOrder: li,
-          });
-
-          const prizeRows: { id: string; locationId: string; prizeKey: string; value: string; sortOrder: number }[] = [];
-          const PRIZE_ORDER = ["gEight", "gSeven", "gSix", "gFive", "gFour", "gThree", "gTwo", "gOne", "db"];
-          for (const key of PRIZE_ORDER) {
-            const count = (loc.prizes as Record<string, number>)[key] ?? 0;
-            for (let pi = 0; pi < count; pi++) {
-              prizeRows.push({ id: crypto.randomUUID(), locationId, prizeKey: key, value: "", sortOrder: pi });
-            }
-          }
-          if (prizeRows.length > 0) {
-            await db.insert(lotteryPrize).values(prizeRows);
-          }
-        }
+      try {
+        await ensureLotterySessionsForDate(input.date);
+        return { success: true };
+      } catch (error) {
+        console.error("tRPC seedLotteryDate database error:", error);
+        throw new Error("Failed to initialize lottery date.");
       }
-
-      return { success: true };
     }),
 
   /**

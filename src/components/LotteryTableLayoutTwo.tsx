@@ -3,6 +3,10 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
 import { LocationData, Prize } from "@/lib/mockData";
+import { useDrawStatuses } from "@/hooks/useDrawStatus";
+import { formatDisplayDateTime } from "@/lib/utils";
+import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
+import { trpc } from "@/app/_trpc/client";
 import {
   Table,
   TableBody,
@@ -58,33 +62,40 @@ function getRowLabel(
 
 // ── Pure render function — no component state needed, so it lives ──
 // outside the component and isn't recreated every render.
-function renderNorthernPrizeCell(key: string, prizes: Prize[] | undefined) {
+function renderNorthernPrizeCell(
+  key: string,
+  prizes: Prize[] | undefined,
+  drawStatus: "pending" | "spinning" | "done"
+) {
   if (!prizes || prizes.length === 0)
     return <div className="text-zinc-300 font-normal leading-none">--</div>;
 
+  const isDone = drawStatus === "done";
   const cellItem =
     "hover:bg-primary hover:text-primary-foreground w-full rounded-xs cursor-pointer leading-none";
+
+  // Helper: show value only when draw is done, otherwise X
+  const val = (pz: Prize) =>
+    isDone && pz.value ? pz.value : <span className="text-zinc-300 font-normal">X</span>;
 
   switch (key) {
     case "db":
       return (
         <div className={`${cellItem} text-red-655 text-[35px] md:text-[40px] tracking-wider text-center font-bold`}>
-          {prizes[0]?.value || <span>X</span>}
+          {val(prizes[0])}
         </div>
       );
     case "gOne":
       return (
         <div className={`${cellItem} text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider text-center`}>
-          {prizes[0]?.value || <span className="text-zinc-300 font-normal">X</span>}
+          {val(prizes[0])}
         </div>
       );
     case "gTwo":
       return (
         <div className="flex justify-around items-center w-full text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-1">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>
-              {pz.value || <span className="text-zinc-300 font-normal">X</span>}
-            </span>
+            <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
         </div>
       );
@@ -93,9 +104,7 @@ function renderNorthernPrizeCell(key: string, prizes: Prize[] | undefined) {
       return (
         <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-4">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>
-              {pz.value || <span className="text-muted-foreground font-normal">X</span>}
-            </span>
+            <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
         </div>
       );
@@ -103,9 +112,7 @@ function renderNorthernPrizeCell(key: string, prizes: Prize[] | undefined) {
       return (
         <div className="grid grid-cols-2 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-12">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={`${cellItem} p-0!`}>
-              {pz.value || <span className="text-muted-foreground font-normal">X</span>}
-            </span>
+            <span key={idx} className={`${cellItem} p-0!`}>{val(pz)}</span>
           ))}
         </div>
       );
@@ -113,9 +120,7 @@ function renderNorthernPrizeCell(key: string, prizes: Prize[] | undefined) {
       return (
         <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-4">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>
-              {pz.value || <span className="text-muted-foreground font-normal">X</span>}
-            </span>
+            <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
         </div>
       );
@@ -123,9 +128,7 @@ function renderNorthernPrizeCell(key: string, prizes: Prize[] | undefined) {
       return (
         <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center text-red-655 font-bold tracking-wider leading-none text-[30px] md:text-[35px]">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>
-              {pz.value || <span className="text-muted-foreground font-normal">X</span>}
-            </span>
+            <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
         </div>
       );
@@ -135,6 +138,16 @@ function renderNorthernPrizeCell(key: string, prizes: Prize[] | undefined) {
 }
 
 export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLayoutTwoProps) {
+  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
+  const displayConfig = displaySettings ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS;
+  const { columnStatuses, isPending, isSpinning } = useDrawStatuses(
+    dateParam,
+    periodData?.displayNumber,
+    1,
+    displayConfig,
+  );
+  const drawStatus = columnStatuses[0] ?? "done";
+
   const rows = useMemo(() => {
     if (!periodData?.data?.length) return [];
     return DEFAULT_ROW_LABELS.map(({ key, defaultLabel }) => ({
@@ -149,15 +162,35 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
   const formattedName = periodData.name
     .toUpperCase()
     .replace("SỔ KẾT QUẢ", "KẾT QUẢ XỔ SỐ");
+  const drawDateTimeLabel = formatDisplayDateTime(
+    dateParam,
+    periodData.displayNumber,
+    "hh:mm A"
+  );
 
   return (
     <div className="rounded-xs shadow-md mb-8  hover:shadow-lg">
       {/* Table header */}
       <div className="bg-primary text-primary-foreground py-1 font-bold text-center flex flex-col sm:flex-row justify-center items-center uppercase">
         <span>
-          {periodData.displayNumber} - {dayjs(dateParam).format("DD/MM/YYYY")} {formattedName}
+          {drawDateTimeLabel} {formattedName}
         </span>
       </div>
+
+      {/* Pending notice */}
+      {isPending && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-700 text-xs text-center font-medium">
+          Chưa đến giờ quay · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
+        </div>
+      )}
+
+      {/* Spinning notice */}
+      {isSpinning && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-red-600 text-xs text-center font-semibold flex items-center justify-center gap-2 animate-pulse">
+          <span className="inline-block w-3 h-3 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
+          Đang quay số · Kết quả sắp có · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
+        </div>
+      )}
 
       <Table className="w-full border-collapse mb-2">
         <TableBody >
@@ -167,7 +200,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
               {dayjs(dateParam).format("dddd")}
             </TableCell>
             <TableCell className="text-xl text-center font-extrabold">
-              Ngày: {dayjs(dateParam).format("DD/MM/YYYY")}
+              Ngày: {formatDisplayDateTime(dateParam)}
             </TableCell>
           </TableRow>
 
@@ -183,7 +216,13 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
                   {row.label}
                 </TableCell>
                 <TableCell className="p-0 text-center text-primary">
-                  {renderNorthernPrizeCell(row.key, prizes)}
+                  {drawStatus === "spinning" ? (
+                    <div className="font-mono text-primary text-[25px] md:text-[30px] font-bold animate-pulse tracking-widest py-1">
+                      {prizes && prizes.length > 0
+                        ? prizes.map((_, i) => <span key={i} className="mr-2">{Math.floor(Math.random() * 90000 + 10000)}</span>)
+                        : "..."}
+                    </div>
+                  ) : renderNorthernPrizeCell(row.key, prizes, drawStatus)}
                 </TableCell>
               </TableRow>
             );
