@@ -12,7 +12,7 @@ const AdsCard = ({ ad, ...rest }: Props & ComponentProps<"div">) => {
     <div
       {...rest}
       className={clsx(
-        "relative rounded-xs  shadow-sm overflow-hidden group",
+        "relative rounded-xs shadow-sm overflow-hidden group shrink-0 w-full",
         rest.className,
       )}
     >

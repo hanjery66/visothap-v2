@@ -12,6 +12,8 @@ import AdsCard from "./_component/ads-card";
 import { Ads } from "@/db/schema";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AdFromQuery } from "@/types";
+import { Calendar } from "@/components/ui/calendar";
+import { vi } from "date-fns/locale";
 
 dayjs.locale("vi");
 
@@ -84,42 +86,42 @@ export default function LandingPage() {
       days.push(calendarDate.date(i));
     }
 
-    const weekdays = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
     return (
-      <div className=" rounded-xs shadow-md border border-zinc-100 p-4 transition-all hover:shadow-lg">
+      <div className="rounded-xs shadow-md border border-zinc-100 p-2.5 sm:p-4 transition-all hover:shadow-lg bg-background w-full max-w-full overflow-hidden">
         {/* Month selector */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-3">
           <button
             onClick={() => setCalendarDate(calendarDate.subtract(1, "month"))}
-            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors text-zinc-600"
+            className="p-1 hover:bg-zinc-100 rounded-md transition-colors text-zinc-600"
           >
             <ChevronLeft size={16} strokeWidth={2.5} />
           </button>
-          <span className="font-bold text-zinc-800 text-sm capitalize">
+          <span className="font-bold text-zinc-800 text-xs sm:text-sm capitalize">
             Tháng {calendarDate.format("MM, YYYY")}
           </span>
           <button
             onClick={() => setCalendarDate(calendarDate.add(1, "month"))}
-            className="p-1.5 hover:bg-zinc-100 rounded-md transition-colors text-zinc-600"
+            className="p-1 hover:bg-zinc-100 rounded-md transition-colors text-zinc-600"
           >
             <ChevronRight size={16} strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Weekdays */}
-        <div className="grid grid-cols-7 gap-1 text-center font-semibold text-foreground text-xs mb-2">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center font-semibold text-zinc-500 text-[11px] sm:text-xs mb-1.5">
           {weekdays.map((w) => (
-            <div key={w} className="py-1">
+            <div key={w} className="py-0.5">
               {w}
             </div>
           ))}
         </div>
 
         {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {days.map((day, idx) => {
-            if (!day) return <div key={`empty-${idx}`} className="py-2" />;
+            if (!day) return <div key={`empty-${idx}`} className="aspect-square w-full" />;
 
             const isSelected = day.format("YYYY-MM-DD") === dateParam;
             const isToday = day.format("YYYY-MM-DD") === todayStr;
@@ -128,7 +130,7 @@ export default function LandingPage() {
               <button
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
-                className={`min-h-8 min-w-8 font-semibold rounded-md transition-all flex items-center justify-center ${isSelected
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center p-0 ${isSelected
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : isToday
                     ? "bg-red-50 text-primary border border-primary/50"
@@ -145,28 +147,28 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-4 items-start w-full">
+    <div className="grid grid-cols-12 gap-8 items-start w-full">
       {/* LEFT AD COLUMN (Span 2) */}
 
       <div className="flex col-span-3 flex-col gap-4">
         {adsByPosition.Left && adsByPosition.Left.length > 0 ? (
           adsByPosition.Left.map((ad: Ads) => (
-            <AdsCard key={ad.id} ad={ad} className="h-80" />
+            <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />
           ))
         ) : (
-          <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs  text-center text-xs text-foreground">
+          <div className="h-60 w-full p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs flex items-center justify-center text-center text-xs text-zinc-400 font-medium shrink-0">
             Left Banner Ad
           </div>
         )}
       </div>
 
-      {/* CENTER CONTENT COLUMN (Span 7) */}
+      {/* CENTER CONTENT COLUMN (Span 6) */}
       <div className="col-span-6 flex flex-col gap-2">
         {/* Center Banner Advertisement */}
         {adsByPosition.Center && adsByPosition.Center.length > 0 && (
           <div className="flex flex-col gap-4 mb-2">
             {adsByPosition.Center.map((ad: Ads) => (
-              <AdsCard key={ad.id} ad={ad} className="h-30" />
+              <AdsCard key={ad.id} ad={ad} className="h-24 w-full shrink-0" />
             ))}
           </div>
         )}
@@ -225,10 +227,10 @@ export default function LandingPage() {
         <div className="flex flex-col gap-4">
           {adsByPosition.Right && adsByPosition.Right.length > 0 ? (
             adsByPosition.Right.map((ad: Ads) => (
-              <AdsCard key={ad.id} ad={ad} className="h-80" />
+              <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />
             ))
           ) : (
-            <div className="p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs text-center text-xs text-foreground">
+            <div className="h-60 w-full p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs flex items-center justify-center text-center text-xs text-zinc-400 font-medium shrink-0">
               Right Banner Ad
             </div>
           )}

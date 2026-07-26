@@ -208,7 +208,7 @@ export default function AdminLayout({
             </aside>
 
             {/* MAIN DYNAMIC CONTENT WORKSPACE */}
-            <Card className="flex-1 w-full rounded-sm shadow-lg min-h-[500px]">
+            <Card className="flex-1 w-full rounded-sm shadow-lg min-h-125">
               <CardHeader>
                 <CardTitle>
                   {menus.find((m) => m.href === pathname)?.title}

@@ -76,24 +76,24 @@ function renderNorthernPrizeCell(
 
   // Helper: show value only when draw is done, otherwise X
   const val = (pz: Prize) =>
-    isDone && pz.value ? pz.value : <span className="text-zinc-300 font-normal">X</span>;
+    isDone && pz.value ? pz.value : <span className="font-normal">X</span>;
 
   switch (key) {
     case "db":
       return (
-        <div className={`${cellItem} text-red-655 text-[35px] md:text-[40px] tracking-wider text-center font-bold`}>
+        <div className={`${cellItem} text-red-600 text-[28px] md:text-[30px] font-semibold py-0.5`}>
           {val(prizes[0])}
         </div>
       );
     case "gOne":
       return (
-        <div className={`${cellItem} text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider text-center`}>
+        <div className={`${cellItem} text-zinc-800 font-semibold text-[17px] md:text-[19px] py-1`}>
           {val(prizes[0])}
         </div>
       );
     case "gTwo":
       return (
-        <div className="flex justify-around items-center w-full text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-1">
+        <div className="flex justify-around items-center w-full text-zinc-800 font-semibold text-[17px] md:text-[19px] px-1">
           {prizes.map((pz, idx) => (
             <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
@@ -102,7 +102,7 @@ function renderNorthernPrizeCell(
     case "gThree":
     case "gFive":
       return (
-        <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-4">
+        <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[17px] md:text-[19px] px-4">
           {prizes.map((pz, idx) => (
             <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
@@ -110,7 +110,7 @@ function renderNorthernPrizeCell(
       );
     case "gFour":
       return (
-        <div className="grid grid-cols-2 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-12">
+        <div className="grid grid-cols-2 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[17px] md:text-[19px] px-2 sm:px-4">
           {prizes.map((pz, idx) => (
             <span key={idx} className={`${cellItem} p-0!`}>{val(pz)}</span>
           ))}
@@ -118,7 +118,7 @@ function renderNorthernPrizeCell(
       );
     case "gSix":
       return (
-        <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[20px] md:text-[25px] tracking-wider leading-none px-4">
+        <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[17px] md:text-[19px] px-4">
           {prizes.map((pz, idx) => (
             <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
@@ -126,7 +126,7 @@ function renderNorthernPrizeCell(
       );
     case "gSeven":
       return (
-        <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center text-red-655 font-bold tracking-wider leading-none text-[30px] md:text-[35px]">
+        <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center text-red-600 font-semibold text-[22px] md:text-[25px]">
           {prizes.map((pz, idx) => (
             <span key={idx} className={cellItem}>{val(pz)}</span>
           ))}
@@ -169,9 +169,9 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
   );
 
   return (
-    <div className="rounded-xs shadow-md mb-8  hover:shadow-lg">
+    <div className="rounded-xs shadow-md mb-8 hover:shadow-lg">
       {/* Table header */}
-      <div className="bg-primary text-primary-foreground py-1 font-bold text-center flex flex-col sm:flex-row justify-center items-center uppercase">
+      <div className="bg-primary text-primary-foreground py-1 font-bold text-center flex flex-col sm:flex-row justify-center items-center uppercase text-xs sm:text-sm">
         <span>
           {drawDateTimeLabel} {formattedName}
         </span>
@@ -193,13 +193,13 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
       )}
 
       <Table className="w-full border-collapse mb-2">
-        <TableBody >
+        <TableBody>
           {/* Location row */}
           <TableRow className="border-b border-zinc-200 font-bold hover:bg-transparent">
-            <TableCell className="font-bold text-xl border-r border-zinc-200 w-1/4 text-center">
+            <TableCell className="font-semibold capitalize text-sm md:text-base border-r border-zinc-200 w-1/4 text-center py-1">
               {dayjs(dateParam).format("dddd")}
             </TableCell>
-            <TableCell className="text-xl text-center font-extrabold">
+            <TableCell className="text-sm md:text-base text-center font-semibold py-1">
               Ngày: {formatDisplayDateTime(dateParam)}
             </TableCell>
           </TableRow>
@@ -212,12 +212,12 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
                 key={row.key}
                 className="border-b border-zinc-200 last:border-b-0 hover:bg-zinc-50/50 transition-colors"
               >
-                <TableCell className="p-0 font-bold text-xl text-muted-foreground border-r border-zinc-200 text-center">
+                <TableCell className="p-0 font-medium text-sm md:text-base text-muted-foreground border-r border-zinc-200 text-center">
                   {row.label}
                 </TableCell>
                 <TableCell className="p-0 text-center text-primary">
                   {drawStatus === "spinning" ? (
-                    <div className="font-mono text-primary text-[25px] md:text-[30px] font-bold animate-pulse tracking-widest py-1">
+                    <div className="font-mono text-primary text-[22px] md:text-[25px] font-bold animate-pulse tracking-widest py-1">
                       {prizes && prizes.length > 0
                         ? prizes.map((_, i) => <span key={i} className="mr-2">{Math.floor(Math.random() * 90000 + 10000)}</span>)
                         : "..."}

@@ -136,6 +136,6 @@ body {
 
 @layer base {
   .container {
-    @apply mx-auto px-4 min-w-5xl max-w-6xl!;
+    @apply mx-auto px-4 min-w-4xl max-w-5xl!;
   }
 }

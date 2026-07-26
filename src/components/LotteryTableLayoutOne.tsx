@@ -71,47 +71,47 @@ export function LotteryTableLayoutOne({
     {
       key: "gEight",
       label: getRowLabel("gEight", "Gi 8"),
-      color: "text-red-600 font-extrabold text-[35px] md:text-[40px]",
+      color: "text-red-600 font-semibold text-[28px] md:text-[30px]",
     },
     {
       key: "gSeven",
       label: getRowLabel("gSeven", "Gi 7"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "gSix",
       label: getRowLabel("gSix", "Gi 6"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "gFive",
       label: getRowLabel("gFive", "Gi 5"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "gFour",
       label: getRowLabel("gFour", "Gi 4"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "gThree",
       label: getRowLabel("gThree", "Gi 3"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "gTwo",
       label: getRowLabel("gTwo", "Gi 2"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "gOne",
       label: getRowLabel("gOne", "Gi 1"),
-      color: "text-zinc-800 text-[20px] md:text-[25px] font-semibold",
+      color: "text-zinc-800 text-[17px] md:text-[19px] font-semibold",
     },
     {
       key: "db",
       label: getRowLabel("db", "Đ. B"),
-      color: "text-red-600 font-extrabold text-[35px] md:text-[40px]",
+      color: "text-red-600 font-semibold text-[22px] md:text-[25px]",
     },
   ];
 
@@ -186,9 +186,9 @@ export function LotteryTableLayoutOne({
   );
 
   return (
-    <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg ">
+    <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
       {/* Banner */}
-      <div className="bg-primary text-primary-foreground  font-bold   text-center flex flex-col sm:flex-row justify-center items-center gap-1  uppercase py-1">
+      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1 text-xs sm:text-sm">
         <span>
           {drawDateTimeLabel}{" "}
           {formattedName}
@@ -210,8 +210,8 @@ export function LotteryTableLayoutOne({
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <div className="flex w-full min-w-[500px] py-2">
+      <div className="w-full overflow-hidden">
+        <div className="flex w-full py-2">
           {/* ── Label column (not selectable) ── */}
           <div
             className="flex flex-col shrink-0 w-1/5 border-r border-zinc-200"
@@ -221,7 +221,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[0] = el;
               }}
-              className="flex items-center justify-center  font-bold  md:text-lg border-b border-zinc-200 bg-white text-center"
+              className="flex items-center justify-center capitalize font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center py-0.5"
             >
               {dayjs(dateParam).format("dddd")}
             </div>
@@ -229,7 +229,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[1] = el;
               }}
-              className="flex items-center justify-center  font-extrabold  md:text-lg border-b border-zinc-200 bg-white text-center"
+              className="flex items-center justify-center font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center py-0.5"
             >
               {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
             </div>
@@ -239,7 +239,7 @@ export function LotteryTableLayoutOne({
                 ref={(el) => {
                   lblRowRefs.current[i] = el;
                 }}
-                className="flex items-center justify-center font-bold text-muted-foreground md:text-lg border-b border-zinc-200 last:border-b-0"
+                className="flex items-center justify-center font-medium text-muted-foreground text-sm md:text-base border-b border-zinc-200 last:border-b-0"
               >
                 {row.label}
               </div>
@@ -258,7 +258,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][0] = el;
                 }}
-                className="flex items-center justify-center  text-black font-bold  md:text-lg border-b border-zinc-200 bg-white text-center"
+                className="flex items-center justify-center capitalize text-black font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center py-0.5"
               >
                 {loc.location}
               </div>
@@ -268,7 +268,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][1] = el;
                 }}
-                className="flex items-center justify-center text-black font-extrabold  md:text-lg border-b border-zinc-200 bg-white text-center uppercase"
+                className="flex items-center justify-center text-black font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center uppercase py-0.5"
               >
                 {loc.code}
               </div>
@@ -288,13 +288,13 @@ export function LotteryTableLayoutOne({
                     {colStatus === "spinning" ? (
                       prizes && prizes.length > 0
                         ? prizes.map((_, idx) => (
-                              <p
-                                key={idx}
-                                className="w-full m-0 p-0 leading-none font-mono  select-none animate-pulse"
-                              >
-                                <span className="inline-block">{splashNumber}</span>
-                              </p>
-                            ))
+                          <p
+                            key={idx}
+                            className="w-full m-0 p-0 leading-none font-mono select-none animate-pulse"
+                          >
+                            <span className="inline-block">{splashNumber}</span>
+                          </p>
+                        ))
                         : <span className="font-normal text-primary animate-pulse">...</span>
                     ) : prizes && prizes.length > 0 ? (
                       prizes.map((pz, idx) => (
