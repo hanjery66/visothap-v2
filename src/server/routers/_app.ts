@@ -12,10 +12,12 @@ import {
   ensureLotterySessionsForDate,
   ensureScheduleSeeded,
   getSchedulesForDate,
+  getPeriodsReadyToSeed,
   LOTTERY_PERIODS,
   resolvePeriodSchedule,
 } from "@/server/lottery-seed";
 import { ensureDisplaySettingsSeeded } from "@/server/lottery-display";
+import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
 
 export const appRouter = router({
   getUsers: publicProcedure.query(async () => {
@@ -407,7 +409,10 @@ export const appRouter = router({
       const settings = await ensureDisplaySettingsSeeded();
       return {
         splashMinutesBefore: settings.splashMinutesBefore,
+        autoSeedMinutesBeforeSplash: settings.autoSeedMinutesBeforeSplash,
         columnRevealIntervalMinutes: settings.columnRevealIntervalMinutes,
+        cellSplashDurationSeconds: settings.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+        cellPauseIntervalSeconds: settings.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
       };
     } catch (error) {
       console.error("tRPC getLotteryDisplaySettings error:", error);
@@ -419,7 +424,10 @@ export const appRouter = router({
     .input(
       z.object({
         splashMinutesBefore: z.number().int().min(0).max(60),
+        autoSeedMinutesBeforeSplash: z.number().int().min(0).max(60),
         columnRevealIntervalMinutes: z.number().int().min(0).max(60),
+        cellSplashDurationSeconds: z.number().int().min(1).max(300),
+        cellPauseIntervalSeconds: z.number().int().min(0).max(300),
       }),
     )
     .mutation(async ({ input }) => {
@@ -429,7 +437,10 @@ export const appRouter = router({
           .update(lotteryDisplaySetting)
           .set({
             splashMinutesBefore: input.splashMinutesBefore,
+            autoSeedMinutesBeforeSplash: input.autoSeedMinutesBeforeSplash,
             columnRevealIntervalMinutes: input.columnRevealIntervalMinutes,
+            cellSplashDurationSeconds: input.cellSplashDurationSeconds,
+            cellPauseIntervalSeconds: input.cellPauseIntervalSeconds,
             updatedAt: new Date(),
           })
           .where(eq(lotteryDisplaySetting.id, "default"));
@@ -459,12 +470,18 @@ export const appRouter = router({
         .from(lotterySession)
         .where(eq(lotterySession.date, input.date));
 
-      if (sessions.length === 0) {
-        await ensureLotterySessionsForDate(input.date);
-        sessions = await db
-          .select()
-          .from(lotterySession)
-          .where(eq(lotterySession.date, input.date));
+      // Always check if new periods have become ready to seed (each period has its own draw time)
+      {
+        const displaySettings = await ensureDisplaySettingsSeeded();
+        const readyPeriods = getPeriodsReadyToSeed(input.date, daySchedules, displaySettings);
+        if (readyPeriods.length > 0) {
+          // ensureLotterySessionsForDate skips already-existing sessions, so this is safe to call always
+          await ensureLotterySessionsForDate(input.date, readyPeriods);
+          sessions = await db
+            .select()
+            .from(lotterySession)
+            .where(eq(lotterySession.date, input.date));
+        }
       }
 
       if (sessions.length === 0) return null;

@@ -28,7 +28,7 @@ export function useDrawStatuses(
 
     const id = setInterval(() => {
       setState(getState());
-    }, 10_000);
+    }, 1_000);
 
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,6 +38,8 @@ export function useDrawStatuses(
     columnCount,
     config.splashMinutesBefore,
     config.columnRevealIntervalMinutes,
+    config.cellSplashDurationSeconds,
+    config.cellPauseIntervalSeconds,
   ]);
 
   return state;

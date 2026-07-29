@@ -8,6 +8,8 @@ import {
   lotterySession,
   type LotterySchedule,
 } from "@/db/schema";
+import dayjs from "dayjs";
+import { parseDrawTime } from "@/lib/utils";
 import {
   DEFAULT_PERIOD_SCHEDULE,
   LOTTERY_PERIODS,
@@ -130,10 +132,14 @@ export async function getSchedulesForDate(date: string): Promise<LotterySchedule
   return allSchedules.filter((row) => row.dayOfWeek === dayKey);
 }
 
-export async function ensureLotterySessionsForDate(date: string): Promise<void> {
+export async function ensureLotterySessionsForDate(
+  date: string,
+  onlyPeriods?: LotteryPeriodKey[]
+): Promise<void> {
   const daySchedules = await getSchedulesForDate(date);
 
   for (const def of PERIOD_DEFS) {
+    if (onlyPeriods && !onlyPeriods.includes(def.period)) continue;
     const schedule = daySchedules.find((row) => row.period === def.period);
     if (schedule && !schedule.enabled) continue;
 
@@ -205,6 +211,64 @@ export function resolvePeriodSchedule(
   period: LotteryPeriodKey
 ) {
   return daySchedules.find((row) => row.period === period);
+}
+
+/**
+ * Returns the list of period keys whose auto-seed window has opened for the given date.
+ * - Past dates: all enabled periods are returned.
+ * - Future dates: empty array (never auto-seed ahead of time).
+ * - Today: only periods where now >= (drawTime - splashMinutesBefore - autoSeedMinutesBeforeSplash).
+ */
+export function getPeriodsReadyToSeed(
+  dateStr: string,
+  daySchedules: LotterySchedule[],
+  displaySettings: { splashMinutesBefore: number; autoSeedMinutesBeforeSplash: number }
+): LotteryPeriodKey[] {
+  const todayStr = dayjs().format("YYYY-MM-DD");
+
+  // Past dates — all enabled periods should be seeded
+  if (dayjs(dateStr).isBefore(dayjs(todayStr))) {
+    return PERIOD_DEFS
+      .filter((def) => {
+        const schedule = daySchedules.find((row) => row.period === def.period);
+        return !(schedule && !schedule.enabled);
+      })
+      .map((def) => def.period);
+  }
+
+  // Future dates — nothing
+  if (dayjs(dateStr).isAfter(dayjs(todayStr))) {
+    return [];
+  }
+
+  // Today — only periods whose auto-seed window has been reached
+  const totalOffsetMinutes =
+    (displaySettings.splashMinutesBefore ?? 2) +
+    (displaySettings.autoSeedMinutesBeforeSplash ?? 5);
+
+  const ready: LotteryPeriodKey[] = [];
+  const now = dayjs();
+
+  for (const def of PERIOD_DEFS) {
+    const schedule = daySchedules.find((row) => row.period === def.period);
+    if (schedule && !schedule.enabled) continue;
+
+    const drawTimeStr = schedule?.drawTime ?? DEFAULT_PERIOD_SCHEDULE[def.period].drawTime;
+    const parsed = parseDrawTime(drawTimeStr);
+    if (!parsed) continue;
+
+    const drawMoment = dayjs(dateStr)
+      .hour(parsed.hour)
+      .minute(parsed.minute)
+      .second(0);
+
+    const autoSeedMoment = drawMoment.subtract(totalOffsetMinutes, "minute");
+    if (now.isAfter(autoSeedMoment) || now.isSame(autoSeedMoment)) {
+      ready.push(def.period);
+    }
+  }
+
+  return ready;
 }
 
 export { LOTTERY_PERIODS, PERIOD_DEFS };

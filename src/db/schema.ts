@@ -141,13 +141,22 @@ export const lotterySchedule = pgTable("lottery_schedule", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
-/** Global lottery UI timing — splash window and staggered column reveal. */
+/** Global lottery UI timing — splash window, auto-seed trigger window, and staggered column reveal. */
 export const lotteryDisplaySetting = pgTable("lottery_display_setting", {
   id: text("id").primaryKey(),
   splashMinutesBefore: integer("splash_minutes_before").notNull().default(2),
+  autoSeedMinutesBeforeSplash: integer("auto_seed_minutes_before_splash")
+    .notNull()
+    .default(5),
   columnRevealIntervalMinutes: integer("column_reveal_interval_minutes")
     .notNull()
     .default(1),
+  cellSplashDurationSeconds: integer("cell_splash_duration_seconds")
+    .notNull()
+    .default(10),
+  cellPauseIntervalSeconds: integer("cell_pause_interval_seconds")
+    .notNull()
+    .default(5),
   updatedAt: timestamp("updated_at").notNull(),
 });
 

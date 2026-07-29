@@ -113,7 +113,13 @@ export default function LotteryScheduleSettings() {
 
     useEffect(() => {
         if (dbDisplaySettings) {
-            setDisplaySettings(dbDisplaySettings);
+            setDisplaySettings({
+                splashMinutesBefore: dbDisplaySettings.splashMinutesBefore,
+                autoSeedMinutesBeforeSplash: dbDisplaySettings.autoSeedMinutesBeforeSplash,
+                columnRevealIntervalMinutes: dbDisplaySettings.columnRevealIntervalMinutes,
+                cellSplashDurationSeconds: (dbDisplaySettings as any).cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+                cellPauseIntervalSeconds: (dbDisplaySettings as any).cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
+            });
         }
     }, [dbDisplaySettings]);
 
@@ -258,7 +264,7 @@ export default function LotteryScheduleSettings() {
                         <h3 className="font-semibold text-sm">Display timing</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-1.5">
                             <Label htmlFor="splash-minutes" className="text-xs text-muted-foreground">
                                 Splash starts before draw (minutes)
@@ -274,6 +280,26 @@ export default function LotteryScheduleSettings() {
                                     setDisplaySettings((prev) => ({
                                         ...prev,
                                         splashMinutesBefore: Number(e.target.value),
+                                    }));
+                                }}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="autoseed-minutes" className="text-xs text-muted-foreground">
+                                Auto-seed data before splash (minutes)
+                            </Label>
+                            <Input
+                                id="autoseed-minutes"
+                                type="number"
+                                min={0}
+                                max={120}
+                                value={displaySettings.autoSeedMinutesBeforeSplash}
+                                onChange={(e) => {
+                                    setDirty(true);
+                                    setDisplaySettings((prev) => ({
+                                        ...prev,
+                                        autoSeedMinutesBeforeSplash: Number(e.target.value),
                                     }));
                                 }}
                             />
@@ -298,22 +324,62 @@ export default function LotteryScheduleSettings() {
                                 }}
                             />
                         </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="cell-splash-duration" className="text-xs text-muted-foreground">
+                                Cell splash duration (seconds)
+                            </Label>
+                            <Input
+                                id="cell-splash-duration"
+                                type="number"
+                                min={1}
+                                max={300}
+                                value={displaySettings.cellSplashDurationSeconds ?? 10}
+                                onChange={(e) => {
+                                    setDirty(true);
+                                    setDisplaySettings((prev) => ({
+                                        ...prev,
+                                        cellSplashDurationSeconds: Number(e.target.value),
+                                    }));
+                                }}
+                            />
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label htmlFor="cell-pause-interval" className="text-xs text-muted-foreground">
+                                Pause between cell reveals (seconds)
+                            </Label>
+                            <Input
+                                id="cell-pause-interval"
+                                type="number"
+                                min={0}
+                                max={300}
+                                value={displaySettings.cellPauseIntervalSeconds ?? 5}
+                                onChange={(e) => {
+                                    setDirty(true);
+                                    setDisplaySettings((prev) => ({
+                                        ...prev,
+                                        cellPauseIntervalSeconds: Number(e.target.value),
+                                    }));
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <p className="text-xs text-muted-foreground">
-                        Column 1 reveals at draw time, column 2 after{" "}
+                        Data tables auto-seed{" "}
                         <span className="font-semibold text-foreground">
-                            {displaySettings.columnRevealIntervalMinutes} min
-                        </span>
-                        , column 3 after{" "}
+                            {displaySettings.autoSeedMinutesBeforeSplash} min
+                        </span>{" "}
+                        before splash (total{" "}
                         <span className="font-semibold text-foreground">
-                            {displaySettings.columnRevealIntervalMinutes * 2} min
-                        </span>
-                        , etc. Splash animation starts{" "}
+                            {displaySettings.splashMinutesBefore + displaySettings.autoSeedMinutesBeforeSplash} min
+                        </span>{" "}
+                        before draw time). Splash animation starts{" "}
                         <span className="font-semibold text-foreground">
                             {displaySettings.splashMinutesBefore} min
                         </span>{" "}
-                        before draw time for all columns.
+                        before draw time.
                     </p>
                 </div>
 

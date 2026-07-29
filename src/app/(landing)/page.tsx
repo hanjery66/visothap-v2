@@ -12,8 +12,6 @@ import AdsCard from "./_component/ads-card";
 import { Ads } from "@/db/schema";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AdFromQuery } from "@/types";
-import { Calendar } from "@/components/ui/calendar";
-import { vi } from "date-fns/locale";
 
 dayjs.locale("vi");
 

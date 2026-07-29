@@ -6,8 +6,23 @@ import { LocationData, Prize } from "@/lib/mockData";
 import { useDrawStatuses } from "@/hooks/useDrawStatus";
 import useSplashNumber from "@/hooks/use-splash-number";
 import { formatDisplayDateTime } from "@/lib/utils";
-import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
+import { DEFAULT_LOTTERY_DISPLAY_SETTINGS, LotteryDisplayConfig } from "@/lib/lottery-display";
 import { trpc } from "@/app/_trpc/client";
+import { RollingDigits } from "@/components/RollingDigits";
+import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
+import { Loader2 } from "lucide-react";
+
+const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
+  gEight: 2,
+  gSeven: 3,
+  gSix: 4,
+  gFive: 4,
+  gFour: 5,
+  gThree: 5,
+  gTwo: 5,
+  gOne: 5,
+  db: 6,
+};
 
 interface LotteryTableLayoutOneProps {
   periodData: any;
@@ -19,7 +34,13 @@ export function LotteryTableLayoutOne({
   dateParam,
 }: LotteryTableLayoutOneProps) {
   const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
-  const displayConfig = displaySettings ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS;
+  const displayConfig: LotteryDisplayConfig = {
+    splashMinutesBefore: displaySettings?.splashMinutesBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
+    autoSeedMinutesBeforeSplash: displaySettings?.autoSeedMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
+    columnRevealIntervalMinutes: displaySettings?.columnRevealIntervalMinutes ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.columnRevealIntervalMinutes,
+    cellSplashDurationSeconds: (displaySettings as any)?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+    cellPauseIntervalSeconds: (displaySettings as any)?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
+  };
   const locationCount = periodData?.data?.length ?? 0;
 
   const { columnStatuses, isPending, isSpinning } = useDrawStatuses(
@@ -196,19 +217,11 @@ export function LotteryTableLayoutOne({
       </div>
 
       {/* Pending notice */}
-      {isPending && (
+      {/* {isPending && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-700 text-xs text-center font-medium">
           Chưa đến giờ quay · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
         </div>
-      )}
-
-      {/* Spinning notice */}
-      {isSpinning && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-red-600 text-xs text-center font-semibold flex items-center justify-center gap-2 animate-pulse">
-          <span className="inline-block w-3 h-3 rounded-full border-2 border-red-500 border-t-transparent animate-spin" />
-          Đang quay số · Kết quả sắp có · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
-        </div>
-      )}
+      )} */}
 
       <div className="w-full overflow-hidden">
         <div className="flex w-full py-2">
@@ -273,48 +286,121 @@ export function LotteryTableLayoutOne({
                 {loc.code}
               </div>
 
-              {rows.map((row, rowIdx) => {
-                const prizes = loc[row.key] as Prize[];
-                const colStatus = columnStatuses[colIdx] ?? "done";
-                return (
-                  <div
-                    key={row.key}
-                    ref={(el) => {
-                      if (!allRowRefs.current[colIdx]) allRowRefs.current[colIdx] = [];
-                      allRowRefs.current[colIdx][rowIdx] = el;
-                    }}
-                    className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-none space-y-0 ${row.color}`}
-                  >
-                    {colStatus === "spinning" ? (
-                      prizes && prizes.length > 0
-                        ? prizes.map((_, idx) => (
-                          <p
-                            key={idx}
-                            className="w-full m-0 p-0 leading-none font-mono select-none animate-pulse"
-                          >
-                            <span className="inline-block">{splashNumber}</span>
-                          </p>
-                        ))
-                        : <span className="font-normal text-primary animate-pulse">...</span>
-                    ) : prizes && prizes.length > 0 ? (
-                      prizes.map((pz, idx) => (
-                        <p
-                          key={idx}
-                          className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 p-0 leading-none"
-                        >
-                          {colStatus === "done" && pz.value
-                            ? pz.value
-                            : <span className="font-normal">X</span>}
-                        </p>
-                      ))
-                    ) : (
-                      <span className="font-normal">--</span>
-                    )}
-                  </div>
-                );
-              })}
+              {(() => {
+                // Count total slots in all columns before this one so the
+                // splash plays top-to-bottom within each column sequentially.
+                const totalPreviousSlots = locations
+                  .slice(0, colIdx)
+                  .reduce((sum, prevLoc) => {
+                    return (
+                      sum +
+                      rows.reduce((s, r) => {
+                        const p = (prevLoc[r.key] as Prize[]) || [];
+                        return s + (p.length > 0 ? p.length : 0);
+                      }, 0)
+                    );
+                  }, 0);
 
+                // Collect all prizes for this column in order so we can check
+                // whether a previous slot is still waiting for its value.
+                const allColumnPrizes: { pz: Prize; expectedLength: number }[] = [];
+                rows.forEach((row) => {
+                  const prizes = (loc[row.key] as Prize[]) || [];
+                  const expectedLength = LAYOUT_ONE_DIGIT_LENGTHS[row.key] ?? 5;
+                  if (prizes.length > 0) {
+                    prizes.forEach((pz) => allColumnPrizes.push({ pz, expectedLength }));
+                  }
+                });
 
+                let localSlotIndex = 0;
+                return rows.map((row, rowIdx) => {
+                  const prizes = (loc[row.key] as Prize[]) || [];
+                  const expectedLength = LAYOUT_ONE_DIGIT_LENGTHS[row.key] ?? 5;
+
+                  return (
+                    <div
+                      key={row.key}
+                      ref={(el) => {
+                        if (!allRowRefs.current[colIdx]) allRowRefs.current[colIdx] = [];
+                        allRowRefs.current[colIdx][rowIdx] = el;
+                      }}
+                      className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-none space-y-0 ${row.color}`}
+                    >
+                      {prizes.length > 0 ? (
+                        prizes.map((pz, idx) => {
+                          const slotIdx = localSlotIndex++;
+                          const len = pz.value ? pz.value.length : expectedLength;
+
+                          // Always use time-based status — even if pz.value exists,
+                          // the number is only revealed once the cell's splash window has passed.
+                          // (For past draws, computeCellDrawStatus returns "done" instantly for
+                          // all cells, so historical results still appear immediately.)
+                          const cellStatus = computeCellDrawStatus(
+                            dateParam,
+                            periodData?.displayNumber,
+                            totalPreviousSlots,
+                            slotIdx,
+                            displayConfig,
+                          );
+
+                          // Stage 3 — Reveal the real number (timing cleared AND value ready)
+                          if (cellStatus === "done" && pz.value) {
+                            return (
+                              <p
+                                key={idx}
+                                className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 p-0 leading-none"
+                              >
+                                {pz.value}
+                              </p>
+                            );
+                          }
+
+                          // Stage 1 — Not yet time for this slot's splash
+                          if (cellStatus === "pending") {
+                            return (
+                              <p key={idx} className="w-full m-0 p-0 leading-none flex items-center justify-center gap-0.5 py-0.5 overflow-hidden">
+                                {Array.from({ length: expectedLength }).map((__, d) => (
+                                  <Loader2 key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+                                ))}
+                              </p>
+                            );
+                          }
+
+                          // Stage 2 — Splash window active ("spinning"), OR window passed but
+                          // value not yet available ("done" + no value): keep rolling, never blank.
+                          // Also check: if a previous slot in this column is still rolling
+                          // (done-by-time but no value), keep this cell frozen as pending too.
+                          const anyPreviousStillRolling = allColumnPrizes
+                            .slice(0, slotIdx)
+                            .some((entry) => {
+                              if (entry.pz.value) return false;
+                              // previous slot has no value yet → it's still rolling
+                              return true;
+                            });
+
+                          if (anyPreviousStillRolling) {
+                            return (
+                              <p key={idx} className="w-full m-0 p-0 leading-none flex items-center justify-center gap-0.5 py-0.5 overflow-hidden">
+                                {Array.from({ length: expectedLength }).map((__, d) => (
+                                  <Loader2 key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+                                ))}
+                              </p>
+                            );
+                          }
+
+                          return (
+                            <p key={idx} className="w-full m-0 p-0 leading-none">
+                              <RollingDigits length={len} />
+                            </p>
+                          );
+                        })
+                      ) : (
+                        <span className="font-normal">--</span>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           ))}
         </div>

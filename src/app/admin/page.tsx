@@ -117,7 +117,8 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
   };
 
   const [columnTexts, setColumnTexts] = useState<Record<string, string>>({});
-  const [dirty, setDirty] = useState(false);
+  const [dirtyColumns, setDirtyColumns] = useState<Set<string | number>>(new Set());
+  const dirty = dirtyColumns.size > 0;
 
   // ── Inline edit state for location headers ──────────────────────────────
   type LocationEdit = { location: string; code: string };
@@ -144,7 +145,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
       initialTexts[loc.code || idx] = getInitialText(loc);
     });
     setColumnTexts(initialTexts);
-    setDirty(false);
+    setDirtyColumns(new Set());
     // Reset location edits to reflect new data
     const initLocEdits: Record<string, LocationEdit> = {};
     locations.forEach((loc: LocationData) => {
@@ -214,7 +215,6 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
   const { mutate: savePrizes, isPending } =
     trpc.upsertLotteryPrizes.useMutation({
       onSuccess: () => {
-        setDirty(false);
         onSaved();
         utils.getLotteryByDate.invalidate();
         toast.success("success");
@@ -242,36 +242,74 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
       initialTexts[loc.code || idx] = getInitialText(loc);
     });
     setColumnTexts(initialTexts);
-    setDirty(false);
+    setDirtyColumns(new Set());
   };
 
   const handleSave = () => {
-    if (!allValid) return;
     const allUpdates: { prizeId: string; value: string }[] = [];
+    const savedLocKeys: (string | number)[] = [];
 
     locations.forEach((loc: LocationData, idx: number) => {
       const locKey = loc.code || idx;
       const text = columnTexts[locKey] ?? "";
       const currentLines = getNormalizedLines(text);
-      const orderedPrizes = getOrderedPrizes(loc);
+      const isValid = currentLines.length <= expectedCount;
 
+      // Only save valid dirty columns
+      if (!dirtyColumns.has(locKey) || !isValid) return;
+
+      const orderedPrizes = getOrderedPrizes(loc);
       orderedPrizes.forEach((pz: Prize, pzIdx: number) => {
-        if (!pz.id) return; // skip prizes without a DB id (shouldn't happen in save flow)
+        if (!pz.id) return;
         allUpdates.push({
           prizeId: pz.id,
           value: currentLines[pzIdx] ?? "",
         });
       });
+      savedLocKeys.push(locKey);
     });
 
-    savePrizes(allUpdates);
+    if (allUpdates.length === 0) return;
+
+    savePrizes(allUpdates, {
+      onSuccess: () => {
+        setDirtyColumns((prev) => {
+          const next = new Set(prev);
+          savedLocKeys.forEach((key) => next.delete(key));
+          return next;
+        });
+      },
+    });
+  };
+
+  // Save a single column
+  const handleSaveColumn = (locKey: string | number, loc: LocationData) => {
+    const text = columnTexts[locKey] ?? "";
+    const currentLines = getNormalizedLines(text);
+    const orderedPrizes = getOrderedPrizes(loc);
+    const updates: { prizeId: string; value: string }[] = [];
+
+    orderedPrizes.forEach((pz: Prize, pzIdx: number) => {
+      if (!pz.id) return;
+      updates.push({ prizeId: pz.id, value: currentLines[pzIdx] ?? "" });
+    });
+
+    savePrizes(updates, {
+      onSuccess: () => {
+        setDirtyColumns((prev) => {
+          const next = new Set(prev);
+          next.delete(locKey);
+          return next;
+        });
+      },
+    });
   };
 
   const columnStatus = locations.map((loc: LocationData, idx: number) => {
     const locKey = loc.code || idx;
     const text = columnTexts[locKey] ?? "";
     const currentLines = getNormalizedLines(text);
-    const isValid = currentLines.length === expectedCount;
+    const isValid = currentLines.length <= expectedCount;
     return { locKey, isValid, count: currentLines.length };
   });
 
@@ -280,7 +318,10 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
     isValid: boolean;
     count: number;
   };
-  const allValid = columnStatus.every((status: ColumnStatus) => status.isValid);
+  // Check if any dirty column is valid (for enabling the Save button)
+  const hasValidDirtyColumn = columnStatus.some(
+    (status) => dirtyColumns.has(status.locKey) && status.isValid
+  );
 
   return (
     <div className="flex gap-4">
@@ -457,7 +498,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                             ...prev,
                             [locKey]: e.target.value,
                           }));
-                          setDirty(true);
+                          setDirtyColumns((prev) => new Set(prev).add(locKey));
                         }}
                         onPaste={(e) => {
                           e.preventDefault();
@@ -495,7 +536,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                             }));
                           }
 
-                          setDirty(true);
+                          setDirtyColumns((prev) => new Set(prev).add(locKey));
                         }}
                         className="w-full font-mono text-sm leading-7 py-2 px-3 border border-border rounded-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
                         style={{
@@ -524,25 +565,25 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
         </table>
 
         {dirty && (
-          <div className="flex justify-end gap-2 self-end mt-2 ">
+          <div className="flex justify-end gap-2 self-end mt-2">
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={handleSave}
+              disabled={!hasValidDirtyColumn || isPending}
+            >
+              {isPending && (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              )}
+              Save Valid Columns
+            </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleCancel}
               disabled={isPending}
             >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-[90px]"
-              onClick={handleSave}
-              disabled={!allValid || isPending}
-            >
-              {isPending && (
-                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-              )}
-              Save All
+              Cancel All
             </Button>
           </div>
         )}
