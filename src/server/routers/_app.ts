@@ -410,7 +410,6 @@ export const appRouter = router({
       return {
         splashMinutesBefore: settings.splashMinutesBefore,
         autoSeedMinutesBeforeSplash: settings.autoSeedMinutesBeforeSplash,
-        columnRevealIntervalMinutes: settings.columnRevealIntervalMinutes,
         cellSplashDurationSeconds: settings.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
         cellPauseIntervalSeconds: settings.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
       };
@@ -425,7 +424,6 @@ export const appRouter = router({
       z.object({
         splashMinutesBefore: z.number().int().min(0).max(60),
         autoSeedMinutesBeforeSplash: z.number().int().min(0).max(60),
-        columnRevealIntervalMinutes: z.number().int().min(0).max(60),
         cellSplashDurationSeconds: z.number().int().min(1).max(300),
         cellPauseIntervalSeconds: z.number().int().min(0).max(300),
       }),
@@ -438,7 +436,6 @@ export const appRouter = router({
           .set({
             splashMinutesBefore: input.splashMinutesBefore,
             autoSeedMinutesBeforeSplash: input.autoSeedMinutesBeforeSplash,
-            columnRevealIntervalMinutes: input.columnRevealIntervalMinutes,
             cellSplashDurationSeconds: input.cellSplashDurationSeconds,
             cellPauseIntervalSeconds: input.cellPauseIntervalSeconds,
             updatedAt: new Date(),

@@ -37,7 +37,6 @@ export function useDrawStatuses(
     drawTime,
     columnCount,
     config.splashMinutesBefore,
-    config.columnRevealIntervalMinutes,
     config.cellSplashDurationSeconds,
     config.cellPauseIntervalSeconds,
   ]);

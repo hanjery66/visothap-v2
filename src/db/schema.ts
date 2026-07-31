@@ -148,9 +148,6 @@ export const lotteryDisplaySetting = pgTable("lottery_display_setting", {
   autoSeedMinutesBeforeSplash: integer("auto_seed_minutes_before_splash")
     .notNull()
     .default(5),
-  columnRevealIntervalMinutes: integer("column_reveal_interval_minutes")
-    .notNull()
-    .default(1),
   cellSplashDurationSeconds: integer("cell_splash_duration_seconds")
     .notNull()
     .default(10),

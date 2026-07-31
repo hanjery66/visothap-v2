@@ -21,7 +21,7 @@ export function computeColumnDrawStatus(
     .second(0);
   const splashStart = drawMoment.subtract(config.splashMinutesBefore, "minute");
   const columnReveal = drawMoment.add(
-    columnIndex * config.columnRevealIntervalMinutes,
+    columnIndex * (config.cellPauseIntervalSeconds / 60),
     "minute",
   );
   const now = dayjs();

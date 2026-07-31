@@ -7,7 +7,7 @@ import { useDrawStatuses } from "@/hooks/useDrawStatus";
 import { formatDisplayDateTime } from "@/lib/utils";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
 import { trpc } from "@/app/_trpc/client";
-import { Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
 import {
   Table,
@@ -107,7 +107,7 @@ function renderNorthernPrizeCell(
       return (
         <span className="inline-flex items-center justify-center gap-0.5 overflow-hidden">
           {Array.from({ length: expectedLength }).map((_, d) => (
-            <Loader2 key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+            <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
           ))}
         </span>
       );
@@ -129,7 +129,7 @@ function renderNorthernPrizeCell(
       return (
         <span className="inline-flex items-center justify-center gap-0.5 overflow-hidden">
           {Array.from({ length: expectedLength }).map((_, d) => (
-            <Loader2 key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+            <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
           ))}
         </span>
       );

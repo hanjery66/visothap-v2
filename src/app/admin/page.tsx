@@ -43,9 +43,12 @@ interface PeriodEditorProps {
 }
 
 function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
+
+  console.log(periodData)
+
   if (!periodData?.data?.length) return null;
   const locations: LocationData[] = periodData.data;
-  const isNorthern = periodData.displayTable === "fourth";
+  const isNorthern = periodData.displayTable === "fourth"
 
   // Build the list of expected prize labels matching visual table layout exactly
   const getPrizesMeta = () => {
@@ -282,28 +285,6 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
     });
   };
 
-  // Save a single column
-  const handleSaveColumn = (locKey: string | number, loc: LocationData) => {
-    const text = columnTexts[locKey] ?? "";
-    const currentLines = getNormalizedLines(text);
-    const orderedPrizes = getOrderedPrizes(loc);
-    const updates: { prizeId: string; value: string }[] = [];
-
-    orderedPrizes.forEach((pz: Prize, pzIdx: number) => {
-      if (!pz.id) return;
-      updates.push({ prizeId: pz.id, value: currentLines[pzIdx] ?? "" });
-    });
-
-    savePrizes(updates, {
-      onSuccess: () => {
-        setDirtyColumns((prev) => {
-          const next = new Set(prev);
-          next.delete(locKey);
-          return next;
-        });
-      },
-    });
-  };
 
   const columnStatus = locations.map((loc: LocationData, idx: number) => {
     const locKey = loc.code || idx;
@@ -313,11 +294,6 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
     return { locKey, isValid, count: currentLines.length };
   });
 
-  type ColumnStatus = {
-    locKey: string | number;
-    isValid: boolean;
-    count: number;
-  };
   // Check if any dirty column is valid (for enabling the Save button)
   const hasValidDirtyColumn = columnStatus.some(
     (status) => dirtyColumns.has(status.locKey) && status.isValid
@@ -512,8 +488,8 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                           const groups: string[] = [];
 
-                          for (let i = 0; i < clean.length; i += 18) {
-                            groups.push(clean.slice(i, i + 18).join("\n"));
+                          for (let i = 0; i < clean.length; i += expectedCount) {
+                            groups.push(clean.slice(i, i + expectedCount).join("\n"));
                           }
 
                           if (groups.length > 1) {
@@ -548,7 +524,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                       <div className="text-sm mt-1">
                         {isValid ? (
                           <span className="text-emerald-600 font-medium">
-                            ✓ Valid ({expectedCount}/{expectedCount} lines)
+                            ✓ Valid {lineCount} lines
                           </span>
                         ) : (
                           <span className="text-red-500 font-semibold">
@@ -684,7 +660,7 @@ export default function AdminPage() {
         </Popover>
 
         {/* Seed / initialize */}
-        <Button
+        {/* <Button
           size="sm"
           onClick={() => seedDate({ date: selectedDate })}
           disabled={isWorking}
@@ -696,7 +672,7 @@ export default function AdminPage() {
             <DatabaseZap className="w-3.5 h-3.5" />
           )}
           {hasData ? "Re-initialize" : "Initialize Date"}
-        </Button>
+        </Button> */}
 
         <LotterySettingDialog />
 

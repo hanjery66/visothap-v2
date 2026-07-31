@@ -116,7 +116,6 @@ export default function LotteryScheduleSettings() {
             setDisplaySettings({
                 splashMinutesBefore: dbDisplaySettings.splashMinutesBefore,
                 autoSeedMinutesBeforeSplash: dbDisplaySettings.autoSeedMinutesBeforeSplash,
-                columnRevealIntervalMinutes: dbDisplaySettings.columnRevealIntervalMinutes,
                 cellSplashDurationSeconds: (dbDisplaySettings as any).cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
                 cellPauseIntervalSeconds: (dbDisplaySettings as any).cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
             });
@@ -265,25 +264,7 @@ export default function LotteryScheduleSettings() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="splash-minutes" className="text-xs text-muted-foreground">
-                                Splash starts before draw (minutes)
-                            </Label>
-                            <Input
-                                id="splash-minutes"
-                                type="number"
-                                min={0}
-                                max={60}
-                                value={displaySettings.splashMinutesBefore}
-                                onChange={(e) => {
-                                    setDirty(true);
-                                    setDisplaySettings((prev) => ({
-                                        ...prev,
-                                        splashMinutesBefore: Number(e.target.value),
-                                    }));
-                                }}
-                            />
-                        </div>
+                        
 
                         <div className="space-y-1.5">
                             <Label htmlFor="autoseed-minutes" className="text-xs text-muted-foreground">
@@ -306,20 +287,20 @@ export default function LotteryScheduleSettings() {
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label htmlFor="column-interval" className="text-xs text-muted-foreground">
-                                Minutes between each column reveal
+                            <Label htmlFor="splash-minutes" className="text-xs text-muted-foreground">
+                                Splash starts before draw (minutes)
                             </Label>
                             <Input
-                                id="column-interval"
+                                id="splash-minutes"
                                 type="number"
                                 min={0}
                                 max={60}
-                                value={displaySettings.columnRevealIntervalMinutes}
+                                value={displaySettings.splashMinutesBefore}
                                 onChange={(e) => {
                                     setDirty(true);
                                     setDisplaySettings((prev) => ({
                                         ...prev,
-                                        columnRevealIntervalMinutes: Number(e.target.value),
+                                        splashMinutesBefore: Number(e.target.value),
                                     }));
                                 }}
                             />

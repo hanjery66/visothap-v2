@@ -10,7 +10,7 @@ import { DEFAULT_LOTTERY_DISPLAY_SETTINGS, LotteryDisplayConfig } from "@/lib/lo
 import { trpc } from "@/app/_trpc/client";
 import { RollingDigits } from "@/components/RollingDigits";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
-import { Loader2 } from "lucide-react";
+import { Loader } from "lucide-react";
 
 const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
   gEight: 2,
@@ -37,7 +37,6 @@ export function LotteryTableLayoutOne({
   const displayConfig: LotteryDisplayConfig = {
     splashMinutesBefore: displaySettings?.splashMinutesBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
     autoSeedMinutesBeforeSplash: displaySettings?.autoSeedMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
-    columnRevealIntervalMinutes: displaySettings?.columnRevealIntervalMinutes ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.columnRevealIntervalMinutes,
     cellSplashDurationSeconds: (displaySettings as any)?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
     cellPauseIntervalSeconds: (displaySettings as any)?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
   };
@@ -360,7 +359,7 @@ export function LotteryTableLayoutOne({
                             return (
                               <p key={idx} className="w-full m-0 p-0 leading-none flex items-center justify-center gap-0.5 py-0.5 overflow-hidden">
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <Loader2 key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+                                  <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
                                 ))}
                               </p>
                             );
@@ -382,7 +381,7 @@ export function LotteryTableLayoutOne({
                             return (
                               <p key={idx} className="w-full m-0 p-0 leading-none flex items-center justify-center gap-0.5 py-0.5 overflow-hidden">
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <Loader2 key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+                                  <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
                                 ))}
                               </p>
                             );
