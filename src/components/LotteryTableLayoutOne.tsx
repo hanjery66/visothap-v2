@@ -10,7 +10,7 @@ import { DEFAULT_LOTTERY_DISPLAY_SETTINGS, LotteryDisplayConfig } from "@/lib/lo
 import { trpc } from "@/app/_trpc/client";
 import { RollingDigits } from "@/components/RollingDigits";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
-import { Loader } from "lucide-react";
+import { DigitSpinner } from "@/components/DigitSpinner";
 
 const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
   gEight: 2,
@@ -91,7 +91,7 @@ export function LotteryTableLayoutOne({
     {
       key: "gEight",
       label: getRowLabel("gEight", "Gi 8"),
-      color: "text-red-600 font-semibold text-[28px] md:text-[30px]",
+      color: "text-red-600 font-semibold text-[35px] md:text-[40px]",
     },
     {
       key: "gSeven",
@@ -131,7 +131,7 @@ export function LotteryTableLayoutOne({
     {
       key: "db",
       label: getRowLabel("db", "Đ. B"),
-      color: "text-red-600 font-semibold text-[22px] md:text-[25px]",
+      color: "text-red-600 font-semibold text-[25px] md:text-[28px]",
     },
   ];
 
@@ -208,7 +208,7 @@ export function LotteryTableLayoutOne({
   return (
     <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
       {/* Banner */}
-      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1 text-xs sm:text-sm">
+      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-sm">
         <span>
           {drawDateTimeLabel}{" "}
           {formattedName}
@@ -217,13 +217,13 @@ export function LotteryTableLayoutOne({
 
       {/* Pending notice */}
       {/* {isPending && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-700 text-xs text-center font-medium">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-0.5 text-amber-700 text-xs text-center font-medium">
           Chưa đến giờ quay · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
         </div>
       )} */}
 
       <div className="w-full overflow-hidden">
-        <div className="flex w-full py-2">
+        <div className="flex w-full">
           {/* ── Label column (not selectable) ── */}
           <div
             className="flex flex-col shrink-0 w-1/5 border-r border-zinc-200"
@@ -347,7 +347,7 @@ export function LotteryTableLayoutOne({
                             return (
                               <p
                                 key={idx}
-                                className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 p-0 leading-none"
+                                className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 leading-none py-1"
                               >
                                 {pz.value}
                               </p>
@@ -357,9 +357,9 @@ export function LotteryTableLayoutOne({
                           // Stage 1 — Not yet time for this slot's splash
                           if (cellStatus === "pending") {
                             return (
-                              <p key={idx} className="w-full m-0 p-0 leading-none flex items-center justify-center gap-0.5 py-0.5 overflow-hidden">
+                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 overflow-hidden">
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 " />
                                 ))}
                               </p>
                             );
@@ -379,22 +379,22 @@ export function LotteryTableLayoutOne({
 
                           if (anyPreviousStillRolling) {
                             return (
-                              <p key={idx} className="w-full m-0 p-0 leading-none flex items-center justify-center gap-0.5 py-0.5 overflow-hidden">
+                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 overflow-hidden">
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 " />
                                 ))}
                               </p>
                             );
                           }
 
                           return (
-                            <p key={idx} className="w-full m-0 p-0 leading-none">
+                            <p key={idx} className="w-full m-0 leading-none py-1">
                               <RollingDigits length={len} />
                             </p>
                           );
                         })
                       ) : (
-                        <span className="font-normal">--</span>
+                        <span className="font-normal py-1">--</span>
                       )}
                     </div>
                   );

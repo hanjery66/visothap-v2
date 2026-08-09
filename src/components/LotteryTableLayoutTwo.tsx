@@ -7,7 +7,7 @@ import { useDrawStatuses } from "@/hooks/useDrawStatus";
 import { formatDisplayDateTime } from "@/lib/utils";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
 import { trpc } from "@/app/_trpc/client";
-import { Loader } from "lucide-react";
+import { DigitSpinner } from "@/components/DigitSpinner";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
 import {
   Table,
@@ -86,11 +86,11 @@ function renderNorthernPrizeCell(
   allColumnPrizes: { pz: Prize; expectedLength: number }[],
 ) {
   if (!prizes || prizes.length === 0)
-    return <div className="text-zinc-300 font-normal leading-none">--</div>;
+    return <div className="text-zinc-300 font-normal leading-none py-1">--</div>;
 
   const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[key] ?? 5;
   const cellItem =
-    "hover:bg-primary hover:text-primary-foreground w-full rounded-xs cursor-pointer leading-none";
+    "hover:bg-primary hover:text-primary-foreground w-full rounded-xs cursor-pointer leading-none flex items-center justify-center text-center";
 
   const val = (pz: Prize, idx: number) => {
     const slotIdx = getNextSlotIndex();
@@ -105,9 +105,9 @@ function renderNorthernPrizeCell(
     // Stage 1 — Not yet time for this slot's splash
     if (cellStatus === "pending") {
       return (
-        <span className="inline-flex items-center justify-center gap-0.5 overflow-hidden">
+        <span className="w-full flex items-center justify-center gap-0.5 overflow-hidden">
           {Array.from({ length: expectedLength }).map((_, d) => (
-            <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+            <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
           ))}
         </span>
       );
@@ -127,9 +127,9 @@ function renderNorthernPrizeCell(
 
     if (anyPreviousStillRolling) {
       return (
-        <span className="inline-flex items-center justify-center gap-0.5 overflow-hidden">
+        <span className="w-full flex items-center justify-center gap-0.5 overflow-hidden">
           {Array.from({ length: expectedLength }).map((_, d) => (
-            <Loader key={d} className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-spin text-muted-foreground/70 shrink-0" />
+            <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
           ))}
         </span>
       );
@@ -142,54 +142,54 @@ function renderNorthernPrizeCell(
   switch (key) {
     case "db":
       return (
-        <div className={`${cellItem} text-red-600 text-[28px] md:text-[30px] font-semibold py-0.5`}>
+        <div className={`${cellItem} text-primary text-[35px] md:text-[40px] font-semibold py-1.5 sm:py-2`}>
           {val(prizes[0], 0)}
         </div>
       );
     case "gOne":
       return (
-        <div className={`${cellItem} text-zinc-800 font-semibold text-[17px] md:text-[19px] py-1`}>
+        <div className={`${cellItem} text-zinc-800 font-semibold text-[30px] md:text-[35px] py-2 sm:py-2.5`}>
           {val(prizes[0], 0)}
         </div>
       );
     case "gTwo":
       return (
-        <div className="flex justify-around items-center w-full text-zinc-800 font-semibold text-[17px] md:text-[19px] px-1">
+        <div className="flex justify-around items-stretch w-full h-full text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>{val(pz, idx)}</span>
+            <div key={idx} className={`${cellItem} flex-1 py-1.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
     case "gThree":
     case "gFive":
       return (
-        <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[17px] md:text-[19px] px-4">
+        <div className="grid grid-cols-3 w-full h-full text-center text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>{val(pz, idx)}</span>
+            <div key={idx} className={`${cellItem} py-1.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
     case "gFour":
       return (
-        <div className="grid grid-cols-2 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[17px] md:text-[19px] px-2 sm:px-4">
+        <div className="grid grid-cols-2 w-full h-full text-center text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={`${cellItem} p-0!`}>{val(pz, idx)}</span>
+            <div key={idx} className={`${cellItem} py-1.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
     case "gSix":
       return (
-        <div className="grid grid-cols-3 gap-y-1 gap-x-4 justify-center items-center w-full text-center text-zinc-800 font-semibold text-[17px] md:text-[19px] px-4">
+        <div className="grid grid-cols-3 w-full h-full text-center text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>{val(pz, idx)}</span>
+            <div key={idx} className={`${cellItem} py-1.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
     case "gSeven":
       return (
-        <div className="grid grid-cols-4 gap-x-2 justify-center items-center w-full text-center text-red-600 font-semibold text-[22px] md:text-[25px]">
+        <div className="grid grid-cols-4 w-full h-full text-center text-primary font-semibold text-[30px] md:text-[35px]">
           {prizes.map((pz, idx) => (
-            <span key={idx} className={cellItem}>{val(pz, idx)}</span>
+            <div key={idx} className={`${cellItem} py-2 sm:py-2.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -228,73 +228,70 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
   );
 
   return (
-    <div className="rounded-xs shadow-md mb-8 hover:shadow-lg">
+    <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
       {/* Table header */}
-      <div className="bg-primary text-primary-foreground py-1 font-bold text-center flex flex-col sm:flex-row justify-center items-center uppercase text-xs sm:text-sm">
+      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-sm">
         <span>
           {drawDateTimeLabel} {formattedName}
         </span>
       </div>
 
-      {/* Pending notice */}
-      {/* {isPending && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-amber-700 text-xs text-center font-medium">
-          Chưa đến giờ quay · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
+      <div className="w-full overflow-hidden">
+        <div className="w-full">
+          <Table className="w-full border-collapse">
+            <TableBody>
+              {/* Location row */}
+              <TableRow className="border-b border-zinc-200 font-bold hover:bg-transparent">
+                <TableCell className="font-semibold capitalize text-sm md:text-base border-r border-zinc-200 w-1/5 text-center py-0.5">
+                  {dayjs(dateParam).format("dddd")}
+                </TableCell>
+                <TableCell className="text-sm md:text-base text-center font-semibold py-0.5">
+                  {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
+                </TableCell>
+              </TableRow>
+
+              {/* Prize rows */}
+              {(() => {
+                // Collect all prizes for the column in order to check previous slots
+                const allColumnPrizes: { pz: Prize; expectedLength: number }[] = [];
+                rows.forEach((row) => {
+                  const prizes = (mainData[row.key] as Prize[]) || [];
+                  const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[row.key] ?? 5;
+                  if (prizes.length > 0) {
+                    prizes.forEach((pz) => allColumnPrizes.push({ pz, expectedLength }));
+                  }
+                });
+
+                let globalSlotIndex = 0;
+                return rows.map((row) => {
+                  const prizes = mainData[row.key] as Prize[];
+                  return (
+                    <TableRow
+                      key={row.key}
+                      className="border-b border-zinc-200 last:border-b-0 hover:bg-zinc-50/50 transition-colors"
+                    >
+                      <TableCell className="p-0 font-medium text-sm md:text-base text-muted-foreground border-r border-zinc-200 text-center w-1/5">
+                        {row.label}
+                      </TableCell>
+                      <TableCell className="p-0 text-center text-primary">
+                        {renderNorthernPrizeCell(
+                          row.key,
+                          prizes,
+                          dateParam,
+                          periodData?.displayNumber,
+                          displayConfig,
+                          () => globalSlotIndex++,
+                          allColumnPrizes,
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                });
+              })()}
+            </TableBody>
+          </Table>
         </div>
-      )} */}
-
-      <Table className="w-full border-collapse mb-2">
-        <TableBody>
-          {/* Location row */}
-          <TableRow className="border-b border-zinc-200 font-bold hover:bg-transparent">
-            <TableCell className="font-semibold capitalize text-sm md:text-base border-r border-zinc-200 w-1/4 text-center py-1">
-              {dayjs(dateParam).format("dddd")}
-            </TableCell>
-            <TableCell className="text-sm md:text-base text-center font-semibold py-1">
-              Ngày: {formatDisplayDateTime(dateParam)}
-            </TableCell>
-          </TableRow>
-
-          {/* Prize rows */}
-          {(() => {
-            // Collect all prizes for the column in order to check previous slots
-            const allColumnPrizes: { pz: Prize; expectedLength: number }[] = [];
-            rows.forEach((row) => {
-              const prizes = (mainData[row.key] as Prize[]) || [];
-              const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[row.key] ?? 5;
-              if (prizes.length > 0) {
-                prizes.forEach((pz) => allColumnPrizes.push({ pz, expectedLength }));
-              }
-            });
-
-            let globalSlotIndex = 0;
-            return rows.map((row) => {
-              const prizes = mainData[row.key] as Prize[];
-              return (
-                <TableRow
-                  key={row.key}
-                  className="border-b border-zinc-200 last:border-b-0 hover:bg-zinc-50/50 transition-colors"
-                >
-                  <TableCell className="p-0 font-medium text-sm md:text-base text-muted-foreground border-r border-zinc-200 text-center">
-                    {row.label}
-                  </TableCell>
-                  <TableCell className="p-0 text-center text-primary">
-                    {renderNorthernPrizeCell(
-                      row.key,
-                      prizes,
-                      dateParam,
-                      periodData?.displayNumber,
-                      displayConfig,
-                      () => globalSlotIndex++,
-                      allColumnPrizes,
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            });
-          })()}
-        </TableBody>
-      </Table>
+      </div>
     </div>
   );
 }

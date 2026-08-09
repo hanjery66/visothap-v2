@@ -660,7 +660,7 @@ export default function AdminPage() {
         </Popover>
 
         {/* Seed / initialize */}
-        {/* <Button
+        <Button
           size="sm"
           onClick={() => seedDate({ date: selectedDate })}
           disabled={isWorking}
@@ -672,7 +672,7 @@ export default function AdminPage() {
             <DatabaseZap className="w-3.5 h-3.5" />
           )}
           {hasData ? "Re-initialize" : "Initialize Date"}
-        </Button> */}
+        </Button>
 
         <LotterySettingDialog />
 
