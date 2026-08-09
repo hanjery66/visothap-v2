@@ -5,8 +5,8 @@ import TRPCProvider from "./_trpc/Provider";
 
 const kantum = Kantumruy_Pro({
   variable: "--font-kantum",
-  subsets: ["khmer"],
-  // weight: ["400", "500", "600", "700"],
+  subsets: ["khmer", "latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700"],
 });
 
 
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${kantum.className} antialiased`}
+      className={`${kantum.variable} ${kantum.className} antialiased`}
       suppressHydrationWarning={true}
     >
       <body className="min-h-full flex flex-col w-full">

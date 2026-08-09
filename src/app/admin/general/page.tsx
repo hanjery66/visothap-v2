@@ -436,7 +436,7 @@ export default function GeneralPage() {
                   value={leftFooterContent}
                   onChange={(e) => setLeftFooterContent(e.target.value)}
                   rows={3}
-                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2 shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
+                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2 shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="E.g. <p>© 2026 VISOTHAP. All rights reserved.</p>"
                   required
                 />
@@ -454,7 +454,7 @@ export default function GeneralPage() {
                   value={rightFooterContent}
                   onChange={(e) => setRightFooterContent(e.target.value)}
                   rows={3}
-                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2  shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 font-mono"
+                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2  shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
                   placeholder="E.g. <p>Contact: info@visothap.net</p>"
                   required
                 />

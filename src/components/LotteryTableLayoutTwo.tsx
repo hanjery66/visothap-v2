@@ -86,7 +86,7 @@ function renderNorthernPrizeCell(
   allColumnPrizes: { pz: Prize; expectedLength: number }[],
 ) {
   if (!prizes || prizes.length === 0)
-    return <div className="text-zinc-300 font-normal leading-none py-1">--</div>;
+    return <div className="text-zinc-300 font-normal leading-none py-1.5 h-[1.2em] flex items-center justify-center">--</div>;
 
   const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[key] ?? 5;
   const cellItem =
@@ -99,13 +99,13 @@ function renderNorthernPrizeCell(
 
     // Stage 3 — Reveal the real number (timing cleared AND value ready)
     if (cellStatus === "done" && pz.value) {
-      return <span>{pz.value}</span>;
+      return <span className="w-full h-[1.2em] flex items-center justify-center leading-none">{pz.value}</span>;
     }
 
     // Stage 1 — Not yet time for this slot's splash
     if (cellStatus === "pending") {
       return (
-        <span className="w-full flex items-center justify-center gap-0.5 overflow-hidden">
+        <span className="w-full h-[1.2em] flex items-center justify-center gap-0.5 overflow-hidden leading-none">
           {Array.from({ length: expectedLength }).map((_, d) => (
             <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
           ))}
@@ -127,7 +127,7 @@ function renderNorthernPrizeCell(
 
     if (anyPreviousStillRolling) {
       return (
-        <span className="w-full flex items-center justify-center gap-0.5 overflow-hidden">
+        <span className="w-full h-[1.2em] flex items-center justify-center gap-0.5 overflow-hidden leading-none">
           {Array.from({ length: expectedLength }).map((_, d) => (
             <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
           ))}
@@ -136,7 +136,7 @@ function renderNorthernPrizeCell(
     }
 
     // "spinning" OR "done-but-no-value": keep rolling until the server delivers the number
-    return <RollingDigits length={len} />;
+    return <span className="w-full h-[1.2em] flex items-center justify-center leading-none"><RollingDigits length={len} /></span>;
   };
 
   switch (key) {
@@ -148,7 +148,7 @@ function renderNorthernPrizeCell(
       );
     case "gOne":
       return (
-        <div className={`${cellItem} text-zinc-800 font-semibold text-[30px] md:text-[35px] py-2 sm:py-2.5`}>
+        <div className={`${cellItem} text-zinc-800 font-semibold text-[30px] md:text-[35px] py-0.5 sm:py-1`}>
           {val(prizes[0], 0)}
         </div>
       );
@@ -189,7 +189,7 @@ function renderNorthernPrizeCell(
       return (
         <div className="grid grid-cols-4 w-full h-full text-center text-primary font-semibold text-[30px] md:text-[35px]">
           {prizes.map((pz, idx) => (
-            <div key={idx} className={`${cellItem} py-2 sm:py-2.5`}>{val(pz, idx)}</div>
+            <div key={idx} className={`${cellItem} py-0.5 sm:py-1`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -238,14 +238,14 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
 
       <div className="w-full overflow-hidden">
         <div className="w-full">
-          <Table className="w-full border-collapse">
+          <Table className="w-full border-collapse table-fixed">
             <TableBody>
               {/* Location row */}
               <TableRow className="border-b border-zinc-200 font-bold hover:bg-transparent">
                 <TableCell className="font-semibold capitalize text-sm md:text-base border-r border-zinc-200 w-1/5 text-center py-0.5">
                   {dayjs(dateParam).format("dddd")}
                 </TableCell>
-                <TableCell className="text-sm md:text-base text-center font-semibold py-0.5">
+                <TableCell className="text-sm md:text-base text-center font-semibold py-0.5 w-4/5">
                   {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
                 </TableCell>
               </TableRow>
@@ -273,7 +273,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
                       <TableCell className="p-0 font-medium text-sm md:text-base text-muted-foreground border-r border-zinc-200 text-center w-1/5">
                         {row.label}
                       </TableCell>
-                      <TableCell className="p-0 text-center text-primary">
+                      <TableCell className="p-0 text-center text-primary w-4/5">
                         {renderNorthernPrizeCell(
                           row.key,
                           prizes,

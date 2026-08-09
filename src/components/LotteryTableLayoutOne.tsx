@@ -262,7 +262,7 @@ export function LotteryTableLayoutOne({
           {locations.map((loc, colIdx) => (
             <div
               key={colIdx}
-              className="flex flex-col flex-1 border-r border-zinc-200 last:border-r-0"
+              className="flex flex-col flex-1 min-w-0 basis-0 border-r border-zinc-200 last:border-r-0"
             >
               {/* Header row 1 */}
               <div
@@ -347,7 +347,7 @@ export function LotteryTableLayoutOne({
                             return (
                               <p
                                 key={idx}
-                                className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 leading-none py-1"
+                                className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 leading-none py-1 h-[1.2em] flex items-center justify-center"
                               >
                                 {pz.value}
                               </p>
@@ -357,9 +357,9 @@ export function LotteryTableLayoutOne({
                           // Stage 1 — Not yet time for this slot's splash
                           if (cellStatus === "pending") {
                             return (
-                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 overflow-hidden">
+                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden">
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 " />
+                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
                                 ))}
                               </p>
                             );
@@ -379,22 +379,22 @@ export function LotteryTableLayoutOne({
 
                           if (anyPreviousStillRolling) {
                             return (
-                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 overflow-hidden">
+                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden">
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 " />
+                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
                                 ))}
                               </p>
                             );
                           }
 
                           return (
-                            <p key={idx} className="w-full m-0 leading-none py-1">
+                            <p key={idx} className="w-full m-0 leading-none py-1 h-[1.2em] flex items-center justify-center">
                               <RollingDigits length={len} />
                             </p>
                           );
                         })
                       ) : (
-                        <span className="font-normal py-1">--</span>
+                        <span className="font-normal py-1 h-[1.2em] flex items-center justify-center">--</span>
                       )}
                     </div>
                   );

@@ -514,7 +514,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                           setDirtyColumns((prev) => new Set(prev).add(locKey));
                         }}
-                        className="w-full font-mono text-sm leading-7 py-2 px-3 border border-border rounded-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
+                        className="w-full text-sm leading-7 py-2 px-3 border border-border rounded-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
                         style={{
                           height: `${expectedCount * 28 + 16}px`, // 28px per line + 16px padding
                         }}

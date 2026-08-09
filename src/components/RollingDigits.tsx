@@ -10,7 +10,7 @@ interface RollingDigitsProps {
 export function RollingDigits({ length = 5, className = "" }: RollingDigitsProps) {
   const digits = useSplashNumber({ length, intervalMs: 80 });
   return (
-    <span className={`inline-block font-mono tracking-wider select-none animate-pulse ${className}`}>
+    <span className={`inline-block tabular-nums select-none ${className}`}>
       {digits}
     </span>
   );

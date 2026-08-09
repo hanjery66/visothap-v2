@@ -75,6 +75,7 @@
 }
 
 @theme {
+  --font-sans: var(--font-kantum), sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -100,6 +101,15 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+}
+
+html,
+body,
+input,
+textarea,
+button,
+select {
+  font-family: var(--font-kantum), sans-serif;
 }
 
 body {
