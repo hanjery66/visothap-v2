@@ -86,11 +86,11 @@ function renderNorthernPrizeCell(
   allColumnPrizes: { pz: Prize; expectedLength: number }[],
 ) {
   if (!prizes || prizes.length === 0)
-    return <div className="text-zinc-300 font-normal leading-none py-1.5 h-[1.2em] flex items-center justify-center">--</div>;
+    return <div className="hover:bg-[#fbebd7] text-zinc-300 font-normal leading-none py-0.5 h-[1.2em] flex items-center justify-center w-full cursor-pointer">--</div>;
 
   const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[key] ?? 5;
   const cellItem =
-    "hover:bg-primary hover:text-primary-foreground w-full rounded-xs cursor-pointer leading-none flex items-center justify-center text-center";
+    "hover:bg-[#fbebd7] w-full  cursor-pointer leading-none flex items-center justify-center text-center";
 
   const val = (pz: Prize, idx: number) => {
     const slotIdx = getNextSlotIndex();
@@ -142,13 +142,13 @@ function renderNorthernPrizeCell(
   switch (key) {
     case "db":
       return (
-        <div className={`${cellItem} text-primary text-[35px] md:text-[40px] font-semibold py-1.5 sm:py-2`}>
+        <div className={`${cellItem} text-primary text-[35px] md:text-[40px] font-semibold py-0.5 sm:py-1`}>
           {val(prizes[0], 0)}
         </div>
       );
     case "gOne":
       return (
-        <div className={`${cellItem} text-zinc-800 font-semibold text-[30px] md:text-[35px] py-0.5 sm:py-1`}>
+        <div className={`${cellItem} text-zinc-800 font-semibold text-[25px] md:text-[30px] py-0.5`}>
           {val(prizes[0], 0)}
         </div>
       );
@@ -156,7 +156,7 @@ function renderNorthernPrizeCell(
       return (
         <div className="flex justify-around items-stretch w-full h-full text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <div key={idx} className={`${cellItem} flex-1 py-1.5`}>{val(pz, idx)}</div>
+            <div key={idx} className={`${cellItem} flex-1 py-0.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -165,7 +165,7 @@ function renderNorthernPrizeCell(
       return (
         <div className="grid grid-cols-3 w-full h-full text-center text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <div key={idx} className={`${cellItem} py-1.5`}>{val(pz, idx)}</div>
+            <div key={idx} className={`${cellItem} py-0.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -173,7 +173,7 @@ function renderNorthernPrizeCell(
       return (
         <div className="grid grid-cols-2 w-full h-full text-center text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <div key={idx} className={`${cellItem} py-1.5`}>{val(pz, idx)}</div>
+            <div key={idx} className={`${cellItem} py-0.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -181,7 +181,7 @@ function renderNorthernPrizeCell(
       return (
         <div className="grid grid-cols-3 w-full h-full text-center text-zinc-800 font-semibold text-[18px] md:text-[20px]">
           {prizes.map((pz, idx) => (
-            <div key={idx} className={`${cellItem} py-1.5`}>{val(pz, idx)}</div>
+            <div key={idx} className={`${cellItem} py-0.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -189,7 +189,7 @@ function renderNorthernPrizeCell(
       return (
         <div className="grid grid-cols-4 w-full h-full text-center text-primary font-semibold text-[30px] md:text-[35px]">
           {prizes.map((pz, idx) => (
-            <div key={idx} className={`${cellItem} py-0.5 sm:py-1`}>{val(pz, idx)}</div>
+            <div key={idx} className={`${cellItem} py-0.5`}>{val(pz, idx)}</div>
           ))}
         </div>
       );
@@ -201,12 +201,6 @@ function renderNorthernPrizeCell(
 export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLayoutTwoProps) {
   const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
   const displayConfig = displaySettings ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS;
-  const { columnStatuses, isPending, isSpinning } = useDrawStatuses(
-    dateParam,
-    periodData?.displayNumber,
-    1,
-    displayConfig,
-  );
   const rows = useMemo(() => {
     if (!periodData?.data?.length) return [];
     return DEFAULT_ROW_LABELS.map(({ key, defaultLabel }) => ({
@@ -224,15 +218,15 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
   const drawDateTimeLabel = formatDisplayDateTime(
     dateParam,
     periodData.displayNumber,
-    "hh:mm A"
+    "hh:mm A - DD/MM/YYYY"
   );
 
   return (
-    <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
+    <div className="rounded shadow-md overflow-hidden transition-all hover:shadow-lg">
       {/* Table header */}
       <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-sm">
         <span>
-          {drawDateTimeLabel} {formattedName}
+          {drawDateTimeLabel} {" "} {formattedName}
         </span>
       </div>
 
@@ -246,7 +240,7 @@ export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLay
                   {dayjs(dateParam).format("dddd")}
                 </TableCell>
                 <TableCell className="text-sm md:text-base text-center font-semibold py-0.5 w-4/5">
-                  {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
+                  Ngày: {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
                 </TableCell>
               </TableRow>
 

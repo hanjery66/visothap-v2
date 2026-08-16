@@ -18,6 +18,7 @@ import {
 } from "@/server/lottery-seed";
 import { ensureDisplaySettingsSeeded } from "@/server/lottery-display";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
+import { DEFAULT_PERIOD_SCHEDULE, getDayKeyFromDate } from "@/lib/lottery-schedule";
 
 export const appRouter = router({
   getUsers: publicProcedure.query(async () => {
@@ -54,20 +55,23 @@ export const appRouter = router({
     .input(
       z.object({
         name: z.string().min(2, "Name must be at least 2 characters long"),
-        email: z.string().email("Invalid email address"),
+        email: z.string().email("Invalid email address").optional(),
         username: z.string().min(2, "Username must be at least 2 characters long"),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
+        const updateData: Record<string, any> = {
+          name: input.name,
+          username: input.username.trim().toLowerCase(),
+          displayUsername: input.username.trim(),
+        };
+        if (input.email) {
+          updateData.email = input.email.trim();
+        }
         await db
           .update(user)
-          .set({
-            name: input.name,
-            email: input.email.trim(),
-            username: input.username.trim().toLowerCase(),
-            displayUsername: input.username.trim(),
-          })
+          .set(updateData)
           .where(eq(user.id, ctx.user.id));
         return { success: true };
       } catch (err: unknown) {
@@ -117,12 +121,12 @@ export const appRouter = router({
       if (adsList.length === 0) {
         console.log("ℹ️ No advertisements found in database. Auto-seeding default advertisements...");
         const defaultAds = [
-          { id: "ads-1", title: "Bia Saigon Gold", position: "Left" as const, image: "https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=400&q=80", status: true },
-          { id: "ads-2", title: "Vé Số Kiến Thiết", position: "Left" as const, image: "https://images.unsplash.com/photo-1777896116711-837c58809f9c?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", status: true },
-          { id: "ads-3", title: "Đông Á Bank", position: "Right" as const, image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=400&q=80", status: true },
-          { id: "ads-4", title: "Trà Xanh Không Độ", position: "Right" as const, image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80", status: true },
-          { id: "ads-5", title: "Khuyến Mãi Lớn", position: "Center" as const, image: "https://images.unsplash.com/photo-1472851294608-062f824d296e?auto=format&fit=crop&w=800&q=80", status: true },
-          { id: "ads-6", title: "Cơm Tấm Cali", position: "Center" as const, image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=800&q=80", status: true }
+          { id: "ads-1", position: "Left" as const, image: "https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=400&q=80", status: true },
+          { id: "ads-2", position: "Left" as const, image: "https://images.unsplash.com/photo-1777896116711-837c58809f9c?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", status: true },
+          { id: "ads-3", position: "Right" as const, image: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=400&q=80", status: true },
+          { id: "ads-4", position: "Right" as const, image: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=400&q=80", status: true },
+          { id: "ads-5", position: "Center" as const, image: "https://images.unsplash.com/photo-1472851294608-062f824d296e?auto=format&fit=crop&w=800&q=80", status: true },
+          { id: "ads-6", position: "Center" as const, image: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=800&q=80", status: true }
         ];
 
         const seedData = defaultAds.map(ad => ({
@@ -175,7 +179,6 @@ export const appRouter = router({
     .input(
       z.object({
         id: z.string().optional(),
-        title: z.string().min(1, "Title is required"),
         position: z.enum(["Left", "Right", "Center"]),
         image: z.string().min(1, "Image URL is required"),
         status: z.boolean().default(true),
@@ -199,7 +202,6 @@ export const appRouter = router({
           await db
             .update(advertisement)
             .set({
-              title: input.title,
               position: input.position,
               image: input.image,
               status: input.status,
@@ -212,7 +214,6 @@ export const appRouter = router({
           const newId = `ads-${crypto.randomUUID()}`;
           await db.insert(advertisement).values({
             id: newId,
-            title: input.title,
             position: input.position,
             image: input.image,
             status: input.status,
@@ -291,7 +292,7 @@ export const appRouter = router({
   saveGeneralSettings: authedProcedure
     .input(
       z.object({
-        logo: z.string().min(1, "Mini logo is required"),
+        logo: z.string().optional(),
         fullLogo: z.string().min(1, "Full header logo is required"),
         leftFooterContent: z.string().min(1, "Left footer content is required"),
         rightFooterContent: z.string().min(1, "Right footer content is required"),
@@ -304,8 +305,10 @@ export const appRouter = router({
           .from(generalSetting)
           .limit(1);
 
+        const newLogo = input.logo ?? existing?.logo ?? "/logo.png";
+
         if (existing) {
-          if (existing.logo !== input.logo) {
+          if (input.logo && existing.logo !== input.logo) {
             await deleteFileFromS3(existing.logo);
           }
           if (existing.fullLogo !== input.fullLogo) {
@@ -315,7 +318,7 @@ export const appRouter = router({
           await db
             .update(generalSetting)
             .set({
-              logo: input.logo,
+              logo: newLogo,
               fullLogo: input.fullLogo,
               leftFooterContent: input.leftFooterContent,
               rightFooterContent: input.rightFooterContent,
@@ -327,7 +330,7 @@ export const appRouter = router({
           const newId = "general-1";
           await db.insert(generalSetting).values({
             id: newId,
-            logo: input.logo,
+            logo: newLogo,
             fullLogo: input.fullLogo,
             leftFooterContent: input.leftFooterContent,
             rightFooterContent: input.rightFooterContent,
@@ -397,6 +400,26 @@ export const appRouter = router({
             });
           }
         }
+
+        // Keep all active sessions updated with the latest schedule draw times and names
+        const allSessions = await db.select().from(lotterySession);
+        for (const sess of allSessions) {
+          const dayKey = getDayKeyFromDate(sess.date);
+          const matchedSchedule = input.find(
+            (item) => item.dayOfWeek === dayKey && item.period === sess.period
+          );
+          if (matchedSchedule) {
+            await db
+              .update(lotterySession)
+              .set({
+                name: matchedSchedule.name,
+                displayNumber: matchedSchedule.drawTime,
+                updatedAt: new Date(),
+              })
+              .where(eq(lotterySession.id, sess.id));
+          }
+        }
+
         return { success: true };
       } catch (error) {
         console.error("tRPC saveLotterySchedule database error:", error);
@@ -550,9 +573,9 @@ export const appRouter = router({
         });
 
         result[period] = {
-          name: schedule?.name ?? session.name,
+          name: schedule?.name || session.name || DEFAULT_PERIOD_SCHEDULE[period].name,
           displayTable: session.displayTable,
-          displayNumber: schedule?.drawTime ?? session.displayNumber,
+          displayNumber: schedule?.drawTime || session.displayNumber || DEFAULT_PERIOD_SCHEDULE[period].drawTime,
           sessionId: session.id,
           prizeLabels: session.prizeLabels ? JSON.parse(session.prizeLabels) : null,
           ...Object.fromEntries(PRIZE_KEYS.map((k) => [k, PERIOD_LABELS[k].label])),

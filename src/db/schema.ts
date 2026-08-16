@@ -57,7 +57,6 @@ export const verification = pgTable("verification", {
 
 export const advertisement = pgTable("advertisement", {
   id: text("id").primaryKey(),
-  title: text("title").notNull(),
   position: text("position").$type<"Left" | "Right" | "Center">().notNull(),
   image: text("image").notNull(),
   status: boolean("status").default(true).notNull(),

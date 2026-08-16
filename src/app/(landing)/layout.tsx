@@ -44,27 +44,27 @@ function LandingHeaderAndNav({
   return (
     <>
       {/* Top logo header */}
-      <header className="mt-2">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3">
+      <header className="mt-2 w-full">
+        <div className="flex justify-between items-center w-full">
+          <Link href="/" className="flex items-center gap-3 shrink-0">
             {settings?.fullLogo ? (
-              <div className="relative h-12 w-auto">
+              <div className="relative h-12 w-auto max-w-[200px] sm:max-w-xs flex items-center">
                 <Image
                   src={settings.fullLogo}
                   alt="Logo Header"
-                  height={50}
-                  width={50}
-                  className="object-contain w-full h-full"
+                  height={48}
+                  width={200}
+                  className="object-contain object-left h-12 w-auto"
                   unoptimized
                 />
               </div>
             ) : (
-              <div className="h-12 flex items-center justify-center font-bold text-2xl text-primary tracking-wide font-mono">
+              <div className="h-12 flex items-center font-bold text-2xl text-primary tracking-wide font-mono">
                 Logo
               </div>
             )}
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             <Button asChild variant="dark">
               <Link href="/admin" className="flex items-center gap-1.5">
                 <LayoutDashboard size={16} strokeWidth={2.5} />
@@ -76,7 +76,7 @@ function LandingHeaderAndNav({
       </header>
 
       {/* Nav is full width, inner ul is constrained by container */}
-      <nav className="border mt-2 border-primary backdrop-blur-2xl sticky top-0 z-50 rounded-xs overflow-x-auto scrollbar-none w-full">
+      <nav className="border mt-2 border-primary backdrop-blur-2xl sticky top-0 z-50 rounded  overflow-x-auto scrollbar-none w-full">
         <div className="">
           <ul className="flex flex-row w-full justify-between items-stretch">
             {navigations.map((nav) => {
@@ -126,7 +126,7 @@ export default function LandingLayout({
         <main className="flex-1 py-6">
           <Suspense
             fallback={
-              <div className="bg-white rounded-xs shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
+              <div className="bg-white rounded  shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#15bece]"></div>
                 Loading ...
               </div>

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Pencil,
   Trash2,
@@ -17,6 +16,7 @@ import {
   ImagePlus,
   Plus,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
@@ -89,7 +89,6 @@ export default function AdvertisementPage() {
     setSelectedFile(null);
     setFormAd({
       id: ad.id,
-      title: ad.title,
       position: ad.position,
       image: ad.image,
       status: ad.status,
@@ -99,7 +98,6 @@ export default function AdvertisementPage() {
   const handleCreateNew = () => {
     setSelectedFile(null);
     setFormAd({
-      title: "",
       position: "Left",
       image: "",
       status: true,
@@ -114,20 +112,16 @@ export default function AdvertisementPage() {
     setFormAd(null);
   };
 
-  const handleDelete = (id: string, title: string) => {
-    if (
-      confirm(
-        `Are you sure you want to delete the advertisement banner "${title}"?`,
-      )
-    ) {
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this advertisement banner?")) {
       deleteMutation.mutate({ id });
     }
   };
 
   const handleSaveAd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formAd || !formAd.title || !formAd.position || !formAd.image) {
-      toast.error("Please fill in all required fields and upload an image.");
+    if (!formAd || !formAd.position || !formAd.image) {
+      toast.error("Please select a position and upload an image.");
       return;
     }
 
@@ -168,7 +162,6 @@ export default function AdvertisementPage() {
 
     saveMutation.mutate({
       id: formAd.id,
-      title: formAd.title,
       position: formAd.position,
       image: finalImageUrl,
       status: formAd.status ?? true,
@@ -188,22 +181,21 @@ export default function AdvertisementPage() {
   const columns: ColumnDef<Ads>[] = [
     {
       accessorKey: "image",
-      header: "Banner",
+      header: "Banner Preview",
       cell: ({ row }) => {
         const image = row.getValue("image") as string;
-        const title = row.getValue("title") as string;
         return (
-          <div className="relative group w-12 h-12 rounded  overflow-hidden flex items-center justify-center shadow-md">
+          <div className="relative group w-16 h-12 rounded overflow-hidden flex items-center justify-center border border-zinc-200 bg-zinc-50 shadow-xs">
             {image ? (
               <Image
                 src={image}
-                alt={title}
+                alt="Banner"
                 fill
-                className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-200"
+                className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-200"
                 unoptimized
               />
             ) : (
-              <span className="text-xs text-zinc-650 font-bold uppercase">
+              <span className="text-[10px] text-zinc-400 font-bold uppercase">
                 No Pic
               </span>
             )}
@@ -212,28 +204,19 @@ export default function AdvertisementPage() {
       },
     },
     {
-      accessorKey: "title",
-      header: "Title",
-      cell: ({ row }) => (
-        <div className="max-w-[200px] truncate" title={row.getValue("title")}>
-          {row.getValue("title")}
-        </div>
-      ),
-    },
-    {
       accessorKey: "position",
       header: "Display Position",
       cell: ({ row }) => {
         const pos = row.getValue("position") as string;
         const colorMap: Record<string, string> = {
-          Left: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-          Right: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-          Center: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+          Left: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+          Right: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+          Center: "bg-purple-500/10 text-purple-600 border-purple-500/20",
         };
-        const colorClass = colorMap[pos] || " border-zinc-700";
+        const colorClass = colorMap[pos] || " border-zinc-200";
         return (
           <span
-            className={`px-2 py-0.5 rounded  uppercase border ${colorClass}`}
+            className={`px-2.5 py-0.5 rounded text-xs font-semibold uppercase border ${colorClass}`}
           >
             {pos} Column
           </span>
@@ -252,7 +235,7 @@ export default function AdvertisementPage() {
               onCheckedChange={() => handleToggleAdStatus(ad.id, ad.status)}
             />
             <span
-              className={` w-10 text-left ${ad.status ? "text-primary" : "text-zinc-500"}`}
+              className={`w-12 text-left text-xs font-medium ${ad.status ? "text-primary font-semibold" : "text-zinc-400"}`}
             >
               {ad.status ? "Active" : "Hidden"}
             </span>
@@ -272,13 +255,16 @@ export default function AdvertisementPage() {
               size="icon"
               title="Edit Banner"
               variant={"outline"}
+              className="h-8 w-8 rounded"
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
             <Button
-              onClick={() => handleDelete(ad.id, ad.title)}
+              onClick={() => handleDelete(ad.id)}
               size="icon"
               title="Delete Banner"
+              variant="outline"
+              className="h-8 w-8 rounded text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -289,56 +275,27 @@ export default function AdvertisementPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        {!formAd && (
+    <div className="w-full max-w-5xl flex flex-col gap-6">
+      {!formAd && (
+        <div className="flex justify-between items-center">
           <Button
             onClick={handleCreateNew}
             size="sm"
-            className="flex items-center gap-1.5 font-bold shadow-md"
+            className="flex items-center gap-1.5 font-bold shadow-xs rounded"
           >
             <Plus className="h-4 w-4" />
             Add Banner
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Editing / Creating Ad Form Overlay */}
       {formAd && (
-        <Card className="rounded-xl flex flex-col gap-4">
-          <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
-          <CardHeader className="px-5 pt-5 pb-0">
-            <CardTitle className=" text-primary flex items-center gap-2">
-              <ImagePlus className="h-4 w-4 text-primary" />
-              {formAd.id
-                ? "Modify Advertisement Banner"
-                : "Create New Advertisement Banner"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            <form onSubmit={handleSaveAd} className="flex flex-col gap-5">
+        <form onSubmit={handleSaveAd} className="flex flex-col gap-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Title */}
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="ad-title" className=" font-bold">
-                    Advertisement Title
-                  </Label>
-                  <Input
-                    id="ad-title"
-                    type="text"
-                    placeholder="Enter advertisement campaign/title"
-                    value={formAd.title || ""}
-                    onChange={(e) =>
-                      setFormAd({ ...formAd, title: e.target.value })
-                    }
-                    required
-                    className="focus:border-pritext-primary"
-                  />
-                </div>
-
                 {/* Position */}
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="ad-position" className="text-xs font-bold">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="ad-position" className="text-xs font-medium text-zinc-600">
                     Display Position
                   </Label>
                   <Select
@@ -350,7 +307,7 @@ export default function AdvertisementPage() {
                       })
                     }
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full rounded bg-white">
                       <SelectValue placeholder="Display Position" />
                     </SelectTrigger>
                     <SelectContent>
@@ -363,16 +320,37 @@ export default function AdvertisementPage() {
                   </Select>
                 </div>
 
-                {/* Premium File Upload and URL Preview Section */}
+                {/* Status Switch in Form */}
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="form-status" className="text-xs font-medium text-zinc-600">
+                    Visibility Status
+                  </Label>
+                  <div className="flex items-center gap-2 border border-zinc-200 bg-white px-3 py-1.5 rounded h-9 shadow-xs">
+                    <Switch
+                      id="form-status"
+                      checked={formAd.status ?? true}
+                      onCheckedChange={(checked) =>
+                        setFormAd({ ...formAd, status: checked })
+                      }
+                    />
+                    <span
+                      className={`text-xs font-semibold ${(formAd.status ?? true) ? "text-primary" : "text-zinc-400"}`}
+                    >
+                      {(formAd.status ?? true) ? "Active" : "Hidden"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* File Upload and URL Preview Section */}
                 <div className="md:col-span-2 flex flex-col gap-2">
-                  <Label className=" font-bold">
+                  <Label className="text-xs font-medium text-zinc-600">
                     Banner Advertisement Image
                   </Label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                     {/* Visual Dropzone / File Picker */}
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="md:col-span-2 border border-primary/30 border-dashed hover:border-primary/50  rounded-xs p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all min-h-[120px] group relative"
+                      className="md:col-span-2 border border-zinc-200 border-dashed hover:border-primary/50 bg-white rounded p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all min-h-[120px] group relative"
                     >
                       <input
                         type="file"
@@ -384,20 +362,20 @@ export default function AdvertisementPage() {
 
                       {uploading ? (
                         <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                          <span className="text-sm  font-medium">
+                          <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                          <span className="text-xs font-medium text-zinc-600">
                             Processing file upload...
                           </span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-1.5 text-center">
-                          <div className="p-2 rounded-full  text-primary  group-hover:text-primary transition-colors">
+                          <div className="p-2 rounded text-primary group-hover:text-primary transition-colors">
                             <Upload className="h-5 w-5" />
                           </div>
-                          <span className="text-xs font-semibold text-primary">
+                          <span className="text-xs font-semibold text-foreground">
                             Click to select image file
                           </span>
-                          <span className="text-sm text-primary/50">
+                          <span className="text-xs text-zinc-400">
                             JPG, PNG, WEBP, GIF up to 5MB
                           </span>
                         </div>
@@ -405,7 +383,7 @@ export default function AdvertisementPage() {
                     </div>
 
                     {/* Image Preview Block */}
-                    <div className="w-full h-[120px] rounded-xs border border-primary/30  overflow-hidden flex items-center justify-center relative group">
+                    <div className="w-full h-[120px] rounded border border-zinc-200 bg-white overflow-hidden flex items-center justify-center relative group">
                       {formAd.image ? (
                         <>
                           <Image
@@ -415,18 +393,18 @@ export default function AdvertisementPage() {
                             className="w-full h-full object-cover"
                             unoptimized
                           />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center">
-                            <span className="text-sm text-zinc-300 font-bold uppercase truncate max-w-full">
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center text-white">
+                            <span className="text-xs font-bold uppercase truncate max-w-full">
                               {formAd.image.startsWith("/uploads/")
                                 ? "Uploaded Locally"
-                                : "External URL"}
+                                : "Image Loaded"}
                             </span>
                           </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center gap-1 text-primary/50 text-center p-2">
-                          <ImagePlus className="h-7 w-7" />
-                          <span className=" uppercase">
+                        <div className="flex flex-col items-center gap-1 text-zinc-400 text-center p-2">
+                          <ImagePlus className="h-6 w-6" />
+                          <span className="text-[10px] font-bold uppercase">
                             No Image Loaded
                           </span>
                         </div>
@@ -435,14 +413,14 @@ export default function AdvertisementPage() {
                   </div>
                 </div>
 
-                {/* Direct Image Link Fallback (for flexibility) */}
+                {/* Direct Image Link Fallback */}
                 <div className="md:col-span-2 flex flex-col gap-1.5">
                   <Label
                     htmlFor="ad-image-url"
-                    className="text-xs text-zinc-500 font-semibold flex items-center gap-1"
+                    className="text-xs text-zinc-500 font-medium flex items-center gap-1"
                   >
-                    <AlertCircle className="h-3 w-3 text-zinc-650" />
-                    Or paste direct external Image URL Link
+                    <AlertCircle className="h-3 w-3 text-zinc-400" />
+                    Or paste direct image URL
                   </Label>
                   <Input
                     id="ad-image-url"
@@ -453,47 +431,26 @@ export default function AdvertisementPage() {
                       setFormAd({ ...formAd, image: e.target.value })
                     }
                     required
-                    className="focus:border-primary text-xs font-mono "
+                    className="focus:border-primary text-xs font-mono bg-white"
                   />
-                </div>
-
-                {/* Status Switch in Form */}
-                <div className="flex items-center gap-3">
-                  <Label htmlFor="form-status" className="text-xs  font-bold">
-                    Visibility Status
-                  </Label>
-                  <div className="flex items-center gap-2  border border-primary/30  px-3 py-1.5 rounded-xs shadow-sm">
-                    <Switch
-                      id="form-status"
-                      checked={formAd.status ?? true}
-                      onCheckedChange={(checked) =>
-                        setFormAd({ ...formAd, status: checked })
-                      }
-                    />
-                    <span
-                      className={`text-xs font-bold ${(formAd.status ?? true) ? "text-primary" : "text-muted-foreground"}`}
-                    >
-                      {(formAd.status ?? true) ? "Active" : "Hidden"}
-                    </span>
-                  </div>
                 </div>
               </div>
 
               {/* Form Buttons */}
-              <div className="flex justify-end gap-2 border-t border-primary/30 pt-4 mt-2">
+              <div className="flex justify-end gap-2 border-t border-zinc-200 pt-4 mt-2">
                 <Button
                   type="button"
                   onClick={handleCancel}
                   variant="outline"
                   size="sm"
-                  className="px-4 font-semibold text-xs border border-primary"
+                  className="px-4 font-semibold text-xs rounded"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   size="sm"
-                  className="px-5 font-bold text-xs"
+                  className="px-5 font-bold text-xs rounded"
                   disabled={saveMutation.isPending}
                 >
                   {saveMutation.isPending ? (
@@ -502,13 +459,14 @@ export default function AdvertisementPage() {
                       Saving...
                     </div>
                   ) : (
-                    "Save Advertisement"
+                    <>
+                      Save Advertisement
+                      <Sparkles className="h-3 w-3" />
+                    </>
                   )}
                 </Button>
               </div>
             </form>
-          </CardContent>
-        </Card>
       )}
 
       {/* Ads List Table */}

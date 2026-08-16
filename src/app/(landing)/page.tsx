@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -87,12 +87,12 @@ export default function LandingPage() {
     const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
     return (
-      <div className="rounded-xs shadow-md border border-zinc-100 p-2.5 sm:p-4 transition-all hover:shadow-lg bg-background w-full max-w-full overflow-hidden">
+      <div className="rounded  shadow-md border border-zinc-100 p-2.5 sm:p-4 transition-all hover:shadow-lg bg-background w-full max-w-full overflow-hidden">
         {/* Month selector */}
         <div className="flex justify-between items-center mb-3">
           <button
             onClick={() => setCalendarDate(calendarDate.subtract(1, "month"))}
-            className="p-1 hover:bg-zinc-100 rounded-md transition-colors text-zinc-600"
+            className="p-1 hover:bg-zinc-100 rounded transition-colors text-zinc-600"
           >
             <ChevronLeft size={16} strokeWidth={2.5} />
           </button>
@@ -101,7 +101,7 @@ export default function LandingPage() {
           </span>
           <button
             onClick={() => setCalendarDate(calendarDate.add(1, "month"))}
-            className="p-1 hover:bg-zinc-100 rounded-md transition-colors text-zinc-600"
+            className="p-1 hover:bg-zinc-100 rounded transition-colors text-zinc-600"
           >
             <ChevronRight size={16} strokeWidth={2.5} />
           </button>
@@ -128,7 +128,7 @@ export default function LandingPage() {
               <button
                 key={day.toString()}
                 onClick={() => handleDateSelect(day)}
-                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center p-0 ${isSelected
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded transition-all flex items-center justify-center p-0 ${isSelected
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : isToday
                     ? "bg-red-50 text-primary border border-primary/50"
@@ -145,7 +145,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-8 items-start w-full">
+    <div className="grid grid-cols-12 gap-10 items-start w-full">
       {/* LEFT AD COLUMN (Span 2) */}
 
       <div className="flex col-span-3 flex-col gap-4">
@@ -154,62 +154,101 @@ export default function LandingPage() {
             <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />
           ))
         ) : (
-          <div className="h-60 w-full p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs flex items-center justify-center text-center text-xs text-zinc-400 font-medium shrink-0">
+          <div className="h-60 w-full p-4 bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center text-center text-xs text-zinc-400 font-medium shrink-0">
             Left Banner Ad
           </div>
         )}
       </div>
 
       {/* CENTER CONTENT COLUMN (Span 6) */}
-      <div className="col-span-6 flex flex-col gap-2">
-        {/* Center Banner Advertisement */}
-        {adsByPosition.Center && adsByPosition.Center.length > 0 && (
-          <div className="flex flex-col gap-4 mb-2">
-            {adsByPosition.Center.map((ad: Ads) => (
-              <AdsCard key={ad.id} ad={ad} className="h-24 w-full shrink-0" />
-            ))}
-          </div>
-        )}
-
+      <div className="col-span-6 flex flex-col gap-6">
         {lottery ? (
-          <>
-            {lottery.first && shouldRenderPeriod(lottery.first.name) && (
-              <LotteryTableLayoutOne
-                periodData={lottery.first}
-                dateParam={dateParam}
-              />
-            )}
-            {lottery.second && shouldRenderPeriod(lottery.second.name) && (
-              <LotteryTableLayoutOne
-                periodData={lottery.second}
-                dateParam={dateParam}
-              />
-            )}
-            {lottery.third && shouldRenderPeriod(lottery.third.name) && (
-              <LotteryTableLayoutOne
-                periodData={lottery.third}
-                dateParam={dateParam}
-              />
-            )}
-            {lottery.fourth && shouldRenderPeriod(lottery.fourth.name) && (
-              <LotteryTableLayoutTwo
-                periodData={lottery.fourth}
-                dateParam={dateParam}
-              />
-            )}
+          (() => {
+            const tables: { key: string; component: React.ReactNode }[] = [];
+            if (lottery.first && shouldRenderPeriod(lottery.first.name)) {
+              tables.push({
+                key: "first",
+                component: (
+                  <LotteryTableLayoutOne
+                    periodData={lottery.first}
+                    dateParam={dateParam}
+                  />
+                ),
+              });
+            }
+            if (lottery.second && shouldRenderPeriod(lottery.second.name)) {
+              tables.push({
+                key: "second",
+                component: (
+                  <LotteryTableLayoutOne
+                    periodData={lottery.second}
+                    dateParam={dateParam}
+                  />
+                ),
+              });
+            }
+            if (lottery.third && shouldRenderPeriod(lottery.third.name)) {
+              tables.push({
+                key: "third",
+                component: (
+                  <LotteryTableLayoutOne
+                    periodData={lottery.third}
+                    dateParam={dateParam}
+                  />
+                ),
+              });
+            }
+            if (lottery.fourth && shouldRenderPeriod(lottery.fourth.name)) {
+              tables.push({
+                key: "fourth",
+                component: (
+                  <LotteryTableLayoutTwo
+                    periodData={lottery.fourth}
+                    dateParam={dateParam}
+                  />
+                ),
+              });
+            }
 
-            {/* In case no periods matched search filter */}
-            {!(lottery.first && shouldRenderPeriod(lottery.first.name)) &&
-              !(lottery.second && shouldRenderPeriod(lottery.second.name)) &&
-              !(lottery.third && shouldRenderPeriod(lottery.third.name)) &&
-              !(lottery.fourth && shouldRenderPeriod(lottery.fourth.name)) && (
-                <div className=" rounded-xs shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
-                  No matching results table found.
+            const centerAds = adsByPosition.Center || [];
+
+            if (tables.length === 0) {
+              return (
+                <div className="flex flex-col gap-6">
+                  {centerAds.map((ad: Ads) => (
+                    <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
+                  ))}
+                  <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
+                    No matching results table found.
+                  </div>
                 </div>
-              )}
-          </>
+              );
+            }
+
+            return (
+              <div className="flex flex-col gap-6">
+                {tables.map((tbl, index) => (
+                  <React.Fragment key={tbl.key}>
+                    {centerAds[index] && (
+                      <AdsCard
+                        key={centerAds[index].id}
+                        ad={centerAds[index]}
+                        className="h-16 w-full shrink-0"
+                      />
+                    )}
+                    {tbl.component}
+                  </React.Fragment>
+                ))}
+
+                {/* Remaining center ads if there are more ads than tables */}
+                {centerAds.slice(tables.length).map((ad: Ads) => (
+                  <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
+                ))}
+              </div>
+            );
+          })()
         ) : (
-          <div className=" rounded-xs shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
+          <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
             Loading data...
           </div>
@@ -228,7 +267,7 @@ export default function LandingPage() {
               <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />
             ))
           ) : (
-            <div className="h-60 w-full p-4 bg-zinc-50 border border-dashed border-zinc-200 rounded-xs flex items-center justify-center text-center text-xs text-zinc-400 font-medium shrink-0">
+            <div className="h-60 w-full p-4 bg-zinc-50 border border-dashed border-zinc-200 flex items-center justify-center text-center text-xs text-zinc-400 font-medium shrink-0">
               Right Banner Ad
             </div>
           )}

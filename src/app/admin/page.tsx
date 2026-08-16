@@ -26,7 +26,6 @@ import {
   Pencil,
   Check,
   X,
-  Pen,
   Settings,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -43,8 +42,6 @@ interface PeriodEditorProps {
 }
 
 function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
-
-  console.log(periodData)
 
   if (!periodData?.data?.length) return null;
   const locations: LocationData[] = periodData.data;
@@ -301,11 +298,11 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
   return (
     <div className="flex gap-4">
-      <div className="overflow-x-auto rounded-xs flex-col  w-full flex justify-center items-center ">
+      <div className="overflow-x-auto rounded  flex-col  w-full flex justify-center items-center ">
         <table className="w-full max-w-4xl border border-zinc-200  min-w-150 border-collapse text-sm">
           <thead>
             <tr className="bg-primary/5 border-b border-zinc-200">
-              <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-[140px]">
+              <th className="px-3 py-2.5 text-left font-semibold text-zinc-500 w-35">
                 Giải
               </th>
               {locations.map((loc: LocationData, i: number) => {
@@ -393,16 +390,16 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
             <tr>
               {/* Left labels column */}
               <td className="px-3 py-2 border-r border-zinc-200 align-top bg-zinc-50/50">
-                <div className="flex flex-col font-mono text-sm select-none py-2 gap-0">
+                <div className="flex flex-col font-mono text-base select-none py-2 gap-0">
                   {prizeMeta.map((pm, idx) => (
                     <div
                       key={idx}
-                      className="h-7 flex items-center justify-between text-zinc-500 pr-2 border-b border-zinc-100 last:border-b-0"
+                      className="h-8 flex items-center justify-between text-zinc-500 pr-2 border-b border-zinc-100 last:border-b-0"
                     >
                       {editingLabelIdx === idx ? (
                         <div className="flex items-center gap-1 w-full">
                           <input
-                            className="flex-1 min-w-0 text-xs font-semibold border border-primary/50 rounded px-1 py-0 outline-none focus:ring-1 focus:ring-primary/20 bg-white text-zinc-700 h-5"
+                            className="flex-1 min-w-0 text-sm font-semibold border border-primary/50 rounded px-1.5 py-0 outline-none focus:ring-1 focus:ring-primary/20 bg-white text-zinc-700 h-6"
                             value={labelDraft}
                             onChange={(e) => setLabelDraft(e.target.value)}
                             onKeyDown={(e) => {
@@ -431,7 +428,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                         </div>
                       ) : (
                         <div className="group flex items-center gap-1 w-full">
-                          <span className="font-semibold text-zinc-700 flex-1">
+                          <span className="font-semibold text-zinc-700 flex-1 text-sm md:text-base">
                             {labelEdits[idx] ?? pm.label}
                           </span>
                           <button
@@ -439,7 +436,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-primary shrink-0"
                             title="Edit label"
                           >
-                            <Pencil className="w-3 h-3" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}
@@ -514,9 +511,9 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                           setDirtyColumns((prev) => new Set(prev).add(locKey));
                         }}
-                        className="w-full text-sm leading-7 py-2 px-3 border border-border rounded-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
+                        className="w-full font-mono font-semibold text-base leading-8 py-2 px-3 border border-border rounded focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none overflow-hidden tracking-wider transition-all"
                         style={{
-                          height: `${expectedCount * 28 + 16}px`, // 28px per line + 16px padding
+                          height: `${expectedCount * 32 + 18}px`, // 32px per line + 16px padding + 2px borders
                         }}
                         placeholder="Type or paste column values..."
                       />
@@ -582,27 +579,6 @@ export default function AdminPage() {
 
   const utils = trpc.useUtils();
 
-  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
-  const [sessionNameDraft, setSessionNameDraft] = useState("");
-
-  const { mutate: updateSessionName, isPending: isUpdatingSessionName } =
-    trpc.updateLotterySessionName.useMutation({
-      onSuccess: () => {
-        utils.getLotteryByDate.invalidate();
-        setEditingSessionId(null);
-        toast.success("Session name updated!")
-      },
-      onError: (e) => toast.error(e.message),
-    });
-
-  const handleSessionNameSave = (sessId: string | undefined) => {
-    if (!sessId || !sessionNameDraft.trim()) return;
-    updateSessionName({
-      sessionId: sessId,
-      name: sessionNameDraft.trim(),
-    });
-  };
-
   // ── Fetch lottery data for selected date ──────────────────────────────────
   const {
     data: lotteryState,
@@ -641,7 +617,7 @@ export default function AdminPage() {
             <Button
               variant="outline"
               size="sm"
-              className="font-semibold min-w-[130px]"
+              className="font-semibold min-w-32.5"
             >
               {formatDisplayDateTime(selectedDate, undefined, "DD/MM/YYYY")}
               <ChevronDownIcon className="ml-1 w-4 h-4" />
@@ -680,7 +656,7 @@ export default function AdminPage() {
 
       {/* ── Status hint ─────────────────────────────────────────────────────── */}
       {!hasData && !isLoading && (
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center text-zinc-500">
+        <div className="rounded border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center text-zinc-500">
           <DatabaseZap className="mx-auto mb-2 w-8 h-8 text-zinc-300" />
           <p className="font-semibold text-sm">No data for {formatDisplayDateTime(selectedDate)}</p>
           <p className="text-xs mt-1">
@@ -715,7 +691,7 @@ export default function AdminPage() {
                 <TabsTrigger
                   key={key}
                   value={key}
-                  className="text-xs md:text-sm transition-all whitespace-nowrap rounded-lg"
+                  className="text-xs md:text-sm transition-all whitespace-nowrap rounded"
                 >
                   {displayTime}
                 </TabsTrigger>
@@ -742,63 +718,9 @@ export default function AdminPage() {
                   <>
                     {/* Section header */}
                     <div className="mb-2 flex items-center justify-center gap-2 h-9">
-                      {editingSessionId === session.sessionId ? (
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="text"
-                            value={sessionNameDraft}
-                            onChange={(e) => setSessionNameDraft(e.target.value)}
-                            className="px-2 py-1 text-sm border border-zinc-300 rounded-md focus:outline-none focus:ring-1 focus:ring-primary w-64 text-center font-semibold uppercase text-foreground bg-white"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleSessionNameSave(session.sessionId);
-                              } else if (e.key === "Escape") {
-                                setEditingSessionId(null);
-                              }
-                            }}
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSessionNameSave(session.sessionId)}
-                            disabled={isUpdatingSessionName || !sessionNameDraft.trim()}
-                            className="h-8 w-8 p-0"
-                          >
-                            {isUpdatingSessionName ? (
-                              <Loader2 size={12} className="animate-spin text-primary" />
-                            ) : (
-                              <Check size={14} className="text-emerald-600" />
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingSessionId(null)}
-                            disabled={isUpdatingSessionName}
-                            className="h-8 w-8 p-0"
-                          >
-                            <X size={14} className="text-rose-600" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="font-semibold text-foreground uppercase tracking-wide">
-                            {session.name}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setSessionNameDraft(session.name);
-                              setEditingSessionId(session.sessionId || "");
-                            }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Pen size={12} className="text-primary" />
-                          </Button>
-                        </>
-                      )}
+                      <span className="font-semibold border px-4 py-1 border-primary rounded text-foreground uppercase tracking-wide">
+                        {session.name}
+                      </span>
                     </div>
                     <PeriodEditor
                       periodData={session}

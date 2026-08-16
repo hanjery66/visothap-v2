@@ -15,16 +15,12 @@ export default function LotterySettingDialog() {
                     <Settings />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Setting</DialogTitle>
                     <DialogDescription>Setting for how lottery show on page</DialogDescription>
                 </DialogHeader>
-
-
                 <LotteryScheduleSettings />
-
-
             </DialogContent>
         </Dialog>
     );

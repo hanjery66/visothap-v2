@@ -12,6 +12,8 @@ import { RollingDigits } from "@/components/RollingDigits";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
 import { DigitSpinner } from "@/components/DigitSpinner";
 
+const HOVER_ROW_BG = "#fbebd7";
+
 const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
   gEight: 2,
   gSeven: 3,
@@ -48,8 +50,6 @@ export function LotteryTableLayoutOne({
     locationCount,
     displayConfig,
   );
-  const splashNumber = useSplashNumber({ length: 5, intervalMs: 100 });
-
   if (!periodData || !periodData.data || periodData.data.length === 0)
     return null;
   const locations = periodData.data as LocationData[];
@@ -202,11 +202,11 @@ export function LotteryTableLayoutOne({
   const drawDateTimeLabel = formatDisplayDateTime(
     dateParam,
     periodData.displayNumber,
-    "hh:mm A"
+    "hh:mm A - DD/MM/YYYY"
   );
 
   return (
-    <div className="rounded-xs shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
+    <div className="rounded shadow-md overflow-hidden transition-all hover:shadow-lg">
       {/* Banner */}
       <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-sm">
         <span>
@@ -347,7 +347,7 @@ export function LotteryTableLayoutOne({
                             return (
                               <p
                                 key={idx}
-                                className="hover:bg-primary hover:text-primary-foreground w-full cursor-pointer m-0 leading-none py-1 h-[1.2em] flex items-center justify-center"
+                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none py-1 h-[1.2em] flex items-center justify-center"
                               >
                                 {pz.value}
                               </p>
@@ -357,7 +357,10 @@ export function LotteryTableLayoutOne({
                           // Stage 1 — Not yet time for this slot's splash
                           if (cellStatus === "pending") {
                             return (
-                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden">
+                              <p
+                                key={idx}
+                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden"
+                              >
                                 {Array.from({ length: expectedLength }).map((__, d) => (
                                   <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
                                 ))}
@@ -379,7 +382,10 @@ export function LotteryTableLayoutOne({
 
                           if (anyPreviousStillRolling) {
                             return (
-                              <p key={idx} className="w-full m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden">
+                              <p
+                                key={idx}
+                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden"
+                              >
                                 {Array.from({ length: expectedLength }).map((__, d) => (
                                   <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
                                 ))}
@@ -388,13 +394,16 @@ export function LotteryTableLayoutOne({
                           }
 
                           return (
-                            <p key={idx} className="w-full m-0 leading-none py-1 h-[1.2em] flex items-center justify-center">
+                            <p
+                              key={idx}
+                              className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none py-1 h-[1.2em] flex items-center justify-center"
+                            >
                               <RollingDigits length={len} />
                             </p>
                           );
                         })
                       ) : (
-                        <span className="font-normal py-1 h-[1.2em] flex items-center justify-center">--</span>
+                        <span className="hover:bg-[#fbebd7] w-full cursor-pointer font-normal py-1 h-[1.2em] flex items-center justify-center">--</span>
                       )}
                     </div>
                   );

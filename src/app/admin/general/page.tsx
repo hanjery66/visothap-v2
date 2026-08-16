@@ -4,12 +4,9 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { trpc } from "@/app/_trpc/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
-  FileText,
   Sparkles,
   Loader2,
   Image as ImageIcon,
@@ -28,31 +25,23 @@ export default function GeneralPage() {
   } = trpc.getGeneralSettings.useQuery();
 
   // Editable settings inputs states
-  const [logo, setLogo] = useState("");
   const [fullLogo, setFullLogo] = useState("");
   const [leftFooterContent, setLeftFooterContent] = useState("");
   const [rightFooterContent, setRightFooterContent] = useState("");
 
-  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
   const [selectedFullLogoFile, setSelectedFullLogoFile] = useState<File | null>(
     null,
   );
 
   // Upload progress indicators
-  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFullLogo, setUploadingFullLogo] = useState(false);
 
-  // Hidden file input element binders
-  const logoInputRef = useRef<HTMLInputElement>(null);
+  // Hidden file input element binder
   const fullLogoInputRef = useRef<HTMLInputElement>(null);
 
   // Bind live variables once loaded
   useEffect(() => {
     if (settings) {
-      // Only update state if no file is currently selected (no blob URL)
-      if (!selectedLogoFile && !logo.startsWith("blob:")) {
-        setLogo(settings.logo || "");
-      }
       if (!selectedFullLogoFile && !fullLogo.startsWith("blob:")) {
         setFullLogo(settings.fullLogo || "");
       }
@@ -66,29 +55,11 @@ export default function GeneralPage() {
   // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
-      if (logo.startsWith("blob:")) {
-        URL.revokeObjectURL(logo);
-      }
       if (fullLogo.startsWith("blob:")) {
         URL.revokeObjectURL(fullLogo);
       }
     };
-  }, [logo, fullLogo]);
-
-  // Upload handler for mini logo
-  const handleUploadLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (logo.startsWith("blob:")) {
-      URL.revokeObjectURL(logo);
-    }
-
-    setSelectedLogoFile(file);
-    const localUrl = URL.createObjectURL(file);
-    setLogo(localUrl);
-    toast.success("Mini emblem logo selected!");
-  };
+  }, [fullLogo]);
 
   // Upload handler for header logo
   const handleUploadFullLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,13 +79,9 @@ export default function GeneralPage() {
   // Mutation to save layout settings
   const saveMutation = trpc.saveGeneralSettings.useMutation({
     onSuccess: () => {
-      if (logo.startsWith("blob:")) {
-        URL.revokeObjectURL(logo);
-      }
       if (fullLogo.startsWith("blob:")) {
         URL.revokeObjectURL(fullLogo);
       }
-      setSelectedLogoFile(null);
       setSelectedFullLogoFile(null);
       toast.success("General layout configuration saved successfully!");
       utils.getGeneralSettings.invalidate();
@@ -127,7 +94,6 @@ export default function GeneralPage() {
   const handleUpdateGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
-      !logo.trim() ||
       !fullLogo.trim() ||
       !leftFooterContent.trim() ||
       !rightFooterContent.trim()
@@ -136,37 +102,7 @@ export default function GeneralPage() {
       return;
     }
 
-    let finalLogo = logo;
     let finalFullLogo = fullLogo;
-
-    if (selectedLogoFile) {
-      setUploadingLogo(true);
-      try {
-        const formData = new FormData();
-        formData.append("file", selectedLogoFile);
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error("Logo upload failed");
-
-        const data = await res.json();
-        if (data.url) {
-          finalLogo = data.url;
-        } else {
-          throw new Error(data.error || "Invalid response");
-        }
-      } catch (err: unknown) {
-        const error = ensureError(err);
-        console.error(error);
-        toast.error(error.message || "Failed to upload emblem logo.");
-        setUploadingLogo(false);
-        return;
-      } finally {
-        setUploadingLogo(false);
-      }
-    }
 
     if (selectedFullLogoFile) {
       setUploadingFullLogo(true);
@@ -198,7 +134,7 @@ export default function GeneralPage() {
     }
 
     saveMutation.mutate({
-      logo: finalLogo.trim(),
+      logo: settings?.logo || "/logo.png",
       fullLogo: finalFullLogo.trim(),
       leftFooterContent: leftFooterContent.trim(),
       rightFooterContent: rightFooterContent.trim(),
@@ -208,263 +144,137 @@ export default function GeneralPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6 w-full max-w-5xl">
-        <div className="border-b  pb-4">
-          <div className="h-6 bg-zinc-850 rounded w-48 mb-2" />
-          <div className="h-4 bg-zinc-850 rounded w-72" />
-        </div>
-        <div className="flex flex-col gap-4 mt-4">
-          <div className="h-48  border border-zinc-850 rounded-xl" />
-          <div className="h-48  border border-zinc-850 rounded-xl" />
-        </div>
+        <div className="h-28 border border-zinc-200 rounded animate-pulse bg-zinc-50/50" />
+        <div className="h-48 border border-zinc-200 rounded animate-pulse bg-zinc-50/50" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4  text-primary text-sm rounded-xl flex items-center gap-2">
+      <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded flex items-center gap-2">
         <span>❌ Failed to load layout configuration: {error.message}</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl">
-      {/* Header */}
-
+    <div className="w-full max-w-5xl">
       <form onSubmit={handleUpdateGeneral} className="flex flex-col gap-6">
-        {/* LOGO REFERENCES PANEL */}
-        <Card className="rounded-xl flex flex-col gap-4">
-          <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
-          <CardHeader className="px-6 pt-5 pb-0 flex flex-row items-center gap-2.5">
-            <div className="p-2 rounded-xs bg-primary/10 text-primary">
-              <ImageIcon className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="">
-                System Brand Logos
-              </CardTitle>
-              <p className="text-sm text-zinc-500 font-medium">
-                Manage image source routes for emblem logos and main header
-                displays.
-              </p>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 flex flex-col gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* MINI LOGO (EMBLEM) CARD */}
-              <div className="flex flex-col gap-3 p-4 border border-primary/30 rounded-xl">
-                <div className="flex justify-between items-center">
-                  <Label
-                    htmlFor="logo-path"
-                    className="text-sm  font-bold uppercase tracking-wide"
-                  >
-                    Mini Emblem Logo
-                  </Label>
-                  <span className="text-xs text-zinc-600 font-bold uppercase">
-                    Square Ratio
-                  </span>
-                </div>
-
-                <div className="flex gap-4 items-center">
-                  {/* Live circular/rounded-square preview box */}
-                  <div className="h-14 w-14 rounded-xs border border-primary/30 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
-                    {logo ? (
-                      <Image
-                        src={logo}
-                        alt="Mini emblem logo"
-                        fill
-                        className="object-contain p-1"
-                        unoptimized
-                      />
-                    ) : (
-                      <span className="text-[8px] font-bold text-zinc-650 uppercase">
-                        No image
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Input
-                        id="logo-path"
-                        type="text"
-                        value={logo}
-                        onChange={(e) => setLogo(e.target.value)}
-                        className="focus:border-primary flex-1"
-                        placeholder="E.g. /logo.png"
-                        required
-                      />
-
-                      <input
-                        type="file"
-                        ref={logoInputRef}
-                        onChange={handleUploadLogo}
-                        accept="image/*"
-                        className="hidden"
-                      />
-
-                      <Button
-                        type="button"
-                        onClick={() => logoInputRef.current?.click()}
-                        disabled={uploadingLogo}
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 cursor-pointer"
-                        title="Upload Emblem Image"
-                      >
-                        {uploadingLogo ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        ) : (
-                          <Upload className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <span className="text-xs text-zinc-600 leading-normal">
-                      Accepts standard formats (PNG, SVG, JPG, WEBP).
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* HEADER LOGO (FULL TEXT) CARD */}
-              <div className="flex flex-col gap-3 p-4 border border-primary/30 rounded-xl">
-                <div className="flex justify-between items-center">
-                  <Label
-                    htmlFor="full-logo-path"
-                    className="text-sm  font-bold uppercase tracking-wide"
-                  >
-                    Header Full Logo
-                  </Label>
-                  <span className="text-xs text-zinc-600 font-bold uppercase">
-                    Horizontal Banner
-                  </span>
-                </div>
-
-                <div className="flex gap-4 items-center">
-                  {/* Live rectangular preview box */}
-                  <div className="h-14 w-28 rounded-xs border border-primary/30 flex items-center justify-center overflow-hidden shrink-0 shadow-inner relative">
-                    {fullLogo ? (
-                      <Image
-                        src={fullLogo}
-                        alt="Header logo"
-                        fill
-                        className="object-contain p-1"
-                        unoptimized
-                      />
-                    ) : (
-                      <span className="text-[8px] font-bold text-zinc-650 uppercase">
-                        No image
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex-1 flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Input
-                        id="full-logo-path"
-                        type="text"
-                        value={fullLogo}
-                        onChange={(e) => setFullLogo(e.target.value)}
-                        className="focus:border-primary flex-1"
-                        placeholder="E.g. /full-logo.png"
-                        required
-                      />
-
-                      <input
-                        type="file"
-                        ref={fullLogoInputRef}
-                        onChange={handleUploadFullLogo}
-                        accept="image/*"
-                        className="hidden"
-                      />
-
-                      <Button
-                        type="button"
-                        onClick={() => fullLogoInputRef.current?.click()}
-                        disabled={uploadingFullLogo}
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 cursor-pointer"
-                        title="Upload Header Image"
-                      >
-                        {uploadingFullLogo ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        ) : (
-                          <Upload className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <span className="text-xs text-zinc-600 leading-normal">
-                      Optimized for horizontal menu banners.
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* FOOTER HTML CONFIGURATION PANEL */}
-        <Card className="rounded-xl flex flex-col gap-4">
-          <div className="absolute top-0 left-0 w-full h-[3px] animate-pulse" />
-          <CardHeader className="px-6 pt-5 pb-0 flex flex-row items-center gap-2.5">
-            <div className="p-2 rounded-xs bg-primary/10 text-primary">
-              <FileText className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className=" ">
-                Footer HTML Content Markup
-              </CardTitle>
-              <p className="text-sm text-zinc-500 font-medium">
-                Inject raw HTML text templates into public landing footers
-                (Copyrights and Hotline metadata).
-              </p>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="flex flex-col gap-1.5 text-left">
-                <Label
-                  htmlFor="left-footer-markup"
-                  className="text-sm text-foreground font-bold uppercase tracking-wide"
-                >
-                  Left Footer Content (HTML)
-                </Label>
-                <textarea
-                  id="left-footer-markup"
-                  value={leftFooterContent}
-                  onChange={(e) => setLeftFooterContent(e.target.value)}
-                  rows={3}
-                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2 shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  placeholder="E.g. <p>© 2026 VISOTHAP. All rights reserved.</p>"
-                  required
+        {/* LOGO SECTION */}
+        <div className="flex flex-col gap-3">
+          <Label className="text-sm font-semibold tracking-wide text-foreground">
+            Header Logo
+          </Label>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 border border-zinc-200 rounded bg-zinc-50/40">
+            {/* Live rectangular preview box */}
+            <div className="h-20 w-48 sm:w-56 rounded border border-zinc-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative">
+              {fullLogo ? (
+                <Image
+                  src={fullLogo}
+                  alt="Header logo"
+                  fill
+                  className="object-contain p-2"
+                  unoptimized
                 />
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-zinc-400">
+                  <ImageIcon className="h-6 w-6" />
+                  <span className="text-[10px] font-bold uppercase">No image</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 flex flex-col gap-2">
+              <input
+                type="file"
+                ref={fullLogoInputRef}
+                onChange={handleUploadFullLogo}
+                accept="image/*"
+                className="hidden"
+              />
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={() => fullLogoInputRef.current?.click()}
+                  disabled={uploadingFullLogo}
+                  variant="outline"
+                  className="cursor-pointer gap-2 font-semibold"
+                >
+                  {uploadingFullLogo ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 text-primary" />
+                      Select New Logo
+                    </>
+                  )}
+                </Button>
+
+                {selectedFullLogoFile && (
+                  <span className="text-xs text-emerald-600 font-medium">
+                    ✓ {selectedFullLogoFile.name}
+                  </span>
+                )}
               </div>
 
-              <div className="flex flex-col gap-1.5 text-left">
-                <Label
-                  htmlFor="right-footer-markup"
-                  className="text-sm text-foreground font-bold uppercase tracking-wide"
-                >
-                  Right Footer Content (HTML)
-                </Label>
-                <textarea
-                  id="right-footer-markup"
-                  value={rightFooterContent}
-                  onChange={(e) => setRightFooterContent(e.target.value)}
-                  rows={3}
-                  className="flex w-full rounded-xs border border-primary/30 px-3 py-2  shadow-sm transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
-                  placeholder="E.g. <p>Contact: info@visothap.net</p>"
-                  required
-                />
-              </div>
+              <span className="text-xs text-zinc-500 leading-normal">
+                Accepts standard image formats (PNG, SVG, JPG, WEBP). Recommended height: 40–80px.
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {/* FOOTER HTML CONFIGURATION SECTION */}
+        <div className="flex flex-col gap-4">
+          <Label className="text-sm font-semibold tracking-wide text-foreground">
+            Footer HTML Content Markup
+          </Label>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="flex flex-col gap-1.5 text-left">
+              <Label
+                htmlFor="left-footer-markup"
+                className="text-xs font-medium text-zinc-600 tracking-wide"
+              >
+                Left Footer Content (HTML)
+              </Label>
+              <textarea
+                id="left-footer-markup"
+                value={leftFooterContent}
+                onChange={(e) => setLeftFooterContent(e.target.value)}
+                rows={3}
+                className="flex w-full rounded border border-zinc-200 px-3 py-2 text-sm shadow-xs transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
+                placeholder="E.g. <p>© 2026 VISOTHAP. All rights reserved.</p>"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5 text-left">
+              <Label
+                htmlFor="right-footer-markup"
+                className="text-xs font-medium text-zinc-600 tracking-wide"
+              >
+                Right Footer Content (HTML)
+              </Label>
+              <textarea
+                id="right-footer-markup"
+                value={rightFooterContent}
+                onChange={(e) => setRightFooterContent(e.target.value)}
+                rows={3}
+                className="flex w-full rounded border border-zinc-200 px-3 py-2 text-sm shadow-xs transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
+                placeholder="E.g. <p>Contact: info@visothap.net</p>"
+                required
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Action Button */}
-        <div className="flex justify-end gap-2 border-t border-primary/30 pt-4">
+        <div className="flex justify-end pt-4 border-t border-zinc-200">
           <Button
             type="submit"
             disabled={saveMutation.isPending}
@@ -473,11 +283,11 @@ export default function GeneralPage() {
             {saveMutation.isPending ? (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Saving configuration...
+                Saving ...
               </>
             ) : (
               <>
-                Save General Configuration
+                Save
                 <Sparkles className="h-3 w-3" />
               </>
             )}

@@ -7,13 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from "@/components/ui/card";
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { trpc } from "@/app/_trpc/client";
 import { toast } from "sonner";
@@ -218,57 +212,36 @@ export default function LotteryScheduleSettings() {
 
     if (isLoading || isDisplayLoading || !schedule) {
         return (
-            <Card className="rounded-xs border-zinc-200 shadow-md">
-                <CardContent className="flex flex-col items-center justify-center py-20 text-sm text-muted-foreground gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <span>Loading draw schedule settings ...</span>
-                </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-20 text-sm text-muted-foreground gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span>Loading draw schedule settings ...</span>
+            </div>
         );
     }
 
     return (
-        <Card className="rounded-xs border-zinc-200 shadow-md">
-            <CardHeader className="border-b border-zinc-200">
-                <div className="flex items-center justify-between gap-4">
-                    <div>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                            <Clock3 className="h-5 w-5 text-primary" />
-                            Draw Time
-                        </CardTitle>
-                        <CardDescription>
-                            Configure dynamic result draw times.
-                        </CardDescription>
-                    </div>
-                    <Button
-                        variant="default"
-                        onClick={handleSave}
-                        disabled={!dirty || saving}
-                        className="shrink-0 gap-1.5"
-                    >
-                        {saving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Save className="h-4 w-4" />
-                        )}
-                        {saving ? "Saving..." : "Save changes"}
-                    </Button>
-                </div>
-            </CardHeader>
+        <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-end">
+                <Button
+                    variant="default"
+                    onClick={handleSave}
+                    disabled={!dirty || saving}
+                    className="shrink-0 gap-1.5"
+                >
+                    {saving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Save className="h-4 w-4" />
+                    )}
+                    {saving ? "Saving..." : "Save changes"}
+                </Button>
+            </div>
 
-            <CardContent className="pt-6 space-y-6">
-                <div className="rounded-xs border border-zinc-200 p-4 space-y-4 bg-zinc-50/50">
-                    <div className="flex items-center gap-2">
-                        <Timer className="h-4 w-4 text-primary" />
-                        <h3 className="font-semibold text-sm">Display timing</h3>
-                    </div>
-
+            <div className="rounded space-y-4 bg-zinc-50/50">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        
-
                         <div className="space-y-1.5">
                             <Label htmlFor="autoseed-minutes" className="text-xs text-muted-foreground">
-                                Auto-seed data before splash (minutes)
+                                Auto-seed before splash (minutes)
                             </Label>
                             <Input
                                 id="autoseed-minutes"
@@ -288,7 +261,7 @@ export default function LotteryScheduleSettings() {
 
                         <div className="space-y-1.5">
                             <Label htmlFor="splash-minutes" className="text-xs text-muted-foreground">
-                                Splash starts before draw (minutes)
+                                Splash before draw (minutes)
                             </Label>
                             <Input
                                 id="splash-minutes"
@@ -328,7 +301,7 @@ export default function LotteryScheduleSettings() {
 
                         <div className="space-y-1.5">
                             <Label htmlFor="cell-pause-interval" className="text-xs text-muted-foreground">
-                                Pause between cell reveals (seconds)
+                                Pause between cell (seconds)
                             </Label>
                             <Input
                                 id="cell-pause-interval"
@@ -364,13 +337,13 @@ export default function LotteryScheduleSettings() {
                     </p>
                 </div>
 
-                <Tabs value={activeDay} onValueChange={(v) => setActiveDay(v as DayKey)}>
-                    <TabsList className="w-full flex-wrap h-auto bg-zinc-100 rounded-xs p-1">
+                <Tabs value={activeDay} onValueChange={(v) => setActiveDay(v as DayKey)} className="mt-6">
+                    <TabsList className="w-full flex-wrap h-auto bg-zinc-100 rounded  p-1">
                         {DAYS.map((d) => (
                             <TabsTrigger
                                 key={d.key}
                                 value={d.key}
-                                className="flex-1 rounded-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                                className="flex-1 rounded  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                             >
                                 <span className="hidden sm:inline">{d.label}</span>
                                 <span className="sm:hidden">{d.short}</span>
@@ -399,7 +372,7 @@ export default function LotteryScheduleSettings() {
                                     return (
                                         <div
                                             key={p.key}
-                                            className={`rounded-xs border p-4 space-y-3 transition-colors ${value.enabled
+                                            className={`rounded  border p-4 space-y-3 transition-colors ${value.enabled
                                                 ? "border-zinc-200 bg-white"
                                                 : "border-zinc-200 bg-zinc-50 opacity-60"
                                                 }`}
@@ -445,22 +418,6 @@ export default function LotteryScheduleSettings() {
                                                 />
                                             </div>
 
-                                            <Separator />
-
-                                            <p className="text-xs text-muted-foreground">
-                                                Result at{" "}
-                                                <span className="font-semibold text-foreground">
-                                                    {value.enabled
-                                                        ? formatDisplayDateTime(
-                                                            dayjs().format(STORAGE_DATE_FORMAT),
-                                                            value.drawTime,
-                                                            "hh:mm A"
-                                                        )
-                                                        : "--:--"}
-                                                </span>
-                                                {" · Spinner starts "}
-                                                {displaySettings.splashMinutesBefore} min before
-                                            </p>
                                         </div>
                                     );
                                 })}
@@ -468,7 +425,6 @@ export default function LotteryScheduleSettings() {
                         </TabsContent>
                     ))}
                 </Tabs>
-            </CardContent>
-        </Card>
+        </div>
     );
 }

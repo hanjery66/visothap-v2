@@ -11,7 +11,6 @@ import { Toaster } from "sonner";
 import {
   BarChart2,
   Image as ImageIcon,
-  Users,
   Settings,
   User,
   LogOut,
@@ -94,12 +93,6 @@ export default function AdminLayout({
       icon: <ImageIcon className="h-4 w-4" />,
     },
     {
-      title: "System Users",
-      description: "Manage system users.",
-      href: "/admin/user",
-      icon: <Users className="h-4 w-4" />,
-    },
-    {
       title: "General Settings",
       description: "Manage general settings.",
       href: "/admin/general",
@@ -111,7 +104,7 @@ export default function AdminLayout({
       href: "/admin/profile",
       icon: <User className="h-4 w-4" />,
     },
-  ]
+  ];
 
 
   const renderSidebarItem = (
@@ -161,7 +154,7 @@ export default function AdminLayout({
       <Toaster theme="dark" closeButton position="top-right" richColors />
 
       {/* ── TOP HEADER BAR ── */}
-      <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 mt-4 border border-primary/30 rounded-sm">
+      <header className="sticky top-0 z-50 backdrop-blur-2xl flex items-center justify-between px-6 py-3 mt-4 border border-primary/30 rounded">
         {/* Left: Logo + brand name */}
         <Link href="/" className="flex items-center gap-3">
           {settings?.fullLogo ? (
@@ -200,7 +193,7 @@ export default function AdminLayout({
         <main className="flex-1 mt-4">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             {/* SIDEBAR NAVIGATION PANEL */}
-            <aside className="w-full lg:w-56 rounded-sm flex flex-col gap-1.5 shrink-0">
+            <aside className="w-full lg:w-56 rounded flex flex-col gap-1.5 shrink-0">
               <span className="font-bold mb-1 tracking-wider uppercase">
                 Management
               </span>
@@ -208,7 +201,7 @@ export default function AdminLayout({
             </aside>
 
             {/* MAIN DYNAMIC CONTENT WORKSPACE */}
-            <Card className="flex-1 w-full rounded-sm shadow-lg min-h-125">
+            <Card className="flex-1 w-full rounded shadow-lg min-h-125">
               <CardHeader>
                 <CardTitle>
                   {menus.find((m) => m.href === pathname)?.title}

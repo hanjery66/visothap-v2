@@ -67,13 +67,13 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md  border border-primary/30 shadow-[0_0_60px_rgba(21,190,206,0.06)] rounded-2xl p-8 relative overflow-hidden">
+    <div className="w-full max-w-md  border border-primary/30 shadow-[0_0_60px_rgba(21,190,206,0.06)] rounded p-8 relative overflow-hidden">
       {/* Decorative top lightbar */}
       <div className="absolute top-0 left-0 right-0 h-[2px]  from-transparent via-primary to-transparent opacity-80" />
 
       {/* Brand logo & header */}
       <div className="flex flex-col items-center mb-8">
-        <div className="w-12 h-12 rounded-xl flex border border-primary/30 items-center justify-center shadow-inner mb-4">
+        <div className="w-12 h-12 rounded flex border border-primary/30 items-center justify-center shadow-inner mb-4">
           <ShieldAlert size={24} strokeWidth={2} className="text-primary" />
         </div>
         <h1 className="text-xl font-bold tracking-tight  from-primary to-primary/60  text-primary">
@@ -85,7 +85,7 @@ function LoginForm() {
       {/* Form content */}
       <form onSubmit={handleLogin} className="flex flex-col gap-5">
         {error && (
-          <div className="p-3 bg-primary/10 border border-primary/30 text-primary rounded-xs flex items-center gap-2">
+          <div className="p-3 bg-primary/10 border border-primary/30 text-primary rounded  flex items-center gap-2">
             <AlertCircle size={14} strokeWidth={2} />
             <span>{error}</span>
           </div>
@@ -155,7 +155,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="w-full max-w-md bg-zinc-900 border border-zinc-850 p-8 rounded-2xl h-[420px] flex items-center justify-center text-zinc-500">
+        <div className="w-full max-w-md bg-zinc-900 border border-zinc-850 p-8 rounded h-[420px] flex items-center justify-center text-zinc-500">
           Loading login layout...
         </div>
       }
