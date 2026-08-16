@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
 import { LocationData, Prize } from "@/lib/mockData";
-import { useDrawStatuses } from "@/hooks/useDrawStatus";
 import { formatDisplayDateTime } from "@/lib/utils";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
 import { trpc } from "@/app/_trpc/client";
@@ -31,6 +30,7 @@ const LAYOUT_TWO_DIGIT_LENGTHS: Record<string, number> = {
 interface LotteryTableLayoutTwoProps {
   periodData: any;
   dateParam: string;
+  displayConfig?: any;
 }
 
 // ── Static metadata — built once, not on every render ──────────────
@@ -207,9 +207,15 @@ function renderNorthernPrizeCell(
   }
 }
 
-export function LotteryTableLayoutTwo({ periodData, dateParam }: LotteryTableLayoutTwoProps) {
-  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
-  const displayConfig = displaySettings ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS;
+export function LotteryTableLayoutTwo({
+  periodData,
+  dateParam,
+  displayConfig: propDisplayConfig,
+}: LotteryTableLayoutTwoProps) {
+  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery(undefined, {
+    enabled: !propDisplayConfig,
+  });
+  const displayConfig = propDisplayConfig ?? displaySettings ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS;
   const rows = useMemo(() => {
     if (!periodData?.data?.length) return [];
     return DEFAULT_ROW_LABELS.map(({ key, defaultLabel }) => ({

@@ -254,12 +254,11 @@ export default function LandingPage() {
             const isAllSessions = tableParam === "Thông Tin Kết Quả";
 
             if (tables.length === 0) {
-              const displayedAds = isAllSessions ? centerAds : centerAds.slice(0, 1);
               return (
                 <div className="flex flex-col gap-6">
-                  {displayedAds.map((ad: Ads) => (
-                    <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
-                  ))}
+                  {centerAds[0] && (
+                    <AdsCard key={centerAds[0].id} ad={centerAds[0]} className="h-16 w-full shrink-0" />
+                  )}
                   <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
                     No matching results table found.
                   </div>
@@ -281,12 +280,6 @@ export default function LandingPage() {
                     {tbl.component}
                   </React.Fragment>
                 ))}
-
-                {/* Remaining center ads if there are more ads than tables (only when viewing all sessions) */}
-                {isAllSessions &&
-                  centerAds.slice(tables.length).map((ad: Ads) => (
-                    <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
-                  ))}
               </div>
             );
           })()

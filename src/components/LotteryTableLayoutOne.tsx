@@ -3,16 +3,12 @@
 import { useRef, useLayoutEffect } from "react";
 import dayjs from "dayjs";
 import { LocationData, Prize } from "@/lib/mockData";
-import { useDrawStatuses } from "@/hooks/useDrawStatus";
-import useSplashNumber from "@/hooks/use-splash-number";
 import { formatDisplayDateTime } from "@/lib/utils";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS, LotteryDisplayConfig } from "@/lib/lottery-display";
 import { trpc } from "@/app/_trpc/client";
 import { RollingDigits } from "@/components/RollingDigits";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
 import { DigitSpinner } from "@/components/DigitSpinner";
-
-const HOVER_ROW_BG = "#fbebd7";
 
 const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
   gEight: 2,
@@ -29,27 +25,25 @@ const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
 interface LotteryTableLayoutOneProps {
   periodData: any;
   dateParam: string;
+  displayConfig?: Partial<LotteryDisplayConfig>;
 }
 
 export function LotteryTableLayoutOne({
   periodData,
   dateParam,
+  displayConfig: propDisplayConfig,
 }: LotteryTableLayoutOneProps) {
-  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
+  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery(undefined, {
+    enabled: !propDisplayConfig,
+  });
+  const effectiveSettings = propDisplayConfig ?? displaySettings;
   const displayConfig: LotteryDisplayConfig = {
-    splashMinutesBefore: displaySettings?.splashMinutesBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
-    autoSeedMinutesBeforeSplash: displaySettings?.autoSeedMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
-    cellSplashDurationSeconds: (displaySettings as any)?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
-    cellPauseIntervalSeconds: (displaySettings as any)?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
+    splashMinutesBefore: effectiveSettings?.splashMinutesBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
+    autoSeedMinutesBeforeSplash: effectiveSettings?.autoSeedMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
+    cellSplashDurationSeconds: (effectiveSettings as any)?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+    cellPauseIntervalSeconds: (effectiveSettings as any)?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
   };
-  const locationCount = periodData?.data?.length ?? 0;
 
-  const { columnStatuses, isPending, isSpinning } = useDrawStatuses(
-    dateParam,
-    periodData?.displayNumber,
-    locationCount,
-    displayConfig,
-  );
   if (!periodData || !periodData.data || periodData.data.length === 0)
     return null;
   const locations = periodData.data as LocationData[];
