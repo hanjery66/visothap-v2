@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { parseDrawTime } from "@/lib/utils";
 import type { LotteryDisplayConfig } from "@/lib/lottery-display";
 
-export type CellDrawStatus = "pending" | "spinning" | "done";
+export type CellDrawStatus = "empty" | "pending" | "spinning" | "done";
 
 /**
  * Compute the draw status for a single prize cell.
@@ -31,11 +31,15 @@ export function computeCellDrawStatus(
     .minute(parsed.minute)
     .second(0);
 
+  const splashMinutes = config.splashMinutesBefore ?? 2;
+  const autoSeedMinutes = config.autoSeedMinutesBeforeSplash ?? 5;
+  const totalOffsetMinutes = splashMinutes + autoSeedMinutes;
+
+  // Window when spinner starts (before splash)
+  const spinnerWindowStart = drawMoment.subtract(totalOffsetMinutes, "minute");
+
   // Splash window opens N minutes before draw time
-  const splashWindowStart = drawMoment.subtract(
-    config.splashMinutesBefore ?? 2,
-    "minute",
-  );
+  const splashWindowStart = drawMoment.subtract(splashMinutes, "minute");
 
   const splashDurationSec = config.cellSplashDurationSeconds ?? 10;
   const pauseIntervalSec = config.cellPauseIntervalSeconds ?? 5;
@@ -50,6 +54,7 @@ export function computeCellDrawStatus(
 
   const now = dayjs();
 
+  if (now.isBefore(spinnerWindowStart)) return "empty";
   if (now.isBefore(slotSplashStart)) return "pending";
   if (now.isBefore(slotRevealTime)) return "spinning";
   return "done";

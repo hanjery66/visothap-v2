@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { parseDrawTime } from "@/lib/utils";
 import type { LotteryDisplayConfig } from "@/lib/lottery-display";
 
-export type DrawStatus = "pending" | "spinning" | "done";
+export type DrawStatus = "empty" | "pending" | "spinning" | "done";
 
 export function computeColumnDrawStatus(
   dateParam: string,
@@ -19,13 +19,17 @@ export function computeColumnDrawStatus(
     .hour(parsed.hour)
     .minute(parsed.minute)
     .second(0);
-  const splashStart = drawMoment.subtract(config.splashMinutesBefore, "minute");
-  const columnReveal = drawMoment.add(
-    columnIndex * (config.cellPauseIntervalSeconds / 60),
-    "minute",
-  );
+
+  const totalOffsetMinutes =
+    (config.splashMinutesBefore ?? 2) +
+    (config.autoSeedMinutesBeforeSplash ?? 5);
+
+  const spinnerStart = drawMoment.subtract(totalOffsetMinutes, "minute");
+  const splashStart = drawMoment.subtract(config.splashMinutesBefore ?? 2, "minute");
+  const columnReveal = drawMoment;
   const now = dayjs();
 
+  if (now.isBefore(spinnerStart)) return "empty";
   if (now.isBefore(splashStart)) return "pending";
   if (now.isBefore(columnReveal)) return "spinning";
   return "done";
@@ -41,7 +45,7 @@ export function computePeriodDrawFlags(
     computeColumnDrawStatus(dateParam, drawTime, i, config),
   );
 
-  const isPending = columnStatuses.every((status) => status === "pending");
+  const isPending = columnStatuses.every((status) => status === "pending" || status === "empty");
   const isSpinning =
     !isPending && !columnStatuses.every((status) => status === "done");
 

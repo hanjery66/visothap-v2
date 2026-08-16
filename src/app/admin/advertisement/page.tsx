@@ -17,6 +17,7 @@ import {
   Plus,
   AlertCircle,
   Sparkles,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
@@ -292,181 +293,181 @@ export default function AdvertisementPage() {
       {/* Editing / Creating Ad Form Overlay */}
       {formAd && (
         <form onSubmit={handleSaveAd} className="flex flex-col gap-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Position */}
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="ad-position" className="text-xs font-medium text-zinc-600">
-                    Display Position
-                  </Label>
-                  <Select
-                    value={formAd.position || "Left"}
-                    onValueChange={(value) =>
-                      setFormAd({
-                        ...formAd,
-                        position: value as Ads["position"],
-                      })
-                    }
-                  >
-                    <SelectTrigger className="w-full rounded bg-white">
-                      <SelectValue placeholder="Display Position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="Left">Left Column</SelectItem>
-                        <SelectItem value="Right">Right Column</SelectItem>
-                        <SelectItem value="Center">Center Row</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Position */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ad-position" className="text-xs font-medium text-zinc-600">
+                Display Position
+              </Label>
+              <Select
+                value={formAd.position || "Left"}
+                onValueChange={(value) =>
+                  setFormAd({
+                    ...formAd,
+                    position: value as Ads["position"],
+                  })
+                }
+              >
+                <SelectTrigger className="w-full rounded bg-white">
+                  <SelectValue placeholder="Display Position" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="Left">Left</SelectItem>
+                    <SelectItem value="Right">Right</SelectItem>
+                    <SelectItem value="Center">Center</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
 
-                {/* Status Switch in Form */}
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="form-status" className="text-xs font-medium text-zinc-600">
-                    Visibility Status
-                  </Label>
-                  <div className="flex items-center gap-2 border border-zinc-200 bg-white px-3 py-1.5 rounded h-9 shadow-xs">
-                    <Switch
-                      id="form-status"
-                      checked={formAd.status ?? true}
-                      onCheckedChange={(checked) =>
-                        setFormAd({ ...formAd, status: checked })
-                      }
-                    />
-                    <span
-                      className={`text-xs font-semibold ${(formAd.status ?? true) ? "text-primary" : "text-zinc-400"}`}
-                    >
-                      {(formAd.status ?? true) ? "Active" : "Hidden"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* File Upload and URL Preview Section */}
-                <div className="md:col-span-2 flex flex-col gap-2">
-                  <Label className="text-xs font-medium text-zinc-600">
-                    Banner Advertisement Image
-                  </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                    {/* Visual Dropzone / File Picker */}
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="md:col-span-2 border border-zinc-200 border-dashed hover:border-primary/50 bg-white rounded p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all min-h-[120px] group relative"
-                    >
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileUpload}
-                        accept="image/*"
-                        className="hidden"
-                      />
-
-                      {uploading ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <Loader2 className="h-6 w-6 text-primary animate-spin" />
-                          <span className="text-xs font-medium text-zinc-600">
-                            Processing file upload...
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1.5 text-center">
-                          <div className="p-2 rounded text-primary group-hover:text-primary transition-colors">
-                            <Upload className="h-5 w-5" />
-                          </div>
-                          <span className="text-xs font-semibold text-foreground">
-                            Click to select image file
-                          </span>
-                          <span className="text-xs text-zinc-400">
-                            JPG, PNG, WEBP, GIF up to 5MB
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image Preview Block */}
-                    <div className="w-full h-[120px] rounded border border-zinc-200 bg-white overflow-hidden flex items-center justify-center relative group">
-                      {formAd.image ? (
-                        <>
-                          <Image
-                            src={formAd.image}
-                            alt="Upload preview"
-                            fill
-                            className="w-full h-full object-cover"
-                            unoptimized
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center text-white">
-                            <span className="text-xs font-bold uppercase truncate max-w-full">
-                              {formAd.image.startsWith("/uploads/")
-                                ? "Uploaded Locally"
-                                : "Image Loaded"}
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1 text-zinc-400 text-center p-2">
-                          <ImagePlus className="h-6 w-6" />
-                          <span className="text-[10px] font-bold uppercase">
-                            No Image Loaded
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Direct Image Link Fallback */}
-                <div className="md:col-span-2 flex flex-col gap-1.5">
-                  <Label
-                    htmlFor="ad-image-url"
-                    className="text-xs text-zinc-500 font-medium flex items-center gap-1"
-                  >
-                    <AlertCircle className="h-3 w-3 text-zinc-400" />
-                    Or paste direct image URL
-                  </Label>
-                  <Input
-                    id="ad-image-url"
-                    type="text"
-                    placeholder="https://example.com/banner-image.png"
-                    value={formAd.image || ""}
-                    onChange={(e) =>
-                      setFormAd({ ...formAd, image: e.target.value })
-                    }
-                    required
-                    className="focus:border-primary text-xs font-mono bg-white"
-                  />
-                </div>
+            {/* Status Switch in Form */}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="form-status" className="text-xs font-medium text-zinc-600">
+                Visibility Status
+              </Label>
+              <div className="flex items-center gap-2 border border-zinc-200 bg-white px-3 py-1.5 rounded h-9 shadow-xs">
+                <Switch
+                  id="form-status"
+                  checked={formAd.status ?? true}
+                  onCheckedChange={(checked) =>
+                    setFormAd({ ...formAd, status: checked })
+                  }
+                />
+                <span
+                  className={`text-xs font-semibold ${(formAd.status ?? true) ? "text-primary" : "text-zinc-400"}`}
+                >
+                  {(formAd.status ?? true) ? "Active" : "Hidden"}
+                </span>
               </div>
+            </div>
 
-              {/* Form Buttons */}
-              <div className="flex justify-end gap-2 border-t border-zinc-200 pt-4 mt-2">
-                <Button
-                  type="button"
-                  onClick={handleCancel}
-                  variant="outline"
-                  size="sm"
-                  className="px-4 font-semibold text-xs rounded"
+            {/* File Upload and URL Preview Section */}
+            <div className="md:col-span-2 flex flex-col gap-2">
+              <Label className="text-xs font-medium text-zinc-600">
+                Banner Advertisement Image
+              </Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                {/* Visual Dropzone / File Picker */}
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="md:col-span-2 border border-zinc-200 border-dashed hover:border-primary/50 bg-white rounded p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all min-h-[120px] group relative"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="px-5 font-bold text-xs rounded"
-                  disabled={saveMutation.isPending}
-                >
-                  {saveMutation.isPending ? (
-                    <div className="flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Saving...
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+
+                  {uploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                      <span className="text-xs font-medium text-zinc-600">
+                        Processing file upload...
+                      </span>
                     </div>
                   ) : (
-                    <>
-                      Save Advertisement
-                      <Sparkles className="h-3 w-3" />
-                    </>
+                    <div className="flex flex-col items-center gap-1.5 text-center">
+                      <div className="p-2 rounded text-primary group-hover:text-primary transition-colors">
+                        <Upload className="h-5 w-5" />
+                      </div>
+                      <span className="text-xs font-semibold text-foreground">
+                        Click to select image file
+                      </span>
+                      <span className="text-xs text-zinc-400">
+                        JPG, PNG, WEBP, GIF up to 5MB
+                      </span>
+                    </div>
                   )}
-                </Button>
+                </div>
+
+                {/* Image Preview Block */}
+                <div className="w-full h-[120px] rounded border border-zinc-200 bg-white overflow-hidden flex items-center justify-center relative group">
+                  {formAd.image ? (
+                    <>
+                      <Image
+                        src={formAd.image}
+                        alt="Upload preview"
+                        fill
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2 text-center text-white">
+                        <span className="text-xs font-bold uppercase truncate max-w-full">
+                          {formAd.image.startsWith("/uploads/")
+                            ? "Uploaded Locally"
+                            : "Image Loaded"}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1 text-zinc-400 text-center p-2">
+                      <ImagePlus className="h-6 w-6" />
+                      <span className="text-[10px] font-bold uppercase">
+                        No Image Loaded
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </form>
+            </div>
+
+            {/* Direct Image Link Fallback */}
+            <div className="md:col-span-2 flex flex-col gap-1.5">
+              <Label
+                htmlFor="ad-image-url"
+                className="text-xs text-zinc-500 font-medium flex items-center gap-1"
+              >
+                <AlertCircle className="h-3 w-3 text-zinc-400" />
+                Or paste direct image URL
+              </Label>
+              <Input
+                id="ad-image-url"
+                type="text"
+                placeholder="https://example.com/banner-image.png"
+                value={formAd.image || ""}
+                onChange={(e) =>
+                  setFormAd({ ...formAd, image: e.target.value })
+                }
+                required
+                className="focus:border-primary text-xs font-mono bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Form Buttons */}
+          <div className="flex justify-end gap-2 border-t border-zinc-200 pt-4 mt-2">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              variant="outline"
+              size="sm"
+              className="px-4 font-semibold text-xs rounded"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              className="px-5 font-bold text-xs rounded"
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending ? (
+                <div className="flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Saving...
+                </div>
+              ) : (
+                <>
+                  Save
+                  <Save className="h-3 w-3" />
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       )}
 
       {/* Ads List Table */}

@@ -1,5 +1,6 @@
 import { router, publicProcedure, authedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import dayjs from "dayjs";
 import { db } from "@/db";
 import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize, lotterySchedule, lotteryDisplaySetting } from "@/db/schema";
 import { desc, eq, inArray } from "drizzle-orm";
@@ -483,24 +484,43 @@ export const appRouter = router({
   getLotteryByDate: publicProcedure
     .input(z.object({ date: z.string() }))
     .query(async ({ input }) => {
-      const daySchedules = await getSchedulesForDate(input.date);
+      let effectiveDate = input.date;
+      let daySchedules = await getSchedulesForDate(effectiveDate);
 
       let sessions = await db
         .select()
         .from(lotterySession)
-        .where(eq(lotterySession.date, input.date));
+        .where(eq(lotterySession.date, effectiveDate));
 
       // Always check if new periods have become ready to seed (each period has its own draw time)
-      {
-        const displaySettings = await ensureDisplaySettingsSeeded();
-        const readyPeriods = getPeriodsReadyToSeed(input.date, daySchedules, displaySettings);
-        if (readyPeriods.length > 0) {
-          // ensureLotterySessionsForDate skips already-existing sessions, so this is safe to call always
-          await ensureLotterySessionsForDate(input.date, readyPeriods);
-          sessions = await db
-            .select()
-            .from(lotterySession)
-            .where(eq(lotterySession.date, input.date));
+      const displaySettings = await ensureDisplaySettingsSeeded();
+      const readyPeriods = getPeriodsReadyToSeed(effectiveDate, daySchedules, displaySettings);
+      if (readyPeriods.length > 0) {
+        // ensureLotterySessionsForDate skips already-existing sessions, so this is safe to call always
+        await ensureLotterySessionsForDate(effectiveDate, readyPeriods);
+        sessions = await db
+          .select()
+          .from(lotterySession)
+          .where(eq(lotterySession.date, effectiveDate));
+      }
+
+      // If requested date has no sessions (e.g. today before first draw),
+      // automatically fall back to previous day's results so user always sees complete lottery data.
+      if (sessions.length === 0) {
+        const prevDate = dayjs(effectiveDate).subtract(1, "day").format("YYYY-MM-DD");
+        const prevSchedules = await getSchedulesForDate(prevDate);
+        const prevReadyPeriods = getPeriodsReadyToSeed(prevDate, prevSchedules, displaySettings);
+        if (prevReadyPeriods.length > 0) {
+          await ensureLotterySessionsForDate(prevDate, prevReadyPeriods);
+        }
+        sessions = await db
+          .select()
+          .from(lotterySession)
+          .where(eq(lotterySession.date, prevDate));
+
+        if (sessions.length > 0) {
+          effectiveDate = prevDate;
+          daySchedules = prevSchedules;
         }
       }
 
@@ -538,7 +558,7 @@ export const appRouter = router({
         db: { label: "Đặc Biệt" },
       };
 
-      const result: Record<string, any> = { _id: `lottery-${input.date}`, date: input.date };
+      const result: Record<string, any> = { _id: `lottery-${effectiveDate}`, date: effectiveDate };
 
       for (const period of LOTTERY_PERIODS) {
         const schedule = resolvePeriodSchedule(daySchedules, period);

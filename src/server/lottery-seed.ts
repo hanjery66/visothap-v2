@@ -217,12 +217,12 @@ export function resolvePeriodSchedule(
  * Returns the list of period keys whose auto-seed window has opened for the given date.
  * - Past dates: all enabled periods are returned.
  * - Future dates: empty array (never auto-seed ahead of time).
- * - Today: only periods where now >= (drawTime - splashMinutesBefore - autoSeedMinutesBeforeSplash).
+ * - Today: only periods where now >= (drawTime - splashMinutesBefore - autoSeedMinutesBeforeSplash * 2).
  */
 export function getPeriodsReadyToSeed(
   dateStr: string,
   daySchedules: LotterySchedule[],
-  displaySettings: { splashMinutesBefore: number; autoSeedMinutesBeforeSplash: number }
+  displaySettings?: { splashMinutesBefore: number; autoSeedMinutesBeforeSplash: number }
 ): LotteryPeriodKey[] {
   const todayStr = dayjs().format("YYYY-MM-DD");
 
@@ -241,10 +241,10 @@ export function getPeriodsReadyToSeed(
     return [];
   }
 
-  // Today — only periods whose auto-seed window has been reached
-  const totalOffsetMinutes =
-    (displaySettings.splashMinutesBefore ?? 2) +
-    (displaySettings.autoSeedMinutesBeforeSplash ?? 5);
+  // Today — only periods whose start window has been reached
+  const splashMinutes = displaySettings?.splashMinutesBefore ?? 2;
+  const autoSeedMinutes = displaySettings?.autoSeedMinutesBeforeSplash ?? 5;
+  const totalOffsetMinutes = splashMinutes + autoSeedMinutes * 2;
 
   const ready: LotteryPeriodKey[] = [];
   const now = dayjs();

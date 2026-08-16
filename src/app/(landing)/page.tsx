@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -12,6 +12,7 @@ import AdsCard from "./_component/ads-card";
 import { Ads } from "@/db/schema";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AdFromQuery } from "@/types";
+import { getDefaultLotteryDate } from "@/lib/lottery-schedule";
 
 dayjs.locale("vi");
 
@@ -19,18 +20,42 @@ export default function LandingPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Get selected date (defaults to today's date)
+  // Query draw schedule & display settings to determine dynamic default date
+  const { data: schedule } = trpc.getLotterySchedule.useQuery();
+  const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
+
   const todayStr = dayjs().format("YYYY-MM-DD");
-  const dateParam = searchParams.get("date") || todayStr;
+  const defaultDate = useMemo(() => {
+    return getDefaultLotteryDate(schedule, displaySettings);
+  }, [schedule, displaySettings]);
+
+  const explicitDate = searchParams.get("date");
+  // If a future date is requested, since we are not there yet, fallback to the current active table date
+  const isFutureDate = explicitDate
+    ? dayjs(explicitDate).isAfter(dayjs(todayStr), "day")
+    : false;
+  const dateParam = explicitDate && !isFutureDate ? explicitDate : defaultDate;
   const tableParam = searchParams.get("table") || "Thông Tin Kết Quả";
 
-  const [calendarDate, setCalendarDate] = useState(dayjs(dateParam));
+  const queryDate = dateParam || todayStr;
 
   // Query lottery data from DB (refetch every 30 seconds)
-  const { data: lottery } = trpc.getLotteryByDate.useQuery(
-    { date: dateParam },
-    { refetchInterval: 30_000 },
-  ) as { data: LotteryState | null | undefined };
+  const { data: lottery, isLoading: isLotteryLoading } = trpc.getLotteryByDate.useQuery(
+    { date: queryDate },
+    {
+      refetchInterval: 30_000,
+    },
+  ) as { data: LotteryState | null | undefined; isLoading: boolean };
+
+  const activeDate = lottery?.date || dateParam || todayStr;
+
+  const [calendarDate, setCalendarDate] = useState(dayjs(activeDate));
+
+  useEffect(() => {
+    if (activeDate) {
+      setCalendarDate(dayjs(activeDate));
+    }
+  }, [activeDate]);
 
   // Query advertisements from database
   const { data: ads = [] } = trpc.getAdvertisements.useQuery();
@@ -54,6 +79,7 @@ export default function LandingPage() {
 
   // Update URL on calendar selection
   const handleDateSelect = (date: dayjs.Dayjs) => {
+    if (date.isAfter(dayjs(todayStr), "day")) return;
     setCalendarDate(date);
     const params = new URLSearchParams(searchParams.toString());
     params.set("date", date.format("YYYY-MM-DD"));
@@ -87,23 +113,23 @@ export default function LandingPage() {
     const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
     return (
-      <div className="rounded  shadow-md border border-zinc-100 p-2.5 sm:p-4 transition-all hover:shadow-lg bg-background w-full max-w-full overflow-hidden">
-        {/* Month selector */}
-        <div className="flex justify-between items-center mb-3">
+      <div className="bg-white rounded border border-zinc-200 p-3 shadow-xs select-none">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-2">
           <button
-            onClick={() => setCalendarDate(calendarDate.subtract(1, "month"))}
-            className="p-1 hover:bg-zinc-100 rounded transition-colors text-zinc-600"
+            onClick={() => setCalendarDate((prev) => prev.subtract(1, "month"))}
+            className="p-1 hover:bg-zinc-100 rounded text-zinc-600 transition"
           >
-            <ChevronLeft size={16} strokeWidth={2.5} />
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="font-bold text-zinc-800 text-xs sm:text-sm capitalize">
-            Tháng {calendarDate.format("MM, YYYY")}
+          <span className="font-semibold text-xs sm:text-sm capitalize text-zinc-800">
+            {calendarDate.format("MMMM, YYYY")}
           </span>
           <button
-            onClick={() => setCalendarDate(calendarDate.add(1, "month"))}
-            className="p-1 hover:bg-zinc-100 rounded transition-colors text-zinc-600"
+            onClick={() => setCalendarDate((prev) => prev.add(1, "month"))}
+            className="p-1 hover:bg-zinc-100 rounded text-zinc-600 transition"
           >
-            <ChevronRight size={16} strokeWidth={2.5} />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -121,19 +147,24 @@ export default function LandingPage() {
           {days.map((day, idx) => {
             if (!day) return <div key={`empty-${idx}`} className="aspect-square w-full" />;
 
-            const isSelected = day.format("YYYY-MM-DD") === dateParam;
+            const isSelected = day.format("YYYY-MM-DD") === activeDate;
             const isToday = day.format("YYYY-MM-DD") === todayStr;
+            const isFuture = day.isAfter(dayjs(todayStr), "day");
 
             return (
               <button
                 key={day.toString()}
-                onClick={() => handleDateSelect(day)}
-                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded transition-all flex items-center justify-center p-0 ${isSelected
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : isToday
-                    ? "bg-red-50 text-primary border border-primary/50"
-                    : "hover:bg-zinc-100 "
-                  }`}
+                onClick={() => !isFuture && handleDateSelect(day)}
+                disabled={isFuture}
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded transition-all flex items-center justify-center p-0 ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : isToday
+                      ? "bg-red-50 text-primary border border-primary/50"
+                      : isFuture
+                        ? "text-zinc-300 cursor-not-allowed opacity-40 hover:bg-transparent"
+                        : "hover:bg-zinc-100 text-zinc-700"
+                }`}
               >
                 {day.date()}
               </button>
@@ -162,7 +193,12 @@ export default function LandingPage() {
 
       {/* CENTER CONTENT COLUMN (Span 6) */}
       <div className="col-span-6 flex flex-col gap-6">
-        {lottery ? (
+        {isLotteryLoading && !lottery ? (
+          <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+            Loading data...
+          </div>
+        ) : lottery ? (
           (() => {
             const tables: { key: string; component: React.ReactNode }[] = [];
             if (lottery.first && shouldRenderPeriod(lottery.first.name)) {
@@ -170,8 +206,9 @@ export default function LandingPage() {
                 key: "first",
                 component: (
                   <LotteryTableLayoutOne
+                    dateParam={activeDate}
                     periodData={lottery.first}
-                    dateParam={dateParam}
+                    displayConfig={displaySettings}
                   />
                 ),
               });
@@ -181,8 +218,9 @@ export default function LandingPage() {
                 key: "second",
                 component: (
                   <LotteryTableLayoutOne
+                    dateParam={activeDate}
                     periodData={lottery.second}
-                    dateParam={dateParam}
+                    displayConfig={displaySettings}
                   />
                 ),
               });
@@ -192,8 +230,9 @@ export default function LandingPage() {
                 key: "third",
                 component: (
                   <LotteryTableLayoutOne
+                    dateParam={activeDate}
                     periodData={lottery.third}
-                    dateParam={dateParam}
+                    displayConfig={displaySettings}
                   />
                 ),
               });
@@ -203,19 +242,22 @@ export default function LandingPage() {
                 key: "fourth",
                 component: (
                   <LotteryTableLayoutTwo
+                    dateParam={activeDate}
                     periodData={lottery.fourth}
-                    dateParam={dateParam}
+                    displayConfig={displaySettings}
                   />
                 ),
               });
             }
 
             const centerAds = adsByPosition.Center || [];
+            const isAllSessions = tableParam === "Thông Tin Kết Quả";
 
             if (tables.length === 0) {
+              const displayedAds = isAllSessions ? centerAds : centerAds.slice(0, 1);
               return (
                 <div className="flex flex-col gap-6">
-                  {centerAds.map((ad: Ads) => (
+                  {displayedAds.map((ad: Ads) => (
                     <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
                   ))}
                   <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
@@ -240,17 +282,17 @@ export default function LandingPage() {
                   </React.Fragment>
                 ))}
 
-                {/* Remaining center ads if there are more ads than tables */}
-                {centerAds.slice(tables.length).map((ad: Ads) => (
-                  <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
-                ))}
+                {/* Remaining center ads if there are more ads than tables (only when viewing all sessions) */}
+                {isAllSessions &&
+                  centerAds.slice(tables.length).map((ad: Ads) => (
+                    <AdsCard key={ad.id} ad={ad} className="h-16 w-full shrink-0" />
+                  ))}
               </div>
             );
           })()
         ) : (
-          <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-            Loading data...
+          <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium">
+            No lottery data available.
           </div>
         )}
       </div>

@@ -1,3 +1,6 @@
+import dayjs from "dayjs";
+import { parseDrawTime } from "@/lib/utils";
+
 export const LOTTERY_DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 export type LotteryDayKey = (typeof LOTTERY_DAY_KEYS)[number];
 
@@ -36,4 +39,68 @@ export function buildDefaultScheduleRows() {
       updatedAt: now,
     }))
   );
+}
+
+export interface ScheduleItem {
+  dayOfWeek: string;
+  period: string;
+  drawTime: string;
+  enabled: boolean;
+}
+
+/**
+ * Calculates the default lottery date to display:
+ * - If today's earliest draw/preparation has started, returns today (YYYY-MM-DD).
+ * - If today's first draw/preparation has NOT started yet, returns yesterday (YYYY-MM-DD).
+ */
+export function getDefaultLotteryDate(
+  schedule?: ScheduleItem[],
+  displayConfig?: { splashMinutesBefore?: number; autoSeedMinutesBeforeSplash?: number },
+  currentMoment = dayjs(),
+): string | undefined {
+  if (!schedule) return undefined;
+
+  const todayStr = currentMoment.format("YYYY-MM-DD");
+  const yesterdayStr = currentMoment.subtract(1, "day").format("YYYY-MM-DD");
+
+  const dayKey = getDayKeyFromDate(todayStr);
+  const splashMinutes = displayConfig?.splashMinutesBefore ?? 2;
+  const autoSeedMinutes = displayConfig?.autoSeedMinutesBeforeSplash ?? 5;
+  // Offset includes: empty cell window (autoSeedMinutes) + spinner window (autoSeedMinutes) + splash window (splashMinutes)
+  const totalOffsetMinutes = splashMinutes + autoSeedMinutes * 2;
+
+  const todayItems = schedule.filter((s) => s.dayOfWeek === dayKey && s.enabled);
+
+  if (todayItems.length === 0) {
+    return yesterdayStr;
+  }
+
+  // Find earliest preparation/draw moment among today's enabled draws
+  let earliestStartMoment: dayjs.Dayjs | null = null;
+
+  for (const item of todayItems) {
+    const parsed = parseDrawTime(item.drawTime);
+    if (!parsed) continue;
+
+    const drawMoment = currentMoment
+      .hour(parsed.hour)
+      .minute(parsed.minute)
+      .second(0);
+    const startMoment = drawMoment.subtract(totalOffsetMinutes, "minute");
+
+    if (!earliestStartMoment || startMoment.isBefore(earliestStartMoment)) {
+      earliestStartMoment = startMoment;
+    }
+  }
+
+  if (!earliestStartMoment) {
+    return todayStr;
+  }
+
+  // If now is before the earliest draw start time of today, show yesterday's data
+  if (currentMoment.isBefore(earliestStartMoment)) {
+    return yesterdayStr;
+  }
+
+  return todayStr;
 }

@@ -97,12 +97,21 @@ function renderNorthernPrizeCell(
     const cellStatus = computeCellDrawStatus(dateParam, drawTime, 0, slotIdx, config);
     const len = pz.value ? pz.value.length : expectedLength;
 
+    // Stage 0 — Before spinner window: cell is empty / blank
+    if (cellStatus === "empty") {
+      return (
+        <span className="w-full h-[1.2em] flex items-center justify-center leading-none">
+          &nbsp;
+        </span>
+      );
+    }
+
     // Stage 3 — Reveal the real number (timing cleared AND value ready)
     if (cellStatus === "done" && pz.value) {
       return <span className="w-full h-[1.2em] flex items-center justify-center leading-none">{pz.value}</span>;
     }
 
-    // Stage 1 — Not yet time for this slot's splash
+    // Stage 1 — Not yet time for this slot's splash (show spinner)
     if (cellStatus === "pending") {
       return (
         <span className="w-full h-[1.2em] flex items-center justify-center gap-0.5 overflow-hidden leading-none">

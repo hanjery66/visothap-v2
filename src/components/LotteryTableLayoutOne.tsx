@@ -286,20 +286,6 @@ export function LotteryTableLayoutOne({
               </div>
 
               {(() => {
-                // Count total slots in all columns before this one so the
-                // splash plays top-to-bottom within each column sequentially.
-                const totalPreviousSlots = locations
-                  .slice(0, colIdx)
-                  .reduce((sum, prevLoc) => {
-                    return (
-                      sum +
-                      rows.reduce((s, r) => {
-                        const p = (prevLoc[r.key] as Prize[]) || [];
-                        return s + (p.length > 0 ? p.length : 0);
-                      }, 0)
-                    );
-                  }, 0);
-
                 // Collect all prizes for this column in order so we can check
                 // whether a previous slot is still waiting for its value.
                 const allColumnPrizes: { pz: Prize; expectedLength: number }[] = [];
@@ -330,17 +316,26 @@ export function LotteryTableLayoutOne({
                           const slotIdx = localSlotIndex++;
                           const len = pz.value ? pz.value.length : expectedLength;
 
-                          // Always use time-based status — even if pz.value exists,
-                          // the number is only revealed once the cell's splash window has passed.
-                          // (For past draws, computeCellDrawStatus returns "done" instantly for
-                          // all cells, so historical results still appear immediately.)
+                          // All columns reveal simultaneously at the same time (row-by-row)
                           const cellStatus = computeCellDrawStatus(
                             dateParam,
                             periodData?.displayNumber,
-                            totalPreviousSlots,
+                            0,
                             slotIdx,
                             displayConfig,
                           );
+
+                          // Stage 0 — Before spinner window: cell is empty / blank
+                          if (cellStatus === "empty") {
+                            return (
+                              <p
+                                key={idx}
+                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none py-1 h-[1.2em] flex items-center justify-center"
+                              >
+                                &nbsp;
+                              </p>
+                            );
+                          }
 
                           // Stage 3 — Reveal the real number (timing cleared AND value ready)
                           if (cellStatus === "done" && pz.value) {
@@ -354,7 +349,7 @@ export function LotteryTableLayoutOne({
                             );
                           }
 
-                          // Stage 1 — Not yet time for this slot's splash
+                          // Stage 1 — Not yet time for this slot's splash (show spinner)
                           if (cellStatus === "pending") {
                             return (
                               <p
