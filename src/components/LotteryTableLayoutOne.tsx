@@ -9,6 +9,7 @@ import { trpc } from "@/app/_trpc/client";
 import { RollingDigits } from "@/components/RollingDigits";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
 import { DigitSpinner } from "@/components/DigitSpinner";
+import { useLiveTicker } from "@/hooks/use-live-ticker";
 
 const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
   gEight: 2,
@@ -33,15 +34,18 @@ export function LotteryTableLayoutOne({
   dateParam,
   displayConfig: propDisplayConfig,
 }: LotteryTableLayoutOneProps) {
+  const currentMoment = useLiveTicker(1000);
   const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery(undefined, {
     enabled: !propDisplayConfig,
   });
+
   const effectiveSettings = propDisplayConfig ?? displaySettings;
   const displayConfig: LotteryDisplayConfig = {
     splashMinutesBefore: effectiveSettings?.splashMinutesBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
     autoSeedMinutesBeforeSplash: effectiveSettings?.autoSeedMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
-    cellSplashDurationSeconds: (effectiveSettings as any)?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
-    cellPauseIntervalSeconds: (effectiveSettings as any)?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
+    spinnerMinutesBeforeSplash: effectiveSettings?.spinnerMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
+    cellSplashDurationSeconds: effectiveSettings?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+    cellPauseIntervalSeconds: effectiveSettings?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
   };
 
   if (!periodData || !periodData.data || periodData.data.length === 0)
@@ -317,6 +321,7 @@ export function LotteryTableLayoutOne({
                             0,
                             slotIdx,
                             displayConfig,
+                            currentMoment,
                           );
 
                           // Stage 0 — Before spinner window: cell is empty / blank
@@ -343,33 +348,13 @@ export function LotteryTableLayoutOne({
                             );
                           }
 
-                          // Stage 1 — Not yet time for this slot's splash (show spinner)
-                          if (cellStatus === "pending") {
-                            return (
-                              <p
-                                key={idx}
-                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden"
-                              >
-                                {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
-                                ))}
-                              </p>
-                            );
-                          }
-
-                          // Stage 2 — Splash window active ("spinning"), OR window passed but
-                          // value not yet available ("done" + no value): keep rolling, never blank.
-                          // Also check: if a previous slot in this column is still rolling
-                          // (done-by-time but no value), keep this cell frozen as pending too.
-                          const anyPreviousStillRolling = allColumnPrizes
+                          // Check if any previous prize in this column is still waiting for its value
+                          const anyPreviousMissingValue = allColumnPrizes
                             .slice(0, slotIdx)
-                            .some((entry) => {
-                              if (entry.pz.value) return false;
-                              // previous slot has no value yet → it's still rolling
-                              return true;
-                            });
+                            .some((entry) => !entry.pz.value);
 
-                          if (anyPreviousStillRolling) {
+                          // Stage 1 — Not yet time for this slot's splash OR previous slot has no number yet (keep spinning)
+                          if (cellStatus === "pending" || anyPreviousMissingValue) {
                             return (
                               <p
                                 key={idx}
@@ -382,6 +367,7 @@ export function LotteryTableLayoutOne({
                             );
                           }
 
+                          // Stage 2 — All previous slots have numbers; this slot actively splashes
                           return (
                             <p
                               key={idx}

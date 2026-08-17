@@ -27,8 +27,10 @@ import {
   Check,
   X,
   Settings,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getDayKeyFromDate } from "@/lib/lottery-schedule";
 import LotterySettingDialog from "./_component/lottery-setting-dialog";
 
 // ---------------------------------------------------------------------------
@@ -579,13 +581,16 @@ export default function AdminPage() {
 
   const utils = trpc.useUtils();
 
-  // ── Fetch lottery data for selected date ──────────────────────────────────
+  // ── Fetch lottery schedule to ensure tabs always have proper titles ───────
+  const { data: schedule } = trpc.getLotterySchedule.useQuery();
+
+  // ── Fetch lottery data for selected date (no auto-seed or fallback on admin) ─
   const {
     data: lotteryState,
     isLoading,
     isFetching,
   } = trpc.getLotteryByDate.useQuery(
-    { date: selectedDate },
+    { date: selectedDate, autoSeed: false, fallbackToPreviousDate: false },
     { refetchOnWindowFocus: false },
   );
 
@@ -594,16 +599,25 @@ export default function AdminPage() {
     trpc.seedLotteryDate.useMutation({
       onSuccess: () => {
         utils.getLotteryByDate.invalidate({ date: selectedDate });
-        toast.success("Date seeded !")
+        toast.success("Date seeded !");
       },
       onError: (e) => toast.error(e.message),
     });
 
+  const { mutate: deleteDate, isPending: isDeleting } =
+    trpc.deleteLotteryDate.useMutation({
+      onSuccess: () => {
+        utils.getLotteryByDate.invalidate({ date: selectedDate });
+        toast.success("Date deleted successfully !");
+      },
+      onError: (e) => toast.error(e.message),
+    });
 
   const hasData = !!lotteryState;
-  const isWorking = isSeeding || isFetching;
+  const isWorking = isSeeding || isDeleting || isFetching;
 
   const PERIOD_KEYS = ["first", "second", "third", "fourth"] as const;
+  const dayKey = getDayKeyFromDate(selectedDate);
 
   return (
     <div className="flex flex-col gap-4">
@@ -630,6 +644,7 @@ export default function AdminPage() {
               onSelect={(date) =>
                 date && setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
               }
+              disabled={{ after: new Date() }}
               defaultMonth={dayjs(selectedDate).toDate()}
             />
           </PopoverContent>
@@ -640,7 +655,7 @@ export default function AdminPage() {
           size="sm"
           onClick={() => seedDate({ date: selectedDate })}
           disabled={isWorking}
-          className="gap-1.5 "
+          className="gap-1.5"
         >
           {isSeeding ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -649,6 +664,27 @@ export default function AdminPage() {
           )}
           {hasData ? "Re-initialize" : "Initialize Date"}
         </Button>
+
+        {/* Delete / clear date */}
+        {hasData && (
+          <Button
+            size="sm"
+            onClick={() => {
+              if (confirm(`Are you sure you want to delete all lottery data for ${selectedDate}?`)) {
+                deleteDate({ date: selectedDate });
+              }
+            }}
+            disabled={isWorking}
+            className="gap-1.5"
+          >
+            {isDeleting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+            Delete Date
+          </Button>
+        )}
 
         <LotterySettingDialog />
 
@@ -684,9 +720,14 @@ export default function AdminPage() {
           <TabsList className="flex justify-start w-fit bg-transparent p-0 mb-2 h-auto gap-1">
             {PERIOD_KEYS.map((key) => {
               const session = (lotteryState as LotteryState)?.[key];
-              const displayTime = session
-                ? formatDisplayDateTime(selectedDate, session.displayNumber, "hh:mm A")
-                : "";
+              const matchedSchedule = schedule?.find(
+                (s: any) => s.dayOfWeek === dayKey && s.period === key
+              );
+              const timeStr = session?.displayNumber || matchedSchedule?.drawTime;
+              const displayTime = timeStr
+                ? formatDisplayDateTime(selectedDate, timeStr, "hh:mm A")
+                : matchedSchedule?.name || key.toUpperCase();
+
               return (
                 <TabsTrigger
                   key={key}
@@ -699,39 +740,56 @@ export default function AdminPage() {
             })}
           </TabsList>
 
-          {PERIOD_KEYS.map((key) => (
-            <TabsContent
-              key={key}
-              value={key}
-              className="focus-visible:ring-0 mt-0"
-            >
-              {(() => {
-                const session = (lotteryState as LotteryState)?.[key];
-                if (!session) {
+          {PERIOD_KEYS.map((key) => {
+            const matchedSchedule = schedule?.find(
+              (s: any) => s.dayOfWeek === dayKey && s.period === key
+            );
+            return (
+              <TabsContent
+                key={key}
+                value={key}
+                className="focus-visible:ring-0 mt-0"
+              >
+                {(() => {
+                  const session = (lotteryState as LotteryState)?.[key];
+                  if (!session) {
+                    return (
+                      <div className="flex flex-col items-center justify-center gap-3 py-12 border border-dashed border-zinc-200 rounded bg-zinc-50/50">
+                        <DatabaseZap className="w-8 h-8 text-zinc-300" />
+                        <p className="font-semibold text-sm text-zinc-600">
+                          Period &ldquo;{matchedSchedule?.name || key}&rdquo; is not initialized yet.
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={() => seedDate({ date: selectedDate })}
+                          disabled={isWorking}
+                          className="gap-1.5"
+                        >
+                          <DatabaseZap className="w-3.5 h-3.5" />
+                          Initialize All Periods
+                        </Button>
+                      </div>
+                    );
+                  }
                   return (
-                    <div className="text-center text-foreground text-sm py-10">
-                      No data for this period.
-                    </div>
+                    <>
+                      {/* Section header */}
+                      <div className="mb-2 flex items-center justify-center gap-2 h-9">
+                        <span className="font-semibold border px-4 py-1 border-primary rounded text-foreground uppercase tracking-wide">
+                          {session.name}
+                        </span>
+                      </div>
+                      <PeriodEditor
+                        periodData={session}
+                        sessionId={session.sessionId ?? ""}
+                        onSaved={() => { }}
+                      />
+                    </>
                   );
-                }
-                return (
-                  <>
-                    {/* Section header */}
-                    <div className="mb-2 flex items-center justify-center gap-2 h-9">
-                      <span className="font-semibold border px-4 py-1 border-primary rounded text-foreground uppercase tracking-wide">
-                        {session.name}
-                      </span>
-                    </div>
-                    <PeriodEditor
-                      periodData={session}
-                      sessionId={session.sessionId ?? ""}
-                      onSaved={() => { }}
-                    />
-                  </>
-                );
-              })()}
-            </TabsContent>
-          ))}
+                })()}
+              </TabsContent>
+            );
+          })}
         </Tabs>
       )}
     </div>

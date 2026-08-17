@@ -15,6 +15,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { RollingDigits } from "@/components/RollingDigits";
+import { useLiveTicker } from "@/hooks/use-live-ticker";
 
 const LAYOUT_TWO_DIGIT_LENGTHS: Record<string, number> = {
   gSeven: 2,
@@ -84,6 +85,7 @@ function renderNorthernPrizeCell(
   config: any,
   getNextSlotIndex: () => number,
   allColumnPrizes: { pz: Prize; expectedLength: number }[],
+  currentMoment?: dayjs.Dayjs,
 ) {
   if (!prizes || prizes.length === 0)
     return <div className="hover:bg-[#fbebd7] text-zinc-300 font-normal leading-none py-0.5 h-[1.2em] flex items-center justify-center w-full cursor-pointer">--</div>;
@@ -94,7 +96,7 @@ function renderNorthernPrizeCell(
 
   const val = (pz: Prize, idx: number) => {
     const slotIdx = getNextSlotIndex();
-    const cellStatus = computeCellDrawStatus(dateParam, drawTime, 0, slotIdx, config);
+    const cellStatus = computeCellDrawStatus(dateParam, drawTime, 0, slotIdx, config, currentMoment);
     const len = pz.value ? pz.value.length : expectedLength;
 
     // Stage 0 — Before spinner window: cell is empty / blank
@@ -111,30 +113,13 @@ function renderNorthernPrizeCell(
       return <span className="w-full h-[1.2em] flex items-center justify-center leading-none">{pz.value}</span>;
     }
 
-    // Stage 1 — Not yet time for this slot's splash (show spinner)
-    if (cellStatus === "pending") {
-      return (
-        <span className="w-full h-[1.2em] flex items-center justify-center gap-0.5 overflow-hidden leading-none">
-          {Array.from({ length: expectedLength }).map((_, d) => (
-            <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
-          ))}
-        </span>
-      );
-    }
-
-    // Stage 2 — Splash window active ("spinning"), OR window passed but
-    // value not yet available ("done" + no value): keep rolling, never blank.
-    // Also check: if a previous slot in this column is still rolling
-    // (done-by-time but no value), keep this cell frozen as pending too.
-    const anyPreviousStillRolling = allColumnPrizes
+    // Check if any previous prize in this column is still waiting for its value
+    const anyPreviousMissingValue = allColumnPrizes
       .slice(0, slotIdx)
-      .some((entry) => {
-        if (entry.pz.value) return false;
-        // previous slot has no value yet → it's still rolling
-        return true;
-      });
+      .some((entry) => !entry.pz.value);
 
-    if (anyPreviousStillRolling) {
+    // Stage 1 — Not yet time for this slot's splash OR previous slot has no number yet (keep spinning)
+    if (cellStatus === "pending" || anyPreviousMissingValue) {
       return (
         <span className="w-full h-[1.2em] flex items-center justify-center gap-0.5 overflow-hidden leading-none">
           {Array.from({ length: expectedLength }).map((_, d) => (
@@ -144,9 +129,14 @@ function renderNorthernPrizeCell(
       );
     }
 
-    // "spinning" OR "done-but-no-value": keep rolling until the server delivers the number
-    return <span className="w-full h-[1.2em] flex items-center justify-center leading-none"><RollingDigits length={len} /></span>;
+    // Stage 2 — All previous slots have numbers; this slot actively splashes
+    return (
+      <span className="w-full h-[1.2em] flex items-center justify-center leading-none">
+        <RollingDigits length={len} />
+      </span>
+    );
   };
+
 
   switch (key) {
     case "db":
@@ -212,6 +202,7 @@ export function LotteryTableLayoutTwo({
   dateParam,
   displayConfig: propDisplayConfig,
 }: LotteryTableLayoutTwoProps) {
+  const currentMoment = useLiveTicker(1000);
   const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery(undefined, {
     enabled: !propDisplayConfig,
   });
@@ -291,6 +282,7 @@ export function LotteryTableLayoutTwo({
                           displayConfig,
                           () => globalSlotIndex++,
                           allColumnPrizes,
+                          currentMoment,
                         )}
                       </TableCell>
                     </TableRow>

@@ -12,7 +12,6 @@ import AdsCard from "./_component/ads-card";
 import { Ads } from "@/db/schema";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AdFromQuery } from "@/types";
-import { getDefaultLotteryDate } from "@/lib/lottery-schedule";
 
 dayjs.locale("vi");
 
@@ -25,37 +24,34 @@ export default function LandingPage() {
   const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
 
   const todayStr = dayjs().format("YYYY-MM-DD");
-  const defaultDate = useMemo(() => {
-    return getDefaultLotteryDate(schedule, displaySettings);
-  }, [schedule, displaySettings]);
 
   const explicitDate = searchParams.get("date");
-  // If a future date is requested, since we are not there yet, fallback to the current active table date
+  // If a future date is requested, since we are not there yet, fallback to today
   const isFutureDate = explicitDate
     ? dayjs(explicitDate).isAfter(dayjs(todayStr), "day")
     : false;
-  const dateParam = explicitDate && !isFutureDate ? explicitDate : defaultDate;
+  const selectedDateStr = explicitDate && !isFutureDate ? explicitDate : todayStr;
   const tableParam = searchParams.get("table") || "Thông Tin Kết Quả";
 
-  const queryDate = dateParam || todayStr;
+  const queryDate = selectedDateStr;
 
-  // Query lottery data from DB (refetch every 30 seconds)
+  // Query lottery data from DB (refetch every 5 seconds for live sync)
   const { data: lottery, isLoading: isLotteryLoading } = trpc.getLotteryByDate.useQuery(
     { date: queryDate },
     {
-      refetchInterval: 30_000,
+      refetchInterval: 5_000,
     },
   ) as { data: LotteryState | null | undefined; isLoading: boolean };
 
-  const activeDate = lottery?.date || dateParam || todayStr;
+  const activeDate = lottery?.date || selectedDateStr;
 
-  const [calendarDate, setCalendarDate] = useState(dayjs(activeDate));
+  const [calendarDate, setCalendarDate] = useState(dayjs(selectedDateStr));
 
   useEffect(() => {
-    if (activeDate) {
-      setCalendarDate(dayjs(activeDate));
+    if (selectedDateStr) {
+      setCalendarDate(dayjs(selectedDateStr));
     }
-  }, [activeDate]);
+  }, [selectedDateStr]);
 
   // Query advertisements from database
   const { data: ads = [] } = trpc.getAdvertisements.useQuery();
@@ -98,7 +94,8 @@ export default function LandingPage() {
   const renderCalendar = () => {
     const startOfMonth = calendarDate.startOf("month");
     const endOfMonth = calendarDate.endOf("month");
-    const startDay = startOfMonth.day();
+    // Monday-first offset: Mon=0, Tue=1, ..., Sun=6
+    const startDay = (startOfMonth.day() + 6) % 7;
     const daysInMonth = calendarDate.daysInMonth();
 
     // Days grid array
@@ -110,7 +107,7 @@ export default function LandingPage() {
       days.push(calendarDate.date(i));
     }
 
-    const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    const weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
     return (
       <div className="bg-white rounded border border-zinc-200 p-3 shadow-xs select-none">
@@ -147,7 +144,7 @@ export default function LandingPage() {
           {days.map((day, idx) => {
             if (!day) return <div key={`empty-${idx}`} className="aspect-square w-full" />;
 
-            const isSelected = day.format("YYYY-MM-DD") === activeDate;
+            const isSelected = day.format("YYYY-MM-DD") === selectedDateStr;
             const isToday = day.format("YYYY-MM-DD") === todayStr;
             const isFuture = day.isAfter(dayjs(todayStr), "day");
 

@@ -222,7 +222,11 @@ export function resolvePeriodSchedule(
 export function getPeriodsReadyToSeed(
   dateStr: string,
   daySchedules: LotterySchedule[],
-  displaySettings?: { splashMinutesBefore: number; autoSeedMinutesBeforeSplash: number }
+  displaySettings?: {
+    splashMinutesBefore: number;
+    autoSeedMinutesBeforeSplash: number;
+    spinnerMinutesBeforeSplash?: number;
+  }
 ): LotteryPeriodKey[] {
   const todayStr = dayjs().format("YYYY-MM-DD");
 
@@ -243,8 +247,9 @@ export function getPeriodsReadyToSeed(
 
   // Today — only periods whose start window has been reached
   const splashMinutes = displaySettings?.splashMinutesBefore ?? 2;
+  const spinnerMinutes = displaySettings?.spinnerMinutesBeforeSplash ?? 5;
   const autoSeedMinutes = displaySettings?.autoSeedMinutesBeforeSplash ?? 5;
-  const totalOffsetMinutes = splashMinutes + autoSeedMinutes * 2;
+  const totalOffsetMinutes = splashMinutes + spinnerMinutes + autoSeedMinutes;
 
   const ready: LotteryPeriodKey[] = [];
   const now = dayjs();

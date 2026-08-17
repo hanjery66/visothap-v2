@@ -110,8 +110,15 @@ export default function LotteryScheduleSettings() {
             setDisplaySettings({
                 splashMinutesBefore: dbDisplaySettings.splashMinutesBefore,
                 autoSeedMinutesBeforeSplash: dbDisplaySettings.autoSeedMinutesBeforeSplash,
-                cellSplashDurationSeconds: (dbDisplaySettings as any).cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
-                cellPauseIntervalSeconds: (dbDisplaySettings as any).cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
+                spinnerMinutesBeforeSplash:
+                    dbDisplaySettings.spinnerMinutesBeforeSplash ??
+                    DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
+                cellSplashDurationSeconds:
+                    dbDisplaySettings.cellSplashDurationSeconds ??
+                    DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+                cellPauseIntervalSeconds:
+                    dbDisplaySettings.cellPauseIntervalSeconds ??
+                    DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
             });
         }
     }, [dbDisplaySettings]);
@@ -238,193 +245,265 @@ export default function LotteryScheduleSettings() {
             </div>
 
             <div className="rounded space-y-4 bg-zinc-50/50">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="autoseed-minutes" className="text-xs text-muted-foreground">
-                                Auto-seed before splash (minutes)
-                            </Label>
-                            <Input
-                                id="autoseed-minutes"
-                                type="number"
-                                min={0}
-                                max={120}
-                                value={displaySettings.autoSeedMinutesBeforeSplash}
-                                onChange={(e) => {
-                                    setDirty(true);
-                                    setDisplaySettings((prev) => ({
-                                        ...prev,
-                                        autoSeedMinutesBeforeSplash: Number(e.target.value),
-                                    }));
-                                }}
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <Label htmlFor="splash-minutes" className="text-xs text-muted-foreground">
-                                Splash before draw (minutes)
-                            </Label>
-                            <Input
-                                id="splash-minutes"
-                                type="number"
-                                min={0}
-                                max={60}
-                                value={displaySettings.splashMinutesBefore}
-                                onChange={(e) => {
-                                    setDirty(true);
-                                    setDisplaySettings((prev) => ({
-                                        ...prev,
-                                        splashMinutesBefore: Number(e.target.value),
-                                    }));
-                                }}
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <Label htmlFor="cell-splash-duration" className="text-xs text-muted-foreground">
-                                Cell splash duration (seconds)
-                            </Label>
-                            <Input
-                                id="cell-splash-duration"
-                                type="number"
-                                min={1}
-                                max={300}
-                                value={displaySettings.cellSplashDurationSeconds ?? 10}
-                                onChange={(e) => {
-                                    setDirty(true);
-                                    setDisplaySettings((prev) => ({
-                                        ...prev,
-                                        cellSplashDurationSeconds: Number(e.target.value),
-                                    }));
-                                }}
-                            />
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <Label htmlFor="cell-pause-interval" className="text-xs text-muted-foreground">
-                                Pause between cell (seconds)
-                            </Label>
-                            <Input
-                                id="cell-pause-interval"
-                                type="number"
-                                min={0}
-                                max={300}
-                                value={displaySettings.cellPauseIntervalSeconds ?? 5}
-                                onChange={(e) => {
-                                    setDirty(true);
-                                    setDisplaySettings((prev) => ({
-                                        ...prev,
-                                        cellPauseIntervalSeconds: Number(e.target.value),
-                                    }));
-                                }}
-                            />
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="autoseed-minutes" className="text-xs text-muted-foreground">
+                            Empty table before spinner (minutes)
+                        </Label>
+                        <Input
+                            id="autoseed-minutes"
+                            type="number"
+                            min={0}
+                            max={120}
+                            value={displaySettings.autoSeedMinutesBeforeSplash}
+                            onChange={(e) => {
+                                setDirty(true);
+                                setDisplaySettings((prev) => ({
+                                    ...prev,
+                                    autoSeedMinutesBeforeSplash: Number(e.target.value),
+                                }));
+                            }}
+                        />
                     </div>
 
-                    <p className="text-xs text-muted-foreground">
-                        Data tables auto-seed{" "}
-                        <span className="font-semibold text-foreground">
-                            {displaySettings.autoSeedMinutesBeforeSplash} min
-                        </span>{" "}
-                        before splash (total{" "}
-                        <span className="font-semibold text-foreground">
-                            {displaySettings.splashMinutesBefore + displaySettings.autoSeedMinutesBeforeSplash} min
-                        </span>{" "}
-                        before draw time). Splash animation starts{" "}
-                        <span className="font-semibold text-foreground">
-                            {displaySettings.splashMinutesBefore} min
-                        </span>{" "}
-                        before draw time.
-                    </p>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="spinner-minutes" className="text-xs text-muted-foreground">
+                            Spinner before splash (minutes)
+                        </Label>
+                        <Input
+                            id="spinner-minutes"
+                            type="number"
+                            min={0}
+                            max={120}
+                            value={displaySettings.spinnerMinutesBeforeSplash ?? 5}
+                            onChange={(e) => {
+                                setDirty(true);
+                                setDisplaySettings((prev) => ({
+                                    ...prev,
+                                    spinnerMinutesBeforeSplash: Number(e.target.value),
+                                }));
+                            }}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label htmlFor="splash-minutes" className="text-xs text-muted-foreground">
+                            Splash before draw (minutes)
+                        </Label>
+                        <Input
+                            id="splash-minutes"
+                            type="number"
+                            min={0}
+                            max={60}
+                            value={displaySettings.splashMinutesBefore}
+                            onChange={(e) => {
+                                setDirty(true);
+                                setDisplaySettings((prev) => ({
+                                    ...prev,
+                                    splashMinutesBefore: Number(e.target.value),
+                                }));
+                            }}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label htmlFor="cell-splash-duration" className="text-xs text-muted-foreground">
+                            Cell splash duration (seconds)
+                        </Label>
+                        <Input
+                            id="cell-splash-duration"
+                            type="number"
+                            min={1}
+                            max={300}
+                            value={displaySettings.cellSplashDurationSeconds ?? 10}
+                            onChange={(e) => {
+                                setDirty(true);
+                                setDisplaySettings((prev) => ({
+                                    ...prev,
+                                    cellSplashDurationSeconds: Number(e.target.value),
+                                }));
+                            }}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label htmlFor="cell-pause-interval" className="text-xs text-muted-foreground">
+                            Pause between cell (seconds)
+                        </Label>
+                        <Input
+                            id="cell-pause-interval"
+                            type="number"
+                            min={0}
+                            max={300}
+                            value={displaySettings.cellPauseIntervalSeconds ?? 5}
+                            onChange={(e) => {
+                                setDirty(true);
+                                setDisplaySettings((prev) => ({
+                                    ...prev,
+                                    cellPauseIntervalSeconds: Number(e.target.value),
+                                }));
+                            }}
+                        />
+                    </div>
                 </div>
 
-                <Tabs value={activeDay} onValueChange={(v) => setActiveDay(v as DayKey)} className="mt-6">
-                    <TabsList className="w-full flex-wrap h-auto bg-zinc-100 rounded  p-1">
-                        {DAYS.map((d) => (
-                            <TabsTrigger
-                                key={d.key}
-                                value={d.key}
-                                className="flex-1 rounded  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                            >
-                                <span className="hidden sm:inline">{d.label}</span>
-                                <span className="sm:hidden">{d.short}</span>
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
+                <p className="text-xs text-muted-foreground">
+                    Spend {" "}
+                    <span className="font-semibold text-foreground">
+                        {displaySettings.splashMinutesBefore +
+                            (displaySettings.spinnerMinutesBeforeSplash ?? 5) +
+                            displaySettings.autoSeedMinutesBeforeSplash}{" "}
+                        min
+                    </span>{" "}
+                    before draw time.
+                </p>
+            </div>
 
+            <Tabs value={activeDay} onValueChange={(v) => setActiveDay(v as DayKey)} className="mt-6">
+                <TabsList className="w-full flex-wrap h-auto bg-zinc-100 rounded  p-1">
                     {DAYS.map((d) => (
-                        <TabsContent key={d.key} value={d.key} className="mt-4 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => copyDayToAll(d.key)}>
-                                        <Copy className="h-3.5 w-3.5" />
-                                        Apply to whole week
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => resetDay(d.key)}>
-                                        <RotateCcw className="h-3.5 w-3.5" />
-                                        Reset
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {PERIODS.map((p) => {
-                                    const value = schedule[d.key][p.key];
-                                    return (
-                                        <div
-                                            key={p.key}
-                                            className={`rounded  border p-4 space-y-3 transition-colors ${value.enabled
-                                                ? "border-zinc-200 bg-white"
-                                                : "border-zinc-200 bg-zinc-50 opacity-60"
-                                                }`}
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-bold text-primary">{p.label}</span>
-                                                <Switch
-                                                    checked={value.enabled}
-                                                    onCheckedChange={(checked) =>
-                                                        updatePeriod(d.key, p.key, { enabled: checked })
-                                                    }
-                                                />
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor={`${d.key}-${p.key}-name`} className="text-xs text-muted-foreground">
-                                                    Session Name
-                                                </Label>
-                                                <Input
-                                                    id={`${d.key}-${p.key}-name`}
-                                                    type="text"
-                                                    value={value.name}
-                                                    disabled={!value.enabled}
-                                                    onChange={(e) =>
-                                                        updatePeriod(d.key, p.key, { name: e.target.value })
-                                                    }
-                                                    placeholder="e.g. Sổ Kết Quả Miền Trung"
-                                                />
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor={`${d.key}-${p.key}-time`} className="text-xs text-muted-foreground">
-                                                    Actual result time (24h)
-                                                </Label>
-                                                <Input
-                                                    id={`${d.key}-${p.key}-time`}
-                                                    type="time"
-                                                    value={value.drawTime}
-                                                    disabled={!value.enabled}
-                                                    onChange={(e) =>
-                                                        updatePeriod(d.key, p.key, { drawTime: e.target.value })
-                                                    }
-                                                />
-                                            </div>
-
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </TabsContent>
+                        <TabsTrigger
+                            key={d.key}
+                            value={d.key}
+                            className="flex-1 rounded  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                        >
+                            <span className="hidden sm:inline">{d.label}</span>
+                            <span className="sm:hidden">{d.short}</span>
+                        </TabsTrigger>
                     ))}
-                </Tabs>
+                </TabsList>
+
+                {DAYS.map((d) => (
+                    <TabsContent key={d.key} value={d.key} className="space-y-4 mt-4">
+                        <div className="flex justify-between items-center  p-3 rounded  border border-primary/10">
+                            <span className="font-semibold text-sm">Schedule for {d.label}</span>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" onClick={() => copyDayToAll(d.key)}>
+                                    <Copy className="h-3.5 w-3.5" />
+                                    Apply to whole week
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => resetDay(d.key)}>
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                    Reset
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {PERIODS.map((p) => {
+                                const value = schedule[d.key][p.key];
+                                return (
+                                    <div
+                                        key={p.key}
+                                        className={`rounded  border p-4 space-y-3 transition-colors ${value.enabled
+                                            ? "border-zinc-200 bg-white"
+                                            : "border-zinc-200 bg-zinc-50 opacity-60"
+                                            }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-bold text-primary">{p.label}</span>
+                                            <Switch
+                                                checked={value.enabled}
+                                                onCheckedChange={(checked) =>
+                                                    updatePeriod(d.key, p.key, { enabled: checked })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor={`${d.key}-${p.key}-name`} className="text-xs text-muted-foreground">
+                                                Session Name
+                                            </Label>
+                                            <Input
+                                                id={`${d.key}-${p.key}-name`}
+                                                type="text"
+                                                value={value.name}
+                                                disabled={!value.enabled}
+                                                onChange={(e) =>
+                                                    updatePeriod(d.key, p.key, { name: e.target.value })
+                                                }
+                                                placeholder="e.g. Sổ Kết QuẢ Miền Trung"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor={`${d.key}-${p.key}-time`} className="text-xs text-muted-foreground">
+                                                Actual result time (24h)
+                                            </Label>
+                                            <Input
+                                                id={`${d.key}-${p.key}-time`}
+                                                type="time"
+                                                value={value.drawTime}
+                                                disabled={!value.enabled}
+                                                onChange={(e) =>
+                                                    updatePeriod(d.key, p.key, { drawTime: e.target.value })
+                                                }
+                                            />
+                                        </div>
+
+                                        {(() => {
+                                            const parsedTime = value.drawTime.split(":");
+                                            if (parsedTime.length !== 2 || !value.enabled) return null;
+                                            const hour = parseInt(parsedTime[0]);
+                                            const minute = parseInt(parsedTime[1]);
+                                            const splashMinutes = displaySettings.splashMinutesBefore ?? 2;
+                                            const autoSeedMinutes = displaySettings.autoSeedMinutesBeforeSplash ?? 5;
+                                            const spinnerMinutes = displaySettings.spinnerMinutesBeforeSplash ?? 5;
+
+                                            const drawMoment = new Date();
+                                            drawMoment.setHours(hour, minute, 0, 0);
+
+                                            const emptyTableMoment = new Date(
+                                                drawMoment.getTime() -
+                                                (splashMinutes + spinnerMinutes + autoSeedMinutes) * 60000,
+                                            );
+                                            const spinnerMoment = new Date(
+                                                drawMoment.getTime() - (splashMinutes + spinnerMinutes) * 60000,
+                                            );
+                                            const splashMoment = new Date(
+                                                drawMoment.getTime() - splashMinutes * 60000,
+                                            );
+
+                                            const format = (d: Date) =>
+                                                d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+                                            return (
+                                                <div className="rounded border border-zinc-200/80 bg-zinc-50/80 p-2.5 text-[11px] space-y-1 text-zinc-600">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-zinc-500">Empty blank cells:</span>
+                                                        <span className="font-semibold text-zinc-700">
+                                                            {format(emptyTableMoment)} – {format(spinnerMoment)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-zinc-500">Spinners show:</span>
+                                                        <span className="font-semibold text-amber-600">
+                                                            {format(spinnerMoment)} – {format(splashMoment)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-zinc-500">Splash animation starts:</span>
+                                                        <span className="font-semibold text-blue-600">
+                                                            {format(splashMoment)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between pt-0.5 border-t border-zinc-200/60 font-medium">
+                                                        <span className="text-zinc-700">Actual result time:</span>
+                                                        <span className="font-bold text-primary">
+                                                            {format(drawMoment)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </TabsContent>
+                ))}
+            </Tabs>
         </div>
     );
 }

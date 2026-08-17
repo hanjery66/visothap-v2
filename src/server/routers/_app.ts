@@ -434,8 +434,15 @@ export const appRouter = router({
       return {
         splashMinutesBefore: settings.splashMinutesBefore,
         autoSeedMinutesBeforeSplash: settings.autoSeedMinutesBeforeSplash,
-        cellSplashDurationSeconds: settings.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
-        cellPauseIntervalSeconds: settings.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
+        spinnerMinutesBeforeSplash:
+          (settings as any).spinnerMinutesBeforeSplash ??
+          DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
+        cellSplashDurationSeconds:
+          settings.cellSplashDurationSeconds ??
+          DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
+        cellPauseIntervalSeconds:
+          settings.cellPauseIntervalSeconds ??
+          DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
       };
     } catch (error) {
       console.error("tRPC getLotteryDisplaySettings error:", error);
@@ -447,7 +454,8 @@ export const appRouter = router({
     .input(
       z.object({
         splashMinutesBefore: z.number().int().min(0).max(60),
-        autoSeedMinutesBeforeSplash: z.number().int().min(0).max(60),
+        autoSeedMinutesBeforeSplash: z.number().int().min(0).max(120),
+        spinnerMinutesBeforeSplash: z.number().int().min(0).max(120).optional(),
         cellSplashDurationSeconds: z.number().int().min(1).max(300),
         cellPauseIntervalSeconds: z.number().int().min(0).max(300),
       }),
@@ -460,6 +468,7 @@ export const appRouter = router({
           .set({
             splashMinutesBefore: input.splashMinutesBefore,
             autoSeedMinutesBeforeSplash: input.autoSeedMinutesBeforeSplash,
+            spinnerMinutesBeforeSplash: input.spinnerMinutesBeforeSplash ?? 5,
             cellSplashDurationSeconds: input.cellSplashDurationSeconds,
             cellPauseIntervalSeconds: input.cellPauseIntervalSeconds,
             updatedAt: new Date(),
@@ -482,7 +491,13 @@ export const appRouter = router({
    * so existing components (LotteryTableLayoutOne / Two) need zero changes.
    */
   getLotteryByDate: publicProcedure
-    .input(z.object({ date: z.string() }))
+    .input(
+      z.object({
+        date: z.string(),
+        autoSeed: z.boolean().optional().default(true),
+        fallbackToPreviousDate: z.boolean().optional().default(true),
+      })
+    )
     .query(async ({ input }) => {
       let effectiveDate = input.date;
       let daySchedules = await getSchedulesForDate(effectiveDate);
@@ -493,25 +508,30 @@ export const appRouter = router({
         .where(eq(lotterySession.date, effectiveDate));
 
       // Always check if new periods have become ready to seed (each period has its own draw time)
-      const displaySettings = await ensureDisplaySettingsSeeded();
-      const readyPeriods = getPeriodsReadyToSeed(effectiveDate, daySchedules, displaySettings);
-      if (readyPeriods.length > 0) {
-        // ensureLotterySessionsForDate skips already-existing sessions, so this is safe to call always
-        await ensureLotterySessionsForDate(effectiveDate, readyPeriods);
-        sessions = await db
-          .select()
-          .from(lotterySession)
-          .where(eq(lotterySession.date, effectiveDate));
+      if (input.autoSeed) {
+        const displaySettings = await ensureDisplaySettingsSeeded();
+        const readyPeriods = getPeriodsReadyToSeed(effectiveDate, daySchedules, displaySettings);
+        if (readyPeriods.length > 0) {
+          // ensureLotterySessionsForDate skips already-existing sessions, so this is safe to call always
+          await ensureLotterySessionsForDate(effectiveDate, readyPeriods);
+          sessions = await db
+            .select()
+            .from(lotterySession)
+            .where(eq(lotterySession.date, effectiveDate));
+        }
       }
 
       // If requested date has no sessions (e.g. today before first draw),
       // automatically fall back to previous day's results so user always sees complete lottery data.
-      if (sessions.length === 0) {
+      if (input.fallbackToPreviousDate && sessions.length === 0) {
         const prevDate = dayjs(effectiveDate).subtract(1, "day").format("YYYY-MM-DD");
         const prevSchedules = await getSchedulesForDate(prevDate);
-        const prevReadyPeriods = getPeriodsReadyToSeed(prevDate, prevSchedules, displaySettings);
-        if (prevReadyPeriods.length > 0) {
-          await ensureLotterySessionsForDate(prevDate, prevReadyPeriods);
+        if (input.autoSeed) {
+          const displaySettings = await ensureDisplaySettingsSeeded();
+          const prevReadyPeriods = getPeriodsReadyToSeed(prevDate, prevSchedules, displaySettings);
+          if (prevReadyPeriods.length > 0) {
+            await ensureLotterySessionsForDate(prevDate, prevReadyPeriods);
+          }
         }
         sessions = await db
           .select()
@@ -790,6 +810,48 @@ export const appRouter = router({
         .where(inArray(lotteryPrize.locationId, locationIds));
 
       return { success: true };
+    }),
+
+  /**
+   * Authed — delete all sessions, locations, and prizes for a date.
+   */
+  deleteLotteryDate: authedProcedure
+    .input(z.object({ date: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const sessions = await db
+          .select({ id: lotterySession.id })
+          .from(lotterySession)
+          .where(eq(lotterySession.date, input.date));
+
+        if (sessions.length === 0) return { success: true };
+
+        const sessionIds = sessions.map((s) => s.id);
+        const locations = await db
+          .select({ id: lotteryLocation.id })
+          .from(lotteryLocation)
+          .where(inArray(lotteryLocation.sessionId, sessionIds));
+
+        if (locations.length > 0) {
+          const locationIds = locations.map((l) => l.id);
+          await db
+            .delete(lotteryPrize)
+            .where(inArray(lotteryPrize.locationId, locationIds));
+        }
+
+        await db
+          .delete(lotteryLocation)
+          .where(inArray(lotteryLocation.sessionId, sessionIds));
+
+        await db
+          .delete(lotterySession)
+          .where(eq(lotterySession.date, input.date));
+
+        return { success: true };
+      } catch (error) {
+        console.error("tRPC deleteLotteryDate database error:", error);
+        throw new Error("Failed to delete lottery date.");
+      }
     }),
 });
 

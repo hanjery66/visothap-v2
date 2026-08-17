@@ -21,6 +21,8 @@ export async function ensureDisplaySettingsSeeded() {
     splashMinutesBefore: DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
     autoSeedMinutesBeforeSplash:
       DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
+    spinnerMinutesBeforeSplash:
+      DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
     cellSplashDurationSeconds:
       DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
     cellPauseIntervalSeconds:
