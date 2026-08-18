@@ -2,10 +2,10 @@ FROM oven/bun:1.3.14-slim
 
 WORKDIR /app
 
-# Install curl for healthcheck and tzdata for timezone
+# Install curl for healthcheck, tzdata for timezone, ca-certificates
 ENV TZ=Asia/Phnom_Penh
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl tzdata && \
+    apt-get install -y --no-install-recommends curl tzdata ca-certificates && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
