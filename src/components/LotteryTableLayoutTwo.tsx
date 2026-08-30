@@ -60,6 +60,18 @@ const DEFAULT_ROW_LABELS: { key: string; defaultLabel: string }[] = [
   { key: "gSeven", defaultLabel: "Gi 7" },
 ];
 
+// Draw / load order: Start from Gi 1 (gOne) down to bottom (Gi 7), then Đ. B (db) at top is last
+const DRAW_ORDER_KEYS = [
+  "gOne",
+  "gTwo",
+  "gThree",
+  "gFour",
+  "gFive",
+  "gSix",
+  "gSeven",
+  "db",
+];
+
 function getRowLabel(
   key: string,
   defaultLabel: string,
@@ -83,7 +95,7 @@ function renderNorthernPrizeCell(
   dateParam: string,
   drawTime: string | undefined,
   config: any,
-  getNextSlotIndex: () => number,
+  getSlotIndex: (key: string, idx: number) => number,
   allColumnPrizes: { pz: Prize; expectedLength: number }[],
   currentMoment?: dayjs.Dayjs,
 ) {
@@ -95,7 +107,7 @@ function renderNorthernPrizeCell(
     "hover:bg-[#fbebd7] w-full  cursor-pointer leading-none flex items-center justify-center text-center";
 
   const val = (pz: Prize, idx: number) => {
-    const slotIdx = getNextSlotIndex();
+    const slotIdx = getSlotIndex(key, idx);
     const cellStatus = computeCellDrawStatus(dateParam, drawTime, 0, slotIdx, config, currentMoment);
     const len = pz.value ? pz.value.length : expectedLength;
 
@@ -121,9 +133,9 @@ function renderNorthernPrizeCell(
     // Stage 1 — Not yet time for this slot's splash OR previous slot has no number yet (keep spinning)
     if (cellStatus === "pending" || anyPreviousMissingValue) {
       return (
-        <span className="w-full h-[1.2em] flex items-center justify-center gap-0.5 overflow-hidden leading-none">
+        <span className="w-full h-[1.2em] flex items-center justify-center overflow-hidden leading-none">
           {Array.from({ length: expectedLength }).map((_, d) => (
-            <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
+            <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
           ))}
         </span>
       );
@@ -230,7 +242,7 @@ export function LotteryTableLayoutTwo({
   return (
     <div className="rounded shadow-md overflow-hidden transition-all hover:shadow-lg">
       {/* Table header */}
-      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-sm">
+      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-base">
         <span>
           {drawDateTimeLabel} {" "} {formattedName}
         </span>
@@ -252,17 +264,19 @@ export function LotteryTableLayoutTwo({
 
               {/* Prize rows */}
               {(() => {
-                // Collect all prizes for the column in order to check previous slots
+                // Collect all prizes in draw sequence order (Gi 1 down to Gi 7, then Đ. B last)
                 const allColumnPrizes: { pz: Prize; expectedLength: number }[] = [];
-                rows.forEach((row) => {
-                  const prizes = (mainData[row.key] as Prize[]) || [];
-                  const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[row.key] ?? 5;
-                  if (prizes.length > 0) {
-                    prizes.forEach((pz) => allColumnPrizes.push({ pz, expectedLength }));
-                  }
+                const slotIndexMap: Record<string, number> = {};
+
+                DRAW_ORDER_KEYS.forEach((key) => {
+                  const prizes = (mainData[key] as Prize[]) || [];
+                  const expectedLength = LAYOUT_TWO_DIGIT_LENGTHS[key] ?? 5;
+                  prizes.forEach((pz, idx) => {
+                    slotIndexMap[`${key}_${idx}`] = allColumnPrizes.length;
+                    allColumnPrizes.push({ pz, expectedLength });
+                  });
                 });
 
-                let globalSlotIndex = 0;
                 return rows.map((row) => {
                   const prizes = mainData[row.key] as Prize[];
                   return (
@@ -280,7 +294,7 @@ export function LotteryTableLayoutTwo({
                           dateParam,
                           periodData?.displayNumber,
                           displayConfig,
-                          () => globalSlotIndex++,
+                          (key, idx) => slotIndexMap[`${key}_${idx}`] ?? 0,
                           allColumnPrizes,
                           currentMoment,
                         )}

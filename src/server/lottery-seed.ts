@@ -44,27 +44,6 @@ const PERIOD_DEFS: {
     displayTable: "first",
     locations: [
       {
-        location: "TP. Đà Nẵng",
-        code: "XSDNG",
-        prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
-      },
-      {
-        location: "Khánh Hòa",
-        code: "XSKH",
-        prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
-      },
-      {
-        location: "Kon Tum",
-        code: "XSKT",
-        prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
-      },
-    ],
-  },
-  {
-    period: "second",
-    displayTable: "second",
-    locations: [
-      {
         location: "Bình Dương",
         code: "XSBD",
         prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
@@ -77,6 +56,27 @@ const PERIOD_DEFS: {
       {
         location: "An Giang",
         code: "XSAG",
+        prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
+      },
+    ],
+  },
+  {
+    period: "second",
+    displayTable: "second",
+    locations: [
+      {
+        location: "TP. Đà Nẵng",
+        code: "XSDNG",
+        prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
+      },
+      {
+        location: "Khánh Hòa",
+        code: "XSKH",
+        prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
+      },
+      {
+        location: "Kon Tum",
+        code: "XSKT",
         prizes: { gEight: 1, gSeven: 1, gSix: 3, gFive: 1, gFour: 7, gThree: 2, gTwo: 1, gOne: 1, db: 1 },
       },
     ],

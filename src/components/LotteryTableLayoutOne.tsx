@@ -129,7 +129,7 @@ export function LotteryTableLayoutOne({
     {
       key: "db",
       label: getRowLabel("db", "Đ. B"),
-      color: "text-red-600 font-semibold text-[25px] md:text-[28px]",
+      color: "text-red-600 font-semibold text-[25px] md:text-[28px] py-1",
     },
   ];
 
@@ -206,7 +206,7 @@ export function LotteryTableLayoutOne({
   return (
     <div className="rounded shadow-md overflow-hidden transition-all hover:shadow-lg">
       {/* Banner */}
-      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-sm">
+      <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-base">
         <span>
           {drawDateTimeLabel}{" "}
           {formattedName}
@@ -358,10 +358,10 @@ export function LotteryTableLayoutOne({
                             return (
                               <p
                                 key={idx}
-                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none flex items-center justify-center gap-0.5 py-1 h-[1.2em] overflow-hidden"
+                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none flex items-center justify-center py-1 h-[1.2em] overflow-hidden"
                               >
                                 {Array.from({ length: expectedLength }).map((__, d) => (
-                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
+                                  <DigitSpinner key={d} className="my-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3" />
                                 ))}
                               </p>
                             );

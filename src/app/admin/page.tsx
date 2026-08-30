@@ -575,6 +575,7 @@ export default function AdminPage() {
   const [selectedDate, setSelectedDate] = useState(
     dayjs().format("YYYY-MM-DD"),
   );
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [activePeriod, setActivePeriod] = useState<
     "first" | "second" | "third" | "fourth"
   >("first");
@@ -626,7 +627,7 @@ export default function AdminPage() {
       <div className="flex flex-wrap items-center gap-2">
 
         {/* Date picker */}
-        <Popover>
+        <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -641,9 +642,12 @@ export default function AdminPage() {
             <Calendar
               mode="single"
               selected={dayjs(selectedDate).toDate()}
-              onSelect={(date) =>
-                date && setSelectedDate(dayjs(date).format("YYYY-MM-DD"))
-              }
+              onSelect={(date) => {
+                if (date) {
+                  setSelectedDate(dayjs(date).format("YYYY-MM-DD"));
+                  setIsDatePickerOpen(false);
+                }
+              }}
               disabled={{ after: new Date() }}
               defaultMonth={dayjs(selectedDate).toDate()}
             />

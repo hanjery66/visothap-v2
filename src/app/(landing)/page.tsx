@@ -20,7 +20,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   // Query draw schedule & display settings to determine dynamic default date
-  const { data: schedule } = trpc.getLotterySchedule.useQuery();
+  // const { data: schedule } = trpc.getLotterySchedule.useQuery();
   const { data: displaySettings } = trpc.getLotteryDisplaySettings.useQuery();
 
   const todayStr = dayjs().format("YYYY-MM-DD");
@@ -153,15 +153,14 @@ export default function LandingPage() {
                 key={day.toString()}
                 onClick={() => !isFuture && handleDateSelect(day)}
                 disabled={isFuture}
-                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded transition-all flex items-center justify-center p-0 ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : isToday
-                      ? "bg-red-50 text-primary border border-primary/50"
-                      : isFuture
-                        ? "text-zinc-300 cursor-not-allowed opacity-40 hover:bg-transparent"
-                        : "hover:bg-zinc-100 text-zinc-700"
-                }`}
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded transition-all flex items-center justify-center p-0 ${isSelected
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : isToday
+                    ? "bg-red-50 text-primary border border-primary/50"
+                    : isFuture
+                      ? "text-zinc-400 cursor-not-allowed hover:bg-transparent"
+                      : "hover:bg-zinc-100 text-zinc-700"
+                  }`}
               >
                 {day.date()}
               </button>
@@ -173,10 +172,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-10 items-start w-full">
-      {/* LEFT AD COLUMN (Span 2) */}
-
-      <div className="flex col-span-3 flex-col gap-4">
+    <div className="grid grid-cols-[220px_1fr_220px] gap-10 items-start w-full">
+      {/* LEFT AD COLUMN */}
+      <div className="flex flex-col gap-4">
         {adsByPosition.Left && adsByPosition.Left.length > 0 ? (
           adsByPosition.Left.map((ad: Ads) => (
             <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />
@@ -188,8 +186,8 @@ export default function LandingPage() {
         )}
       </div>
 
-      {/* CENTER CONTENT COLUMN (Span 6) */}
-      <div className="col-span-6 flex flex-col gap-6">
+      {/* CENTER CONTENT COLUMN (stretches to fill space) */}
+      <div className="flex flex-col gap-6 min-w-0">
         {isLotteryLoading && !lottery ? (
           <div className="rounded shadow-xs border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
@@ -198,25 +196,13 @@ export default function LandingPage() {
         ) : lottery ? (
           (() => {
             const tables: { key: string; component: React.ReactNode }[] = [];
-            if (lottery.first && shouldRenderPeriod(lottery.first.name)) {
+            if (lottery.fourth && shouldRenderPeriod(lottery.fourth.name)) {
               tables.push({
-                key: "first",
+                key: "fourth",
                 component: (
-                  <LotteryTableLayoutOne
+                  <LotteryTableLayoutTwo
                     dateParam={activeDate}
-                    periodData={lottery.first}
-                    displayConfig={displaySettings}
-                  />
-                ),
-              });
-            }
-            if (lottery.second && shouldRenderPeriod(lottery.second.name)) {
-              tables.push({
-                key: "second",
-                component: (
-                  <LotteryTableLayoutOne
-                    dateParam={activeDate}
-                    periodData={lottery.second}
+                    periodData={lottery.fourth}
                     displayConfig={displaySettings}
                   />
                 ),
@@ -234,13 +220,25 @@ export default function LandingPage() {
                 ),
               });
             }
-            if (lottery.fourth && shouldRenderPeriod(lottery.fourth.name)) {
+            if (lottery.second && shouldRenderPeriod(lottery.second.name)) {
               tables.push({
-                key: "fourth",
+                key: "second",
                 component: (
-                  <LotteryTableLayoutTwo
+                  <LotteryTableLayoutOne
                     dateParam={activeDate}
-                    periodData={lottery.fourth}
+                    periodData={lottery.second}
+                    displayConfig={displaySettings}
+                  />
+                ),
+              });
+            }
+            if (lottery.first && shouldRenderPeriod(lottery.first.name)) {
+              tables.push({
+                key: "first",
+                component: (
+                  <LotteryTableLayoutOne
+                    dateParam={activeDate}
+                    periodData={lottery.first}
                     displayConfig={displaySettings}
                   />
                 ),
@@ -287,8 +285,8 @@ export default function LandingPage() {
         )}
       </div>
 
-      {/* RIGHT COLUMN: Calendar + Ads (Span 3) */}
-      <div className="col-span-3 flex flex-col gap-4">
+      {/* RIGHT COLUMN: Calendar + Ads */}
+      <div className="flex flex-col gap-4">
         {/* Interactive Calendar */}
         {renderCalendar()}
 

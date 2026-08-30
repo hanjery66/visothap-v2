@@ -33,11 +33,6 @@ export function computeCellDrawStatus(
     .second(0);
 
   const splashMinutes = config.splashMinutesBefore ?? 2;
-  const autoSeedMinutes = config.autoSeedMinutesBeforeSplash ?? 10;
-  const spinnerMinutes = config.spinnerMinutesBeforeSplash ?? 5;
-
-  // Window when spinner starts (between empty stage and splash)
-  const spinnerWindowStart = drawMoment.subtract(splashMinutes + spinnerMinutes, "minute");
 
   // Splash window opens N minutes before draw time
   const splashWindowStart = drawMoment.subtract(splashMinutes, "minute");
@@ -55,7 +50,6 @@ export function computeCellDrawStatus(
 
   const now = currentMoment ?? dayjs();
 
-  if (now.isBefore(spinnerWindowStart)) return "empty";
   if (now.isBefore(slotSplashStart)) return "pending";
   if (now.isBefore(slotRevealTime)) return "spinning";
   return "done";

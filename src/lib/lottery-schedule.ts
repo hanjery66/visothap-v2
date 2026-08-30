@@ -11,8 +11,8 @@ export const DEFAULT_PERIOD_SCHEDULE: Record<
   LotteryPeriodKey,
   { name: string; drawTime: string }
 > = {
-  first: { name: "Sổ Kết Quả Miền Trung", drawTime: "17:15" },
-  second: { name: "Sổ Kết Quả Miền Đông", drawTime: "13:50" },
+  first: { name: "Sổ Kết Quả Miền Đông", drawTime: "13:50" },
+  second: { name: "Sổ Kết Quả Miền Trung", drawTime: "17:15" },
   third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:15" },
   fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:15" },
 };

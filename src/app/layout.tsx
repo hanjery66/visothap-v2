@@ -1,7 +1,39 @@
 import type { Metadata, Viewport } from "next";
+import localFont from "next/font/local";
 import { Kantumruy_Pro } from "next/font/google";
 import "./globals.css";
 import TRPCProvider from "./_trpc/Provider";
+
+const helvetica = localFont({
+  src: [
+    {
+      path: "../fonts/helvetica-light-587ebe5a59211.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Helvetica.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Helvetica-Oblique.ttf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../fonts/Helvetica-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Helvetica-BoldOblique.ttf",
+      weight: "700",
+      style: "italic",
+    },
+  ],
+  variable: "--font-helvetica",
+});
 
 const kantum = Kantumruy_Pro({
   variable: "--font-kantum",
@@ -27,7 +59,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${kantum.variable} ${kantum.className} antialiased`}
+      className={`${helvetica.variable} ${kantum.variable} ${helvetica.className} antialiased`}
       suppressHydrationWarning={true}
     >
       <body className="min-h-full flex flex-col w-full">

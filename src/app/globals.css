@@ -75,7 +75,7 @@
 }
 
 @theme {
-  --font-sans: var(--font-kantum), sans-serif;
+  --font-sans: var(--font-helvetica), var(--font-kantum), sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -109,7 +109,7 @@ input,
 textarea,
 button,
 select {
-  font-family: var(--font-kantum), sans-serif;
+  font-family: var(--font-helvetica), var(--font-kantum), sans-serif;
 }
 
 body {
@@ -146,6 +146,6 @@ body {
 
 @layer base {
   .container {
-    @apply mx-auto w-full max-w-5xl!;
+    @apply mx-auto w-full max-w-[68rem]!;
   }
 }

@@ -23,8 +23,8 @@ function LandingHeaderAndNav({
 
   const navigations = [
     { label: "Xổ Số Trực Tiếp", value: "Thông Tin Kết Quả" },
-    { label: "Sổ Kết Quả Miền Trung", value: "Sổ Kết Quả Miền Trung" },
     { label: "Sổ Kết Quả Miền Đông", value: "Sổ Kết Quả Miền Đông" },
+    { label: "Sổ Kết Quả Miền Trung", value: "Sổ Kết Quả Miền Trung" },
     { label: "Sổ Kết Quả Miền Nam", value: "Sổ Kết Quả Miền Nam" },
     { label: "Sổ Kết Quả Miền Bắc", value: "Sổ Kết Quả Miền Bắc" },
   ];
@@ -48,7 +48,7 @@ function LandingHeaderAndNav({
         <div className="flex justify-between items-center w-full">
           <Link href="/" className="flex items-center gap-3 shrink-0">
             {settings?.fullLogo ? (
-              <div className="relative h-12 w-auto max-w-[200px] sm:max-w-xs flex items-center">
+              <div className="relative h-12 w-auto max-w-50 sm:max-w-xs flex items-center">
                 <Image
                   src={settings.fullLogo}
                   alt="Logo Header"
@@ -106,8 +106,8 @@ export default function LandingLayout({
   const { data: settings } = trpc.getGeneralSettings.useQuery();
 
   return (
-    <section >
-      <div className="container">
+    <section className="min-h-screen flex flex-col">
+      <div className="container flex-1 flex flex-col">
         <Suspense
           fallback={
             <div className="border-b py-4 shadow-sm">
@@ -139,7 +139,7 @@ export default function LandingLayout({
 
 
       {/* full-bleed breaks out of the body's container max-width → true full viewport width */}
-      <div className=" bg-primary text-primary-foreground mx-auto ">
+      <div className="bg-primary text-primary-foreground w-full mt-auto">
         <div className=" flex items-center justify-between p-8">
           <div
             className="text-xs md:text-base"
