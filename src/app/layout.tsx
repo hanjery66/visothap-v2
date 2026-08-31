@@ -59,10 +59,29 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${helvetica.variable} ${kantum.variable} ${helvetica.className} antialiased`}
+      className={`h-full ${helvetica.variable} ${kantum.variable} ${helvetica.className} antialiased`}
       suppressHydrationWarning={true}
     >
-      <body className="min-h-full flex flex-col w-full">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function setAppHeight() {
+                  var h = window.innerHeight;
+                  document.documentElement.style.setProperty('--app-height', h + 'px');
+                }
+                setAppHeight();
+                window.addEventListener('resize', setAppHeight);
+                window.addEventListener('orientationchange', function() {
+                  setTimeout(setAppHeight, 150);
+                });
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="h-full min-h-full flex flex-col w-full">
         <TRPCProvider>
           {children}
         </TRPCProvider>

@@ -42,20 +42,6 @@ export default function AdminLayout({
     }
   }, [sessionState.data, sessionState.error]);
 
-  // Dynamically update site favicon based on custom database settings
-  // useEffect(() => {
-  //   if (settings?.logo) {
-  //     let link: HTMLLinkElement | null =
-  //       document.querySelector("link[rel*='icon']");
-  //     if (!link) {
-  //       link = document.createElement("link");
-  //       link.rel = "icon";
-  //       document.head.appendChild(link);
-  //     }
-  //     link.href = settings.logo;
-  //   }
-  // }, [settings?.logo]);
-
   const handleSignOut = async () => {
     setLoggingOut(true);
     authClient

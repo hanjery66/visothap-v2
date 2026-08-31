@@ -105,8 +105,27 @@ export default function LandingLayout({
 }) {
   const { data: settings } = trpc.getGeneralSettings.useQuery();
 
+  useEffect(() => {
+    const updateHeight = () => {
+      document.documentElement.style.setProperty(
+        "--app-height",
+        `${window.innerHeight}px`
+      );
+    };
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    window.addEventListener("orientationchange", updateHeight);
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("orientationchange", updateHeight);
+    };
+  }, []);
+
   return (
-    <section className="min-h-screen flex flex-col">
+    <section
+      className="flex-1 flex flex-col w-full"
+      style={{ minHeight: "var(--app-height, 100dvh)" }}
+    >
       <div className="container flex-1 flex flex-col">
         <Suspense
           fallback={
