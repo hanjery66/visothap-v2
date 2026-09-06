@@ -10,18 +10,7 @@ import { RollingDigits } from "@/components/RollingDigits";
 import { computeCellDrawStatus } from "@/lib/lottery-cell-status";
 import { DigitSpinner } from "@/components/DigitSpinner";
 import { useLiveTicker } from "@/hooks/use-live-ticker";
-
-const LAYOUT_ONE_DIGIT_LENGTHS: Record<string, number> = {
-  gEight: 2,
-  gSeven: 3,
-  gSix: 4,
-  gFive: 4,
-  gFour: 5,
-  gThree: 5,
-  gTwo: 5,
-  gOne: 5,
-  db: 6,
-};
+import { LAYOUT_ONE_DIGIT_LENGTHS } from "@/lib/lottery-constants";
 
 interface LotteryTableLayoutOneProps {
   periodData: any;

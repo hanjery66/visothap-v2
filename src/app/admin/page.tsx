@@ -32,8 +32,11 @@ import {
 import { toast } from "sonner";
 import { getDayKeyFromDate } from "@/lib/lottery-schedule";
 import LotterySettingDialog from "./_component/lottery-setting-dialog";
+import {
+  LAYOUT_ONE_DIGIT_LENGTHS,
+  LAYOUT_TWO_DIGIT_LENGTHS,
+} from "@/lib/lottery-constants";
 
-// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // Period grid editor — renders one table per period with textarea column inputs
 // ---------------------------------------------------------------------------
@@ -227,7 +230,10 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
     });
 
   const getNormalizedLines = (rawText: string) => {
-    let rawLines = (rawText ?? "").split("\n").filter(Boolean);
+    let rawLines = (rawText ?? "")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
     // If last line is empty and we have one extra line, remove it (typical copy-paste artifact)
     if (
       rawLines.length === expectedCount + 1 &&
@@ -236,6 +242,109 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
       rawLines = rawLines.slice(0, expectedCount);
     }
     return rawLines;
+  };
+
+  const getExpectedDigitLength = (lineIdx: number): number => {
+    const digitLengths = isNorthern
+      ? LAYOUT_TWO_DIGIT_LENGTHS
+      : LAYOUT_ONE_DIGIT_LENGTHS;
+    const meta = prizeMeta[lineIdx];
+    return digitLengths[meta?.key] ?? 5;
+  };
+
+  const handleTextareaKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    // Allow keyboard shortcuts (Cmd/Ctrl + C, V, A, Z, etc.)
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const textarea = e.currentTarget;
+    const val = textarea.value;
+    const selStart = textarea.selectionStart;
+    const selEnd = textarea.selectionEnd;
+
+    // Disallow Enter if we already reached expectedCount lines (when not replacing text)
+    if (e.key === "Enter") {
+      const lines = val.split("\n");
+      if (lines.length >= expectedCount && selStart === selEnd) {
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Handle single character inputs
+    if (e.key.length === 1) {
+      // Disallow non-digit characters
+      if (!/^\d$/.test(e.key)) {
+        e.preventDefault();
+        return;
+      }
+
+      // If user selected text to replace, allow replacement
+      if (selStart !== selEnd) return;
+
+      const textBeforeCursor = val.slice(0, selStart);
+      const currentLineIdx = textBeforeCursor.split("\n").length - 1;
+
+      if (currentLineIdx >= expectedCount) {
+        e.preventDefault();
+        return;
+      }
+
+      const lines = val.split("\n");
+      const currentLineText = lines[currentLineIdx] ?? "";
+      const maxLen = getExpectedDigitLength(currentLineIdx);
+
+      // Block typing if current line already has enough digits
+      if (currentLineText.length >= maxLen) {
+        e.preventDefault();
+      }
+    }
+  };
+
+  const validateLines = (currentLines: string[]) => {
+    if (currentLines.length === 0) {
+      return { isValid: false, count: 0, error: undefined };
+    }
+    if (currentLines.length < expectedCount) {
+      return {
+        isValid: false,
+        count: currentLines.length,
+        error: `Not enough values (${currentLines.length}/${expectedCount})`,
+      };
+    }
+    if (currentLines.length > expectedCount) {
+      return {
+        isValid: false,
+        count: currentLines.length,
+        error: `Too many values (${currentLines.length}/${expectedCount})`,
+      };
+    }
+
+    for (let i = 0; i < currentLines.length; i++) {
+      const val = currentLines[i];
+      const meta = prizeMeta[i];
+      const expectedLen = getExpectedDigitLength(i);
+      const label = labelEdits[i] ?? meta?.label ?? `Row ${i + 1}`;
+
+      if (!/^\d+$/.test(val)) {
+        return {
+          isValid: false,
+          count: currentLines.length,
+          error: `Line ${i + 1} (${label}): numbers only`,
+        };
+      }
+
+      if (val.length !== expectedLen) {
+        return {
+          isValid: false,
+          count: currentLines.length,
+          error: `Line ${i + 1} (${label}): need ${expectedLen} digits (got ${val.length})`,
+        };
+      }
+    }
+
+    return { isValid: true, count: currentLines.length, error: undefined };
   };
 
   const handleCancel = () => {
@@ -255,10 +364,10 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
       const locKey = loc.code || idx;
       const text = columnTexts[locKey] ?? "";
       const currentLines = getNormalizedLines(text);
-      const isValid = currentLines.length <= expectedCount;
+      const validation = validateLines(currentLines);
 
       // Only save valid dirty columns
-      if (!dirtyColumns.has(locKey) || !isValid) return;
+      if (!dirtyColumns.has(locKey) || !validation.isValid) return;
 
       const orderedPrizes = getOrderedPrizes(loc);
       orderedPrizes.forEach((pz: Prize, pzIdx: number) => {
@@ -289,8 +398,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
     const locKey = loc.code || idx;
     const text = columnTexts[locKey] ?? "";
     const currentLines = getNormalizedLines(text);
-    const isValid = currentLines.length <= expectedCount;
-    return { locKey, isValid, count: currentLines.length };
+    return { locKey, ...validateLines(currentLines) };
   });
 
   // Check if any dirty column is valid (for enabling the Save button)
@@ -457,6 +565,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                 const status = columnStatus.find((s) => s.locKey === locKey);
                 const isValid = status?.isValid ?? false;
                 const lineCount = status?.count ?? 0;
+                const errorMsg = status?.error;
 
                 return (
                   <td
@@ -467,11 +576,22 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                       <textarea
                         value={text}
+                        onKeyDown={handleTextareaKeyDown}
                         onChange={(e) => {
-                          // Normal typing
+                          const rawVal = e.target.value;
+                          const rawLines = rawVal.split("\n");
+                          const sanitizedLines: string[] = [];
+                          const limit = Math.min(rawLines.length, expectedCount);
+                          for (let i = 0; i < limit; i++) {
+                            const maxLen = getExpectedDigitLength(i);
+                            sanitizedLines.push(
+                              rawLines[i].replace(/\D/g, "").slice(0, maxLen)
+                            );
+                          }
+                          const nextVal = sanitizedLines.join("\n");
                           setColumnTexts((prev) => ({
                             ...prev,
-                            [locKey]: e.target.value,
+                            [locKey]: nextVal,
                           }));
                           setDirtyColumns((prev) => new Set(prev).add(locKey));
                         }}
@@ -481,14 +601,19 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
                           const pasted = e.clipboardData.getData("text");
 
                           const clean = pasted
-                            .split(/\r?\n/)
-                            .map((v) => v.trim())
-                            .filter((v) => /^\d+$/.test(v)); // keep only digit lines, preserve leading zeros
+                            .split(/[\r\n\s\t]+/)
+                            .map((v) => v.trim().replace(/\D/g, ""))
+                            .filter(Boolean);
 
                           const groups: string[] = [];
 
                           for (let i = 0; i < clean.length; i += expectedCount) {
-                            groups.push(clean.slice(i, i + expectedCount).join("\n"));
+                            const chunk = clean.slice(i, i + expectedCount);
+                            const clampedChunk = chunk.map((val, idx) => {
+                              const maxLen = getExpectedDigitLength(idx);
+                              return val.slice(0, maxLen);
+                            });
+                            groups.push(clampedChunk.join("\n"));
                           }
 
                           if (groups.length > 1) {
@@ -504,30 +629,51 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
                               return next;
                             });
+
+                            setDirtyColumns((prev) => {
+                              const next = new Set(prev);
+                              groups.forEach((_, index) => {
+                                if (locations[index]) {
+                                  next.add(locations[index].code || index);
+                                }
+                              });
+                              return next;
+                            });
                           } else {
                             setColumnTexts((prev) => ({
                               ...prev,
                               [locKey]: groups[0] ?? "",
                             }));
+                            setDirtyColumns((prev) => new Set(prev).add(locKey));
                           }
-
-                          setDirtyColumns((prev) => new Set(prev).add(locKey));
                         }}
-                        className="w-full font-mono font-semibold text-base leading-8 py-2 px-3 border border-border rounded focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none overflow-hidden tracking-wider transition-all"
+                        className="w-full text-base leading-8 py-2 px-3 border border-border rounded focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none overflow-hidden tracking-wider transition-all"
                         style={{
                           height: `${expectedCount * 32 + 18}px`, // 32px per line + 16px padding + 2px borders
                         }}
-                        placeholder="Type or paste column values..."
+                        placeholder={`V${li + 1} - ${expectedCount} values`}
                       />
 
                       <div className="text-sm mt-1">
                         {isValid ? (
                           <span className="text-emerald-600 font-medium">
-                            ✓ Valid {lineCount} lines
+                            ✓ Ready ({lineCount}/{expectedCount} values)
+                          </span>
+                        ) : lineCount === 0 ? (
+                          <span className="text-zinc-400">
+                            0/{expectedCount} values
+                          </span>
+                        ) : errorMsg ? (
+                          <span className="text-red-500 font-medium text-xs">
+                            ✗ {errorMsg}
+                          </span>
+                        ) : lineCount < expectedCount ? (
+                          <span className="text-amber-600 font-medium">
+                            ✗ Not enough ({lineCount}/{expectedCount} values)
                           </span>
                         ) : (
                           <span className="text-red-500 font-semibold">
-                            ✗ Invalid ({lineCount}/{expectedCount} lines)
+                            ✗ Too many ({lineCount}/{expectedCount} values)
                           </span>
                         )}
                       </div>
@@ -632,7 +778,7 @@ export default function AdminPage() {
             <Button
               variant="outline"
               size="sm"
-              className="font-semibold min-w-32.5"
+              className="font-normal min-w-32.5"
             >
               {formatDisplayDateTime(selectedDate, undefined, "DD/MM/YYYY")}
               <ChevronDownIcon className="ml-1 w-4 h-4" />
@@ -650,6 +796,7 @@ export default function AdminPage() {
               }}
               disabled={{ after: new Date() }}
               defaultMonth={dayjs(selectedDate).toDate()}
+              weekStartsOn={1}
             />
           </PopoverContent>
         </Popover>

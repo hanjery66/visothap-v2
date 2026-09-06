@@ -119,7 +119,7 @@ export default function LandingPage() {
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="font-semibold text-xs sm:text-sm capitalize text-zinc-800">
+          <span className="font-normal text-xs sm:text-sm capitalize text-zinc-800">
             {calendarDate.format("MMMM, YYYY")}
           </span>
           <button
@@ -131,7 +131,7 @@ export default function LandingPage() {
         </div>
 
         {/* Weekdays */}
-        <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center font-semibold text-zinc-500 text-[11px] sm:text-xs mb-1.5">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1 text-center font-normal text-zinc-500 text-[11px] sm:text-xs mb-1.5">
           {weekdays.map((w) => (
             <div key={w} className="py-0.5">
               {w}
@@ -153,7 +153,7 @@ export default function LandingPage() {
                 key={day.toString()}
                 onClick={() => !isFuture && handleDateSelect(day)}
                 disabled={isFuture}
-                className={`aspect-square w-full h-auto text-xs sm:text-sm font-semibold rounded transition-all flex items-center justify-center p-0 ${isSelected
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-normal rounded transition-all flex items-center justify-center p-0 ${isSelected
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : isToday
                     ? "bg-red-50 text-primary border border-primary/50"

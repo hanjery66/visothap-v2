@@ -17,6 +17,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
+  weekStartsOn = 1,
   formatters,
   components,
   ...props
@@ -28,6 +29,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      weekStartsOn={weekStartsOn}
       className={cn(
         "bg-background group/calendar",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -66,7 +68,7 @@ function Calendar({
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
-          "flex h-9 w-full items-center justify-center gap-1.5 text-sm font-medium",
+          "flex h-9 w-full items-center justify-center gap-1.5 text-sm font-normal",
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
@@ -78,7 +80,7 @@ function Calendar({
           defaultClassNames.dropdown
         ),
         caption_label: cn(
-          "select-none font-medium",
+          "select-none font-normal",
           captionLayout === "label"
             ? "text-sm"
             : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded pl-2 pr-1 text-sm [&>svg]:size-3.5",

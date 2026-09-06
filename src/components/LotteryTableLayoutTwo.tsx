@@ -16,17 +16,7 @@ import {
 } from "@/components/ui/table";
 import { RollingDigits } from "@/components/RollingDigits";
 import { useLiveTicker } from "@/hooks/use-live-ticker";
-
-const LAYOUT_TWO_DIGIT_LENGTHS: Record<string, number> = {
-  gSeven: 2,
-  gSix: 3,
-  gFive: 4,
-  gFour: 4,
-  gThree: 5,
-  gTwo: 5,
-  gOne: 5,
-  db: 5,
-};
+import { LAYOUT_TWO_DIGIT_LENGTHS } from "@/lib/lottery-constants";
 
 interface LotteryTableLayoutTwoProps {
   periodData: any;
