@@ -36,6 +36,13 @@
       "when": 1784520000000,
       "tag": "0004_lottery_display_setting",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789281354411,
+      "tag": "0005_add_nav_label",
+      "breakpoints": true
     }
   ]
 }

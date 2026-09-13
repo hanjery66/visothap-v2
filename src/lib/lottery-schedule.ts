@@ -55,7 +55,13 @@ export interface ScheduleItem {
  */
 export function getDefaultLotteryDate(
   schedule?: ScheduleItem[],
-  displayConfig?: { splashMinutesBefore?: number; autoSeedMinutesBeforeSplash?: number },
+  displayConfig?: {
+    splashSecondsBefore?: number;
+    spinnerSecondsBeforeSplash?: number;
+    splashMinutesBefore?: number;
+    spinnerMinutesBeforeSplash?: number;
+    autoSeedMinutesBeforeSplash?: number;
+  },
   currentMoment = dayjs(),
 ): string | undefined {
   if (!schedule) return undefined;
@@ -64,10 +70,13 @@ export function getDefaultLotteryDate(
   const yesterdayStr = currentMoment.subtract(1, "day").format("YYYY-MM-DD");
 
   const dayKey = getDayKeyFromDate(todayStr);
-  const splashMinutes = displayConfig?.splashMinutesBefore ?? 2;
-  const autoSeedMinutes = displayConfig?.autoSeedMinutesBeforeSplash ?? 5;
-  // Offset includes: empty cell window (autoSeedMinutes) + spinner window (autoSeedMinutes) + splash window (splashMinutes)
-  const totalOffsetMinutes = splashMinutes + autoSeedMinutes * 2;
+  const splashSeconds =
+    displayConfig?.splashSecondsBefore ??
+    (displayConfig?.splashMinutesBefore ? displayConfig.splashMinutesBefore * 60 : 60);
+  const spinnerSeconds =
+    displayConfig?.spinnerSecondsBeforeSplash ??
+    (displayConfig?.spinnerMinutesBeforeSplash ? displayConfig.spinnerMinutesBeforeSplash * 60 : 120);
+  const totalOffsetSeconds = splashSeconds + spinnerSeconds;
 
   const todayItems = schedule.filter((s) => s.dayOfWeek === dayKey && s.enabled);
 
@@ -86,7 +95,7 @@ export function getDefaultLotteryDate(
       .hour(parsed.hour)
       .minute(parsed.minute)
       .second(0);
-    const startMoment = drawMoment.subtract(totalOffsetMinutes, "minute");
+    const startMoment = drawMoment.subtract(totalOffsetSeconds, "second");
 
     if (!earliestStartMoment || startMoment.isBefore(earliestStartMoment)) {
       earliestStartMoment = startMoment;

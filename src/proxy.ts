@@ -4,27 +4,27 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect all /admin routes except for /admin/login
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+  // Protect all /ch68 routes except for /ch68/login
+  if (pathname.startsWith("/ch68") && pathname !== "/ch68/login") {
     const sessionToken =
       request.cookies.get("better-auth.session_token") ||
       request.cookies.get("__Secure-better-auth.session_token");
 
     if (!sessionToken) {
-      const loginUrl = new URL("/admin/login", request.url);
+      const loginUrl = new URL("/ch68/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
   // Redirect authenticated users away from the login page
-  if (pathname === "/admin/login") {
+  if (pathname === "/ch68/login") {
     const sessionToken =
       request.cookies.get("better-auth.session_token") ||
       request.cookies.get("__Secure-better-auth.session_token");
 
     if (sessionToken) {
-      return NextResponse.redirect(new URL("/admin", request.url));
+      return NextResponse.redirect(new URL("/ch68", request.url));
     }
   }
 
@@ -32,5 +32,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/ch68/:path*"],
 };

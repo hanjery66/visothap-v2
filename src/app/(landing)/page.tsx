@@ -31,7 +31,8 @@ export default function LandingPage() {
     ? dayjs(explicitDate).isAfter(dayjs(todayStr), "day")
     : false;
   const selectedDateStr = explicitDate && !isFutureDate ? explicitDate : todayStr;
-  const tableParam = searchParams.get("table") || "Thông Tin Kết Quả";
+  const tableParam = searchParams.get("table");
+  const isAllSessions = !tableParam || tableParam === "all" || tableParam === "Thông Tin Kết Quả";
 
   const queryDate = selectedDateStr;
 
@@ -83,11 +84,13 @@ export default function LandingPage() {
   };
 
   // Check which tables are matching the search/table param filters
-  const shouldRenderPeriod = (periodName: string) => {
-    if (tableParam === "Thông Tin Kết Quả") return true;
-    return periodName
-      .toLowerCase()
-      .includes(tableParam.split(" ").pop()?.toLowerCase() || "");
+  const shouldRenderPeriod = (periodKey: string, periodName: string) => {
+    if (isAllSessions) return true;
+    const target = tableParam?.toLowerCase().trim() || "";
+    if (target === periodKey) return true;
+    const period = periodName.toLowerCase().trim();
+    const lastWord = target.split(" ").pop() || "";
+    return period.includes(target) || target.includes(period) || period.includes(lastWord);
   };
 
   // Build high-performance custom responsive calendar
@@ -196,7 +199,7 @@ export default function LandingPage() {
         ) : lottery ? (
           (() => {
             const tables: { key: string; component: React.ReactNode }[] = [];
-            if (lottery.fourth && shouldRenderPeriod(lottery.fourth.name)) {
+            if (lottery.fourth && shouldRenderPeriod("fourth", lottery.fourth.name)) {
               tables.push({
                 key: "fourth",
                 component: (
@@ -208,7 +211,7 @@ export default function LandingPage() {
                 ),
               });
             }
-            if (lottery.third && shouldRenderPeriod(lottery.third.name)) {
+            if (lottery.third && shouldRenderPeriod("third", lottery.third.name)) {
               tables.push({
                 key: "third",
                 component: (
@@ -220,7 +223,7 @@ export default function LandingPage() {
                 ),
               });
             }
-            if (lottery.second && shouldRenderPeriod(lottery.second.name)) {
+            if (lottery.second && shouldRenderPeriod("second", lottery.second.name)) {
               tables.push({
                 key: "second",
                 component: (
@@ -232,7 +235,7 @@ export default function LandingPage() {
                 ),
               });
             }
-            if (lottery.first && shouldRenderPeriod(lottery.first.name)) {
+            if (lottery.first && shouldRenderPeriod("first", lottery.first.name)) {
               tables.push({
                 key: "first",
                 component: (
@@ -246,7 +249,6 @@ export default function LandingPage() {
             }
 
             const centerAds = adsByPosition.Center || [];
-            const isAllSessions = tableParam === "Thông Tin Kết Quả";
 
             if (tables.length === 0) {
               return (

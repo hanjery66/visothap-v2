@@ -223,8 +223,10 @@ export function getPeriodsReadyToSeed(
   dateStr: string,
   daySchedules: LotterySchedule[],
   displaySettings?: {
-    splashMinutesBefore: number;
-    autoSeedMinutesBeforeSplash: number;
+    splashSecondsBefore?: number;
+    spinnerSecondsBeforeSplash?: number;
+    splashMinutesBefore?: number;
+    autoSeedMinutesBeforeSplash?: number;
     spinnerMinutesBeforeSplash?: number;
   }
 ): LotteryPeriodKey[] {
@@ -246,10 +248,13 @@ export function getPeriodsReadyToSeed(
   }
 
   // Today — only periods whose start window has been reached
-  const splashMinutes = displaySettings?.splashMinutesBefore ?? 2;
-  const spinnerMinutes = displaySettings?.spinnerMinutesBeforeSplash ?? 5;
-  const autoSeedMinutes = displaySettings?.autoSeedMinutesBeforeSplash ?? 5;
-  const totalOffsetMinutes = splashMinutes + spinnerMinutes + autoSeedMinutes;
+  const splashSeconds =
+    displaySettings?.splashSecondsBefore ??
+    (displaySettings?.splashMinutesBefore ? displaySettings.splashMinutesBefore * 60 : 60);
+  const spinnerSeconds =
+    displaySettings?.spinnerSecondsBeforeSplash ??
+    (displaySettings?.spinnerMinutesBeforeSplash ? displaySettings.spinnerMinutesBeforeSplash * 60 : 120);
+  const totalOffsetSeconds = splashSeconds + spinnerSeconds;
 
   const ready: LotteryPeriodKey[] = [];
   const now = dayjs();
@@ -267,7 +272,7 @@ export function getPeriodsReadyToSeed(
       .minute(parsed.minute)
       .second(0);
 
-    const autoSeedMoment = drawMoment.subtract(totalOffsetMinutes, "minute");
+    const autoSeedMoment = drawMoment.subtract(totalOffsetSeconds, "second");
     if (now.isAfter(autoSeedMoment) || now.isSame(autoSeedMoment)) {
       ready.push(def.period);
     }

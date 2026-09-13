@@ -79,6 +79,21 @@ export type Ads = typeof advertisement.$inferSelect & {
   updatedAt: string
 }
 
+/**
+ * Navigation tab labels shown in the landing page header nav.
+ * Each row is one tab with a display label and a URL filter value.
+ */
+export const navLabel = pgTable("nav_label", {
+  id: text("id").primaryKey(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  label: text("label").notNull(),   // Display text: "Xổ Số Trực Tiếp"
+  value: text("value").notNull(),   // URL ?table= filter: "Thông Tin Kết Quả"
+  enabled: boolean("enabled").default(true).notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+export type NavLabel = typeof navLabel.$inferSelect;
+
 // ---------------------------------------------------------------------------
 // Lottery tables
 // ---------------------------------------------------------------------------
@@ -143,13 +158,13 @@ export const lotterySchedule = pgTable("lottery_schedule", {
 /** Global lottery UI timing — splash window, auto-seed trigger window, and staggered column reveal. */
 export const lotteryDisplaySetting = pgTable("lottery_display_setting", {
   id: text("id").primaryKey(),
-  splashMinutesBefore: integer("splash_minutes_before").notNull().default(2),
+  splashSecondsBefore: integer("splash_seconds_before").notNull().default(60),
   autoSeedMinutesBeforeSplash: integer("auto_seed_minutes_before_splash")
     .notNull()
-    .default(10),
-  spinnerMinutesBeforeSplash: integer("spinner_minutes_before_splash")
+    .default(0),
+  spinnerSecondsBeforeSplash: integer("spinner_seconds_before_splash")
     .notNull()
-    .default(5),
+    .default(120),
   cellSplashDurationSeconds: integer("cell_splash_duration_seconds")
     .notNull()
     .default(10),

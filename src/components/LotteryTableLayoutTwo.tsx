@@ -24,6 +24,9 @@ interface LotteryTableLayoutTwoProps {
   displayConfig?: any;
 }
 
+// Prizes with subtle light gray background matching standard reference table (G7, G5, G3, G1)
+const LIGHT_BG_PRIZE_KEYS = new Set(["gSeven", "gFive", "gThree", "gOne"]);
+
 // ── Static metadata — built once, not on every render ──────────────
 const PRIZES_META: { key: string; label: string }[] = [
   { key: "db", label: "Đ. B" },
@@ -101,14 +104,6 @@ function renderNorthernPrizeCell(
     const cellStatus = computeCellDrawStatus(dateParam, drawTime, 0, slotIdx, config, currentMoment);
     const len = pz.value ? pz.value.length : expectedLength;
 
-    // Stage 0 — Before spinner window: cell is empty / blank
-    if (cellStatus === "empty") {
-      return (
-        <span className="w-full h-[1.2em] flex items-center justify-center leading-none">
-          &nbsp;
-        </span>
-      );
-    }
 
     // Stage 3 — Reveal the real number (timing cleared AND value ready)
     if (cellStatus === "done" && pz.value) {
@@ -269,10 +264,13 @@ export function LotteryTableLayoutTwo({
 
                 return rows.map((row) => {
                   const prizes = mainData[row.key] as Prize[];
+                  const isLightBg = LIGHT_BG_PRIZE_KEYS.has(row.key);
                   return (
                     <TableRow
                       key={row.key}
-                      className="border-b border-zinc-200 last:border-b-0 hover:bg-zinc-50/50 transition-colors"
+                      className={`border-b border-zinc-200 last:border-b-0 transition-colors ${
+                        isLightBg ? "bg-muted/50" : ""
+                      }`}
                     >
                       <TableCell className="p-0 font-medium text-sm md:text-base text-muted-foreground border-r border-zinc-200 text-center w-1/5">
                         {row.label}

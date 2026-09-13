@@ -18,11 +18,10 @@ export async function ensureDisplaySettingsSeeded() {
 
   const defaults = {
     id: SETTINGS_ID,
-    splashMinutesBefore: DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
-    autoSeedMinutesBeforeSplash:
-      DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
-    spinnerMinutesBeforeSplash:
-      DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
+    splashSecondsBefore: DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashSecondsBefore,
+    autoSeedMinutesBeforeSplash: 0,
+    spinnerSecondsBeforeSplash:
+      DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerSecondsBeforeSplash,
     cellSplashDurationSeconds:
       DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
     cellPauseIntervalSeconds:

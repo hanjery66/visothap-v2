@@ -20,12 +20,16 @@ export function computeColumnDrawStatus(
     .minute(parsed.minute)
     .second(0);
 
-  const totalOffsetMinutes =
-    (config.splashMinutesBefore ?? 2) +
-    (config.autoSeedMinutesBeforeSplash ?? 5);
+  const splashSeconds =
+    config.splashSecondsBefore ??
+    (config.splashMinutesBefore ? config.splashMinutesBefore * 60 : 60);
+  const spinnerSeconds =
+    config.spinnerSecondsBeforeSplash ??
+    (config.spinnerMinutesBeforeSplash ? config.spinnerMinutesBeforeSplash * 60 : 120);
+  const totalOffsetSeconds = splashSeconds + spinnerSeconds;
 
-  const spinnerStart = drawMoment.subtract(totalOffsetMinutes, "minute");
-  const splashStart = drawMoment.subtract(config.splashMinutesBefore ?? 2, "minute");
+  const spinnerStart = drawMoment.subtract(totalOffsetSeconds, "second");
+  const splashStart = drawMoment.subtract(splashSeconds, "second");
   const columnReveal = drawMoment;
   const now = dayjs();
 

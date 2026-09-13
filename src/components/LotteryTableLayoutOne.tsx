@@ -18,6 +18,9 @@ interface LotteryTableLayoutOneProps {
   displayConfig?: Partial<LotteryDisplayConfig>;
 }
 
+// Prizes with subtle light gray background matching standard reference table (G7, G5, G3, G1)
+const LIGHT_BG_PRIZE_KEYS = new Set(["gSeven", "gFive", "gThree", "gOne"]);
+
 export function LotteryTableLayoutOne({
   periodData,
   dateParam,
@@ -30,9 +33,8 @@ export function LotteryTableLayoutOne({
 
   const effectiveSettings = propDisplayConfig ?? displaySettings;
   const displayConfig: LotteryDisplayConfig = {
-    splashMinutesBefore: effectiveSettings?.splashMinutesBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashMinutesBefore,
-    autoSeedMinutesBeforeSplash: effectiveSettings?.autoSeedMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.autoSeedMinutesBeforeSplash,
-    spinnerMinutesBeforeSplash: effectiveSettings?.spinnerMinutesBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
+    splashSecondsBefore: effectiveSettings?.splashSecondsBefore ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashSecondsBefore,
+    spinnerSecondsBeforeSplash: effectiveSettings?.spinnerSecondsBeforeSplash ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerSecondsBeforeSplash,
     cellSplashDurationSeconds: effectiveSettings?.cellSplashDurationSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
     cellPauseIntervalSeconds: effectiveSettings?.cellPauseIntervalSeconds ?? DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellPauseIntervalSeconds,
   };
@@ -220,7 +222,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[0] = el;
               }}
-              className="flex items-center justify-center capitalize font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center py-0.5"
+              className="flex items-center justify-center capitalize font-semibold text-sm md:text-base border-b border-zinc-200  text-center py-0.5"
             >
               {dayjs(dateParam).format("dddd")}
             </div>
@@ -228,21 +230,25 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[1] = el;
               }}
-              className="flex items-center justify-center font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center py-0.5"
+              className="flex items-center justify-center font-semibold text-sm md:text-base border-b border-zinc-200  text-center py-0.5"
             >
               {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
             </div>
-            {rows.map((row, i) => (
-              <div
-                key={row.key}
-                ref={(el) => {
-                  lblRowRefs.current[i] = el;
-                }}
-                className="flex items-center justify-center font-medium text-muted-foreground text-sm md:text-base border-b border-zinc-200 last:border-b-0"
-              >
-                {row.label}
-              </div>
-            ))}
+            {rows.map((row, i) => {
+              const isLightBg = LIGHT_BG_PRIZE_KEYS.has(row.key);
+              return (
+                <div
+                  key={row.key}
+                  ref={(el) => {
+                    lblRowRefs.current[i] = el;
+                  }}
+                  className={`flex items-center justify-center font-medium text-muted-foreground text-sm md:text-base border-b border-zinc-200 last:border-b-0 ${isLightBg ? "bg-muted/50" : ""
+                    }`}
+                >
+                  {row.label}
+                </div>
+              );
+            })}
           </div>
 
           {/* ── One div per location — selection is contained to each ── */}
@@ -257,7 +263,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][0] = el;
                 }}
-                className="flex items-center justify-center capitalize text-black font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center py-0.5"
+                className="flex items-center justify-center capitalize text-black font-semibold text-sm md:text-base border-b border-zinc-200  text-center py-0.5"
               >
                 {loc.location}
               </div>
@@ -267,7 +273,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][1] = el;
                 }}
-                className="flex items-center justify-center text-black font-semibold text-sm md:text-base border-b border-zinc-200 bg-white text-center uppercase py-0.5"
+                className="flex items-center justify-center text-black font-semibold text-sm md:text-base border-b border-zinc-200  text-center uppercase py-0.5"
               >
                 {loc.code}
               </div>
@@ -288,6 +294,7 @@ export function LotteryTableLayoutOne({
                 return rows.map((row, rowIdx) => {
                   const prizes = (loc[row.key] as Prize[]) || [];
                   const expectedLength = LAYOUT_ONE_DIGIT_LENGTHS[row.key] ?? 5;
+                  const isLightBg = LIGHT_BG_PRIZE_KEYS.has(row.key);
 
                   return (
                     <div
@@ -296,7 +303,8 @@ export function LotteryTableLayoutOne({
                         if (!allRowRefs.current[colIdx]) allRowRefs.current[colIdx] = [];
                         allRowRefs.current[colIdx][rowIdx] = el;
                       }}
-                      className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-none space-y-0 ${row.color}`}
+                      className={`flex flex-col items-center justify-center border-b border-zinc-200 last:border-b-0 text-center leading-none space-y-0 ${row.color} ${isLightBg ? "bg-muted/50" : ""
+                        }`}
                     >
                       {prizes.length > 0 ? (
                         prizes.map((pz, idx) => {
@@ -313,17 +321,6 @@ export function LotteryTableLayoutOne({
                             currentMoment,
                           );
 
-                          // Stage 0 — Before spinner window: cell is empty / blank
-                          if (cellStatus === "empty") {
-                            return (
-                              <p
-                                key={idx}
-                                className="hover:bg-[#fbebd7] w-full cursor-pointer m-0 leading-none py-1 h-[1.2em] flex items-center justify-center"
-                              >
-                                &nbsp;
-                              </p>
-                            );
-                          }
 
                           // Stage 3 — Reveal the real number (timing cleared AND value ready)
                           if (cellStatus === "done" && pz.value) {

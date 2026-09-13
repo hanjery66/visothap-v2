@@ -18,27 +18,37 @@ function LandingHeaderAndNav({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Sync current query param 'table'
-  const tableParam = searchParams.get("table") || "Thông Tin Kết Quả";
+  // Fetch nav labels from DB (auto-seeded on first request)
+  const { data: dbNavLabels } = trpc.getNavLabels.useQuery();
 
-  const navigations = [
-    { label: "Xổ Số Trực Tiếp", value: "Thông Tin Kết Quả" },
-    { label: "Sổ Kết Quả Miền Đông", value: "Sổ Kết Quả Miền Đông" },
-    { label: "Sổ Kết Quả Miền Trung", value: "Sổ Kết Quả Miền Trung" },
-    { label: "Sổ Kết Quả Miền Nam", value: "Sổ Kết Quả Miền Nam" },
-    { label: "Sổ Kết Quả Miền Bắc", value: "Sổ Kết Quả Miền Bắc" },
+  // Sync current query param 'table'
+  const tableParam = searchParams.get("table");
+
+  // Fall back to static defaults while loading
+  const STATIC_NAVIGATIONS: { label: string; value: string }[] = [
+    { label: "Xổ Số Trực Tiếp", value: "all" },
+    { label: "Sổ Kết Quả Miền Đông", value: "first" },
+    { label: "Sổ Kết Quả Miền Trung", value: "second" },
+    { label: "Sổ Kết Quả Miền Nam", value: "third" },
+    { label: "Sổ Kết Quả Miền Bắc", value: "fourth" },
   ];
+
+  const navigations = dbNavLabels
+    ? dbNavLabels.filter((n: { enabled: boolean }) => n.enabled)
+    : STATIC_NAVIGATIONS;
 
   const handleNavClick = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("table", value);
 
-    // Reset date in home if clicked
-    if (value === "Thông Tin Kết Quả") {
+    if (!value || value === "all" || value === "Thông Tin Kết Quả") {
+      params.delete("table");
       params.delete("date");
+    } else {
+      params.set("table", value);
     }
 
-    router.push(`${pathname}?${params.toString()}`);
+    const queryString = params.toString();
+    router.push(queryString ? `${pathname}?${queryString}` : pathname);
   };
 
   return (
@@ -64,14 +74,14 @@ function LandingHeaderAndNav({
               </div>
             )}
           </Link>
-          <div className="flex items-center gap-4 shrink-0">
+          {/* <div className="flex items-center gap-4 shrink-0">
             <Button asChild variant="dark">
-              <Link href="/admin" className="flex items-center gap-1.5">
+              <Link href="/ch68" className="flex items-center gap-1.5">
                 <LayoutDashboard size={16} strokeWidth={2.5} />
                 Admin Board
               </Link>
             </Button>
-          </div>
+          </div> */}
         </div>
       </header>
 
@@ -79,11 +89,12 @@ function LandingHeaderAndNav({
       <nav className="border mt-2 border-primary backdrop-blur-2xl sticky top-0 z-50 rounded  overflow-x-auto scrollbar-none w-full">
         <div className="">
           <ul className="flex flex-row w-full justify-between items-stretch">
-            {navigations.map((nav) => {
-              const isSelected = tableParam === nav.value;
+            {(navigations as { label: string; value: string }[]).map((nav) => {
+              const isHomeNav = !nav.value || nav.value === "all" || nav.value === "Thông Tin Kết Quả";
+              const isSelected = !tableParam ? isHomeNav : (tableParam === nav.value || tableParam === nav.label);
               return (
                 <li
-                  key={nav.value}
+                  key={nav.value || nav.label}
                   onClick={() => handleNavClick(nav.value)}
                   className={`text-primary-foreground flex-1 text-center py-2 cursor-pointer text-base font-semibold transition-all duration-200 flex items-center justify-center gap-2 last:border-0 ${isSelected ? "bg-primary" : "text-primary! hover:bg-primary/10"}`}
                 >

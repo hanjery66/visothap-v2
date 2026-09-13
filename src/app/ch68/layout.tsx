@@ -49,7 +49,7 @@ export default function AdminLayout({
         fetchOptions: {
           onSuccess: () => {
             router.refresh();
-            router.replace("/admin/login");
+            router.replace("/ch68/login");
           },
         },
       })
@@ -69,25 +69,25 @@ export default function AdminLayout({
     {
       title: "Lottery Numbers",
       description: "Create and manage lottery numbers.",
-      href: "/admin",
+      href: "/ch68",
       icon: <BarChart2 className="h-4 w-4" />,
     },
     {
       title: "Advertisements",
       description: "Manage advertisements.",
-      href: "/admin/advertisement",
+      href: "/ch68/advertisement",
       icon: <ImageIcon className="h-4 w-4" />,
     },
     {
       title: "General Settings",
       description: "Manage general settings.",
-      href: "/admin/general",
+      href: "/ch68/general",
       icon: <Settings className="h-4 w-4" />,
     },
     {
       title: "Admin Profile",
-      description: "Manage admin profile.",
-      href: "/admin/profile",
+      description: "Manage ch68 profile.",
+      href: "/ch68/profile",
       icon: <User className="h-4 w-4" />,
     },
   ];
@@ -99,8 +99,8 @@ export default function AdminLayout({
     icon: React.ReactNode,
   ) => {
     const isActive =
-      href === "/admin"
-        ? pathname === "/admin" || pathname === "/admin/"
+      href === "/ch68"
+        ? pathname === "/ch68" || pathname === "/ch68/"
         : pathname.startsWith(href);
 
     return (
@@ -113,7 +113,7 @@ export default function AdminLayout({
     );
   };
 
-  if (pathname === "/admin/login") {
+  if (pathname === "/ch68/login") {
     return (
       <div className="min-h-screen w-full  flex items-center justify-center">
         {children}

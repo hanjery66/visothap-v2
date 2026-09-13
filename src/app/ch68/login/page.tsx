@@ -11,7 +11,7 @@ import Link from "next/link";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/admin";
+  const callbackUrl = searchParams.get("callbackUrl") || "/ch68";
   const { data: session } = useSession();
 
   const [username, setUsername] = useState("");

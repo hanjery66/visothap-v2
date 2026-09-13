@@ -2,8 +2,8 @@ import { router, publicProcedure, authedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import dayjs from "dayjs";
 import { db } from "@/db";
-import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize, lotterySchedule, lotteryDisplaySetting } from "@/db/schema";
-import { desc, eq, inArray } from "drizzle-orm";
+import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize, lotterySchedule, lotteryDisplaySetting, navLabel } from "@/db/schema";
+import { desc, eq, inArray, asc } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
@@ -259,6 +259,118 @@ export const appRouter = router({
       }
     }),
 
+  // ---------------------------------------------------------------------------
+  // NAV LABEL PROCEDURES
+  // ---------------------------------------------------------------------------
+
+  /** Public — fetch all nav labels ordered by sortOrder, auto-seeds defaults if empty */
+  getNavLabels: publicProcedure.query(async () => {
+    try {
+      let labels = await db
+        .select()
+        .from(navLabel)
+        .orderBy(asc(navLabel.sortOrder));
+
+      if (labels.length === 0) {
+        // Auto-seed defaults
+        const defaults = [
+          { id: "nav-1", sortOrder: 0, label: "Xổ Số Trực Tiếp", value: "all", enabled: true },
+          { id: "nav-2", sortOrder: 1, label: "Sổ Kết Quả Miền Đông", value: "first", enabled: true },
+          { id: "nav-3", sortOrder: 2, label: "Sổ Kết Quả Miền Trung", value: "second", enabled: true },
+          { id: "nav-4", sortOrder: 3, label: "Sổ Kết Quả Miền Nam", value: "third", enabled: true },
+          { id: "nav-5", sortOrder: 4, label: "Sổ Kết Quả Miền Bắc", value: "fourth", enabled: true },
+        ];
+        await db.insert(navLabel).values(
+          defaults.map((d) => ({ ...d, updatedAt: new Date() }))
+        );
+        labels = await db
+          .select()
+          .from(navLabel)
+          .orderBy(asc(navLabel.sortOrder));
+      }
+
+      return labels;
+    } catch (error) {
+      console.error("tRPC getNavLabels error:", error);
+      throw new Error("Failed to fetch navigation labels.");
+    }
+  }),
+
+  /** Authed — upsert a single nav label (create or update) */
+  saveNavLabel: authedProcedure
+    .input(
+      z.object({
+        id: z.string().optional(),
+        label: z.string().min(1, "Label is required"),
+        value: z.string().optional(),
+        sortOrder: z.number().int().min(0),
+        enabled: z.boolean(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const val = input.value !== undefined ? input.value : input.label;
+        if (input.id) {
+          await db
+            .update(navLabel)
+            .set({ label: input.label, value: val, sortOrder: input.sortOrder, enabled: input.enabled, updatedAt: new Date() })
+            .where(eq(navLabel.id, input.id));
+          return { success: true, id: input.id };
+        } else {
+          const newId = `nav-${crypto.randomUUID()}`;
+          await db.insert(navLabel).values({
+            id: newId,
+            label: input.label,
+            value: val,
+            sortOrder: input.sortOrder,
+            enabled: input.enabled,
+            updatedAt: new Date(),
+          });
+          return { success: true, id: newId };
+        }
+      } catch (error) {
+        console.error("tRPC saveNavLabel error:", error);
+        throw new Error("Failed to save navigation label.");
+      }
+    }),
+
+  /** Authed — delete a nav label (min 1 must remain) */
+  deleteNavLabel: authedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const all = await db.select({ id: navLabel.id }).from(navLabel);
+        if (all.length <= 1) {
+          throw new Error("Cannot delete the last navigation label.");
+        }
+        await db.delete(navLabel).where(eq(navLabel.id, input.id));
+        return { success: true };
+      } catch (error) {
+        console.error("tRPC deleteNavLabel error:", error);
+        throw new Error("Failed to delete navigation label.");
+      }
+    }),
+
+  /** Authed — bulk-update sort orders after drag/reorder */
+  reorderNavLabels: authedProcedure
+    .input(
+      z.array(z.object({ id: z.string(), sortOrder: z.number().int().min(0) }))
+    )
+    .mutation(async ({ input }) => {
+      try {
+        for (const item of input) {
+          await db
+            .update(navLabel)
+            .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
+            .where(eq(navLabel.id, item.id));
+        }
+        return { success: true };
+      } catch (error) {
+        console.error("tRPC reorderNavLabels error:", error);
+        throw new Error("Failed to reorder navigation labels.");
+      }
+    }),
+
   // Get dynamic general visual settings (with smart auto-seed)
   getGeneralSettings: publicProcedure.query(async () => {
     try {
@@ -432,11 +544,12 @@ export const appRouter = router({
     try {
       const settings = await ensureDisplaySettingsSeeded();
       return {
-        splashMinutesBefore: settings.splashMinutesBefore,
-        autoSeedMinutesBeforeSplash: settings.autoSeedMinutesBeforeSplash,
-        spinnerMinutesBeforeSplash:
-          (settings as any).spinnerMinutesBeforeSplash ??
-          DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerMinutesBeforeSplash,
+        splashSecondsBefore:
+          (settings as any).splashSecondsBefore ??
+          DEFAULT_LOTTERY_DISPLAY_SETTINGS.splashSecondsBefore,
+        spinnerSecondsBeforeSplash:
+          (settings as any).spinnerSecondsBeforeSplash ??
+          DEFAULT_LOTTERY_DISPLAY_SETTINGS.spinnerSecondsBeforeSplash,
         cellSplashDurationSeconds:
           settings.cellSplashDurationSeconds ??
           DEFAULT_LOTTERY_DISPLAY_SETTINGS.cellSplashDurationSeconds,
@@ -453,11 +566,11 @@ export const appRouter = router({
   saveLotteryDisplaySettings: authedProcedure
     .input(
       z.object({
-        splashMinutesBefore: z.number().int().min(0).max(60),
-        autoSeedMinutesBeforeSplash: z.number().int().min(0).max(120),
-        spinnerMinutesBeforeSplash: z.number().int().min(0).max(120).optional(),
+        splashSecondsBefore: z.number().int().min(0).max(3600),
+        spinnerSecondsBeforeSplash: z.number().int().min(0).max(7200).optional(),
         cellSplashDurationSeconds: z.number().int().min(1).max(300),
         cellPauseIntervalSeconds: z.number().int().min(0).max(300),
+        autoSeedMinutesBeforeSplash: z.number().int().min(0).max(120).optional().default(0),
       }),
     )
     .mutation(async ({ input }) => {
@@ -466,11 +579,11 @@ export const appRouter = router({
         await db
           .update(lotteryDisplaySetting)
           .set({
-            splashMinutesBefore: input.splashMinutesBefore,
-            autoSeedMinutesBeforeSplash: input.autoSeedMinutesBeforeSplash,
-            spinnerMinutesBeforeSplash: input.spinnerMinutesBeforeSplash ?? 5,
+            splashSecondsBefore: input.splashSecondsBefore,
+            spinnerSecondsBeforeSplash: input.spinnerSecondsBeforeSplash ?? 120,
             cellSplashDurationSeconds: input.cellSplashDurationSeconds,
             cellPauseIntervalSeconds: input.cellPauseIntervalSeconds,
+            autoSeedMinutesBeforeSplash: input.autoSeedMinutesBeforeSplash ?? 0,
             updatedAt: new Date(),
           })
           .where(eq(lotteryDisplaySetting.id, "default"));
