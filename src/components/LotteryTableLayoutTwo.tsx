@@ -91,6 +91,9 @@ function renderNorthernPrizeCell(
   getSlotIndex: (key: string, idx: number) => number,
   allColumnPrizes: { pz: Prize; expectedLength: number }[],
   currentMoment?: dayjs.Dayjs,
+  showTableTime?: string | null,
+  splashDelaySeconds?: number | null,
+  locationUpdatedAt?: string | null,
 ) {
   if (!prizes || prizes.length === 0)
     return <div className="hover:bg-[#fbebd7] text-zinc-300 font-normal leading-none py-0.5 h-[1.2em] flex items-center justify-center w-full cursor-pointer">--</div>;
@@ -101,7 +104,17 @@ function renderNorthernPrizeCell(
 
   const val = (pz: Prize, idx: number) => {
     const slotIdx = getSlotIndex(key, idx);
-    const cellStatus = computeCellDrawStatus(dateParam, drawTime, 0, slotIdx, config, currentMoment);
+    const cellStatus = computeCellDrawStatus(
+      dateParam,
+      drawTime,
+      0,
+      slotIdx,
+      config,
+      currentMoment,
+      showTableTime,
+      splashDelaySeconds,
+      pz.updatedAt || locationUpdatedAt,
+    );
     const len = pz.value ? pz.value.length : expectedLength;
 
 
@@ -285,6 +298,9 @@ export function LotteryTableLayoutTwo({
                           (key, idx) => slotIndexMap[`${key}_${idx}`] ?? 0,
                           allColumnPrizes,
                           currentMoment,
+                          periodData?.showTableTime,
+                          periodData?.splashDelaySeconds,
+                          mainData?.updatedAt,
                         )}
                       </TableCell>
                     </TableRow>

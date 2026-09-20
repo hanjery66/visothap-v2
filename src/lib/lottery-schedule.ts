@@ -9,12 +9,12 @@ export type LotteryPeriodKey = (typeof LOTTERY_PERIODS)[number];
 
 export const DEFAULT_PERIOD_SCHEDULE: Record<
   LotteryPeriodKey,
-  { name: string; drawTime: string }
+  { name: string; drawTime: string; showTableTime: string; splashDelaySeconds: number }
 > = {
-  first: { name: "Sổ Kết Quả Miền Đông", drawTime: "13:50" },
-  second: { name: "Sổ Kết Quả Miền Trung", drawTime: "17:15" },
-  third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:15" },
-  fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:15" },
+  first: { name: "Sổ Kết Quả Miền Đông", drawTime: "10:50", showTableTime: "10:47", splashDelaySeconds: 60 },
+  second: { name: "Sổ Kết Quả Miền Trung", drawTime: "13:50", showTableTime: "13:47", splashDelaySeconds: 60 },
+  third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:50", showTableTime: "16:47", splashDelaySeconds: 60 },
+  fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:45", showTableTime: "18:42", splashDelaySeconds: 60 },
 };
 
 export function getDayKeyFromDate(date: string): LotteryDayKey {
@@ -34,6 +34,8 @@ export function buildDefaultScheduleRows() {
       period,
       name: DEFAULT_PERIOD_SCHEDULE[period].name,
       drawTime: DEFAULT_PERIOD_SCHEDULE[period].drawTime,
+      showTableTime: DEFAULT_PERIOD_SCHEDULE[period].showTableTime,
+      splashDelaySeconds: DEFAULT_PERIOD_SCHEDULE[period].splashDelaySeconds,
       enabled: true,
       createdAt: now,
       updatedAt: now,
@@ -45,6 +47,8 @@ export interface ScheduleItem {
   dayOfWeek: string;
   period: string;
   drawTime: string;
+  showTableTime?: string | null;
+  splashDelaySeconds?: number | null;
   enabled: boolean;
 }
 
@@ -70,13 +74,10 @@ export function getDefaultLotteryDate(
   const yesterdayStr = currentMoment.subtract(1, "day").format("YYYY-MM-DD");
 
   const dayKey = getDayKeyFromDate(todayStr);
-  const splashSeconds =
+  const splashOffset =
     displayConfig?.splashSecondsBefore ??
-    (displayConfig?.splashMinutesBefore ? displayConfig.splashMinutesBefore * 60 : 60);
-  const spinnerSeconds =
-    displayConfig?.spinnerSecondsBeforeSplash ??
-    (displayConfig?.spinnerMinutesBeforeSplash ? displayConfig.spinnerMinutesBeforeSplash * 60 : 120);
-  const totalOffsetSeconds = splashSeconds + spinnerSeconds;
+    (displayConfig?.splashMinutesBefore ? -displayConfig.splashMinutesBefore * 60 : -60);
+  const rawSpinner = displayConfig?.spinnerSecondsBeforeSplash ?? -180;
 
   const todayItems = schedule.filter((s) => s.dayOfWeek === dayKey && s.enabled);
 
@@ -88,14 +89,26 @@ export function getDefaultLotteryDate(
   let earliestStartMoment: dayjs.Dayjs | null = null;
 
   for (const item of todayItems) {
-    const parsed = parseDrawTime(item.drawTime);
-    if (!parsed) continue;
+    let startMoment: dayjs.Dayjs | null = null;
+    const parsedShow = item.showTableTime ? parseDrawTime(item.showTableTime) : null;
+    if (parsedShow) {
+      startMoment = currentMoment
+        .hour(parsedShow.hour)
+        .minute(parsedShow.minute)
+        .second(parsedShow.second ?? 0);
+    } else {
+      const parsed = parseDrawTime(item.drawTime);
+      if (!parsed) continue;
 
-    const drawMoment = currentMoment
-      .hour(parsed.hour)
-      .minute(parsed.minute)
-      .second(0);
-    const startMoment = drawMoment.subtract(totalOffsetSeconds, "second");
+      const drawMoment = currentMoment
+        .hour(parsed.hour)
+        .minute(parsed.minute)
+        .second(parsed.second ?? 0);
+      const splashStart = drawMoment.add(splashOffset, "second");
+      startMoment = rawSpinner < 0
+        ? drawMoment.add(rawSpinner, "second")
+        : splashStart.subtract(rawSpinner, "second");
+    }
 
     if (!earliestStartMoment || startMoment.isBefore(earliestStartMoment)) {
       earliestStartMoment = startMoment;

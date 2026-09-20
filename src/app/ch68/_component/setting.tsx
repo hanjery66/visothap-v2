@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { trpc } from "@/app/_trpc/client";
 import { toast } from "sonner";
 import dayjs from "dayjs";
-import { formatDisplayDateTime, STORAGE_DATE_FORMAT } from "@/lib/utils";
+import { formatDisplayDateTime, parseDrawTime, STORAGE_DATE_FORMAT } from "@/lib/utils";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS, type LotteryDisplayConfig } from "@/lib/lottery-display";
 
 // ────────────────────────────────────────────────────────────────
@@ -25,6 +25,8 @@ type PeriodKey = "first" | "second" | "third" | "fourth";
 interface PeriodSchedule {
     name: string;
     drawTime: string;
+    showTableTime: string;
+    splashDelaySeconds: number;
     enabled: boolean;
 }
 
@@ -54,12 +56,18 @@ const PERIODS: { key: PeriodKey; label: string }[] = [
     { key: "fourth", label: "Miền Bắc" },
 ];
 
-const DEFAULT_PERIOD_TIMES: Record<PeriodKey, { name: string; drawTime: string }> = {
-    first: { name: "Sổ Kết Quả Miền Đông", drawTime: "17:15" },
-    second: { name: "Sổ Kết Quả Miền Trung", drawTime: "13:50" },
-    third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:15" },
-    fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:15" },
+const DEFAULT_PERIOD_TIMES: Record<PeriodKey, { name: string; drawTime: string; showTableTime: string; splashDelaySeconds: number }> = {
+    first: { name: "Sổ Kết Quả Miền Đông", drawTime: "10:50", showTableTime: "10:47", splashDelaySeconds: 60 },
+    second: { name: "Sổ Kết Quả Miền Trung", drawTime: "13:50", showTableTime: "13:47", splashDelaySeconds: 60 },
+    third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:50", showTableTime: "16:47", splashDelaySeconds: 60 },
+    fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:45", showTableTime: "18:42", splashDelaySeconds: 60 },
 };
+
+const DAY_INDEX_MAP: DayKey[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+function getTodayKey(): DayKey {
+    return DAY_INDEX_MAP[dayjs().day()] ?? "mon";
+}
 
 function buildScheduleFromData(data: any[]): WeekSchedule {
     const template = {} as WeekSchedule;
@@ -69,6 +77,8 @@ function buildScheduleFromData(data: any[]): WeekSchedule {
             template[d.key][p.key] = {
                 name: DEFAULT_PERIOD_TIMES[p.key].name,
                 drawTime: DEFAULT_PERIOD_TIMES[p.key].drawTime,
+                showTableTime: DEFAULT_PERIOD_TIMES[p.key].showTableTime,
+                splashDelaySeconds: DEFAULT_PERIOD_TIMES[p.key].splashDelaySeconds,
                 enabled: true,
             };
         }
@@ -81,6 +91,8 @@ function buildScheduleFromData(data: any[]): WeekSchedule {
             template[day][period] = {
                 name: item.name,
                 drawTime: item.drawTime,
+                showTableTime: item.showTableTime ?? item.drawTime,
+                splashDelaySeconds: item.splashDelaySeconds ?? 60,
                 enabled: item.enabled,
             };
         }
@@ -103,7 +115,7 @@ export default function LotteryScheduleSettings() {
     const [displaySettings, setDisplaySettings] = useState<DisplaySettingsFormState>({
         ...DEFAULT_LOTTERY_DISPLAY_SETTINGS,
     });
-    const [activeDay, setActiveDay] = useState<DayKey>("mon");
+    const [activeDay, setActiveDay] = useState<DayKey>(getTodayKey);
     const [dirty, setDirty] = useState(false);
 
     useEffect(() => {
@@ -211,6 +223,8 @@ export default function LotteryScheduleSettings() {
                 period: p.key,
                 name: schedule[d.key][p.key].name,
                 drawTime: schedule[d.key][p.key].drawTime,
+                showTableTime: schedule[d.key][p.key].showTableTime,
+                splashDelaySeconds: Number(schedule[d.key][p.key].splashDelaySeconds) || 60,
                 enabled: schedule[d.key][p.key].enabled,
             }))
         );
@@ -225,11 +239,6 @@ export default function LotteryScheduleSettings() {
             saveDisplaySettings(cleanDisplaySettings),
         ]);
     };
-
-    const activeDayLabel = useMemo(
-        () => DAYS.find((d) => d.key === activeDay)?.label ?? "",
-        [activeDay]
-    );
 
     if (isLoading || isDisplayLoading || !schedule) {
         return (
@@ -258,50 +267,14 @@ export default function LotteryScheduleSettings() {
                 </Button>
             </div>
 
-            <div className="rounded space-y-4 bg-zinc-50/50">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="spinner-seconds" className="text-xs text-muted-foreground">
-                            Show table (seconds)
-                        </Label>
-                        <Input
-                            id="spinner-seconds"
-                            type="number"
-                            min={0}
-                            max={7200}
-                            value={displaySettings.spinnerSecondsBeforeSplash ?? ""}
-                            onChange={(e) => {
-                                setDirty(true);
-                                const val = e.target.value === "" ? "" : Number(e.target.value);
-                                setDisplaySettings((prev) => ({
-                                    ...prev,
-                                    spinnerSecondsBeforeSplash: val,
-                                }));
-                            }}
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="splash-seconds" className="text-xs text-muted-foreground">
-                            Splash animation (seconds)
-                        </Label>
-                        <Input
-                            id="splash-seconds"
-                            type="number"
-                            min={0}
-                            max={3600}
-                            value={displaySettings.splashSecondsBefore ?? ""}
-                            onChange={(e) => {
-                                setDirty(true);
-                                const val = e.target.value === "" ? "" : Number(e.target.value);
-                                setDisplaySettings((prev) => ({
-                                    ...prev,
-                                    splashSecondsBefore: val,
-                                }));
-                            }}
-                        />
-                    </div>
-
+            <div className="rounded space-y-3 bg-zinc-50/70 p-4 border border-zinc-200/70">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <h3 className="text-sm font-semibold text-zinc-800">Animation Pacing (Global)</h3>
+                    <span className="text-xs text-muted-foreground">
+                        Table display times and splash delays are configured individually per session below.
+                    </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label htmlFor="cell-splash-duration" className="text-xs text-muted-foreground">
                             Cell splash duration (seconds)
@@ -344,30 +317,15 @@ export default function LotteryScheduleSettings() {
                         />
                     </div>
                 </div>
-
-                {(() => {
-                    const splashSec = Number(displaySettings.splashSecondsBefore) || 0;
-                    const spinnerSec = Number(displaySettings.spinnerSecondsBeforeSplash) || 0;
-                    const totalSec = splashSec + spinnerSec;
-                    return (
-                        <p className="text-xs text-muted-foreground">
-                            Table appears with spinners{" "}
-                            <span className="font-semibold text-foreground">
-                                {totalSec}s
-                            </span>{" "}
-                            before draw time (spinners run for {spinnerSec}s, then splash begins {splashSec}s before draw).
-                        </p>
-                    );
-                })()}
             </div>
 
             <Tabs value={activeDay} onValueChange={(v) => setActiveDay(v as DayKey)} className="mt-6">
-                <TabsList className="w-full flex-wrap h-auto bg-zinc-100 rounded  p-1">
+                <TabsList className="w-full grid grid-cols-7 h-auto bg-zinc-100 rounded p-1 gap-1">
                     {DAYS.map((d) => (
                         <TabsTrigger
                             key={d.key}
                             value={d.key}
-                            className="flex-1 rounded  data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                            className="w-full rounded data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                         >
                             <span className="hidden sm:inline">{d.label}</span>
                             <span className="sm:hidden">{d.short}</span>
@@ -428,38 +386,75 @@ export default function LotteryScheduleSettings() {
                                             />
                                         </div>
 
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor={`${d.key}-${p.key}-time`} className="text-xs text-muted-foreground">
+                                                    Actual result time
+                                                </Label>
+                                                <Input
+                                                    id={`${d.key}-${p.key}-time`}
+                                                    type="time"
+                                                    value={value.drawTime}
+                                                    disabled={!value.enabled}
+                                                    onChange={(e) =>
+                                                        updatePeriod(d.key, p.key, { drawTime: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor={`${d.key}-${p.key}-show-time`} className="text-xs text-muted-foreground flex justify-between items-center">
+                                                    <span>Show table time</span>
+                                                </Label>
+                                                <Input
+                                                    id={`${d.key}-${p.key}-show-time`}
+                                                    type="time"
+                                                    value={value.showTableTime ?? ""}
+                                                    disabled={!value.enabled}
+                                                    placeholder={value.drawTime}
+                                                    onChange={(e) =>
+                                                        updatePeriod(d.key, p.key, { showTableTime: e.target.value })
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+
                                         <div className="space-y-1.5">
-                                            <Label htmlFor={`${d.key}-${p.key}-time`} className="text-xs text-muted-foreground">
-                                                Actual result time (24h)
+                                            <Label htmlFor={`${d.key}-${p.key}-splash-delay`} className="text-xs text-muted-foreground flex justify-between items-center">
+                                                <span>Splash starts after table (seconds)</span>
                                             </Label>
                                             <Input
-                                                id={`${d.key}-${p.key}-time`}
-                                                type="time"
-                                                value={value.drawTime}
+                                                id={`${d.key}-${p.key}-splash-delay`}
+                                                type="number"
+                                                min={0}
+                                                max={7200}
+                                                value={value.splashDelaySeconds ?? 60}
                                                 disabled={!value.enabled}
-                                                onChange={(e) =>
-                                                    updatePeriod(d.key, p.key, { drawTime: e.target.value })
-                                                }
+                                                onChange={(e) => {
+                                                    const val = e.target.value === "" ? 0 : Number(e.target.value);
+                                                    updatePeriod(d.key, p.key, { splashDelaySeconds: val });
+                                                }}
                                             />
                                         </div>
 
                                         {(() => {
-                                            const parsedTime = value.drawTime.split(":");
-                                            if (parsedTime.length !== 2 || !value.enabled) return null;
-                                            const hour = parseInt(parsedTime[0]);
-                                            const minute = parseInt(parsedTime[1]);
-                                            const splashSeconds = Number(displaySettings.splashSecondsBefore) || 0;
-                                            const spinnerSeconds = Number(displaySettings.spinnerSecondsBeforeSplash) || 0;
+                                            if (!value.enabled) return null;
+                                            const parsedDraw = parseDrawTime(value.drawTime);
+                                            if (!parsedDraw) return null;
 
                                             const drawMoment = new Date();
-                                            drawMoment.setHours(hour, minute, 0, 0);
+                                            drawMoment.setHours(parsedDraw.hour, parsedDraw.minute, parsedDraw.second ?? 0, 0);
 
-                                            const spinnerMoment = new Date(
-                                                drawMoment.getTime() - (splashSeconds + spinnerSeconds) * 1000,
-                                            );
-                                            const splashMoment = new Date(
-                                                drawMoment.getTime() - splashSeconds * 1000,
-                                            );
+                                            const parsedShow = value.showTableTime ? parseDrawTime(value.showTableTime) : null;
+                                            const showMoment = new Date();
+                                            if (parsedShow) {
+                                                showMoment.setHours(parsedShow.hour, parsedShow.minute, parsedShow.second ?? 0, 0);
+                                            } else {
+                                                showMoment.setTime(drawMoment.getTime() - 180 * 1000);
+                                            }
+
+                                            const splashDelaySec = Number(value.splashDelaySeconds ?? 60);
+                                            const splashMoment = new Date(showMoment.getTime() + splashDelaySec * 1000);
 
                                             const format = (d: Date) =>
                                                 d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -469,13 +464,13 @@ export default function LotteryScheduleSettings() {
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-zinc-500">Table shows with spinners:</span>
                                                         <span className="font-semibold text-amber-600">
-                                                            {format(spinnerMoment)} – {format(splashMoment)}
+                                                            {format(showMoment)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-zinc-500">Splash animation starts:</span>
                                                         <span className="font-semibold text-blue-600">
-                                                            {format(splashMoment)}
+                                                            {format(splashMoment)} <span className="text-[10px] text-zinc-400 font-normal">({splashDelaySec}s after table)</span>
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center justify-between pt-0.5 border-t border-zinc-200/60 font-medium">

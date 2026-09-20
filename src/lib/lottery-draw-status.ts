@@ -9,6 +9,8 @@ export function computeColumnDrawStatus(
   drawTime: string | undefined,
   columnIndex: number,
   config: LotteryDisplayConfig,
+  showTableTime?: string | null,
+  splashDelaySeconds?: number | null,
 ): DrawStatus {
   if (!drawTime) return "done";
 
@@ -18,19 +20,27 @@ export function computeColumnDrawStatus(
   const drawMoment = dayjs(dateParam)
     .hour(parsed.hour)
     .minute(parsed.minute)
-    .second(0);
+    .second(parsed.second ?? 0);
 
-  const splashSeconds =
-    config.splashSecondsBefore ??
-    (config.splashMinutesBefore ? config.splashMinutesBefore * 60 : 60);
-  const spinnerSeconds =
-    config.spinnerSecondsBeforeSplash ??
-    (config.spinnerMinutesBeforeSplash ? config.spinnerMinutesBeforeSplash * 60 : 120);
-  const totalOffsetSeconds = splashSeconds + spinnerSeconds;
+  let spinnerStart: dayjs.Dayjs;
+  const parsedShow = showTableTime ? parseDrawTime(showTableTime) : null;
+  if (parsedShow) {
+    spinnerStart = dayjs(dateParam)
+      .hour(parsedShow.hour)
+      .minute(parsedShow.minute)
+      .second(parsedShow.second ?? 0);
+  } else {
+    const tableOffset = config.spinnerSecondsBeforeSplash ?? -180;
+    spinnerStart = drawMoment.add(tableOffset, "second");
+  }
 
-  const spinnerStart = drawMoment.subtract(totalOffsetSeconds, "second");
-  const splashStart = drawMoment.subtract(splashSeconds, "second");
-  const columnReveal = drawMoment;
+  const splashDelay = splashDelaySeconds ?? config.splashSecondsBefore ?? 60;
+  const splashStart = splashDelay < 0
+    ? drawMoment.add(splashDelay, "second")
+    : spinnerStart.add(splashDelay, "second");
+
+  const splashDuration = config.cellSplashDurationSeconds ?? 10;
+  const columnReveal = splashStart.add(splashDuration, "second");
   const now = dayjs();
 
   if (now.isBefore(spinnerStart)) return "empty";

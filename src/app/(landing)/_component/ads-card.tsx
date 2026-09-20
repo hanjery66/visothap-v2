@@ -25,7 +25,7 @@ const AdsCard = ({
         src={ad.image}
         alt="Advertisement"
         fill
-        className={clsx("w-full h-full object-cover", imageClassName)}
+        className={clsx("w-full h-full object-fill", imageClassName)}
         unoptimized={ad.image.startsWith("http")}
       />
     </div>

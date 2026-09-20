@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import dayjs from "dayjs";
 import { db } from "@/db";
 import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize, lotterySchedule, lotteryDisplaySetting, navLabel } from "@/db/schema";
-import { desc, eq, inArray, asc } from "drizzle-orm";
+import { desc, eq, inArray, asc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
@@ -477,60 +477,70 @@ export const appRouter = router({
           period: z.string(),
           name: z.string(),
           drawTime: z.string(),
+          showTableTime: z.string().optional().nullable(),
+          splashDelaySeconds: z.number().optional().nullable(),
           enabled: z.boolean(),
         })
       )
     )
     .mutation(async ({ input }) => {
       try {
-        for (const item of input) {
-          const [existing] = await db
-            .select()
-            .from(lotterySchedule)
-            .where(eq(lotterySchedule.id, item.id))
-            .limit(1);
+        const now = new Date();
 
-          if (existing) {
-            await db
-              .update(lotterySchedule)
-              .set({
-                name: item.name,
-                drawTime: item.drawTime,
-                enabled: item.enabled,
-                updatedAt: new Date(),
-              })
-              .where(eq(lotterySchedule.id, item.id));
-          } else {
-            await db.insert(lotterySchedule).values({
-              id: item.id,
-              dayOfWeek: item.dayOfWeek,
-              period: item.period,
-              name: item.name,
-              drawTime: item.drawTime,
-              enabled: item.enabled,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
-          }
-        }
+        // 1. Bulk upsert all 28 schedules in a single SQL query instead of 56 roundtrips
+        const rowsToUpsert = input.map((item) => ({
+          id: item.id,
+          dayOfWeek: item.dayOfWeek,
+          period: item.period,
+          name: item.name,
+          drawTime: item.drawTime,
+          showTableTime: item.showTableTime,
+          splashDelaySeconds: item.splashDelaySeconds,
+          enabled: item.enabled,
+          createdAt: now,
+          updatedAt: now,
+        }));
 
-        // Keep all active sessions updated with the latest schedule draw times and names
-        const allSessions = await db.select().from(lotterySession);
-        for (const sess of allSessions) {
-          const dayKey = getDayKeyFromDate(sess.date);
-          const matchedSchedule = input.find(
-            (item) => item.dayOfWeek === dayKey && item.period === sess.period
+        await db
+          .insert(lotterySchedule)
+          .values(rowsToUpsert)
+          .onConflictDoUpdate({
+            target: lotterySchedule.id,
+            set: {
+              name: sql`excluded.name`,
+              drawTime: sql`excluded.draw_time`,
+              showTableTime: sql`excluded.show_table_time`,
+              splashDelaySeconds: sql`excluded.splash_delay_seconds`,
+              enabled: sql`excluded.enabled`,
+              updatedAt: now,
+            },
+          });
+
+        // 2. Only sync today's active sessions (4 max) instead of looping over all 260+ past historical sessions
+        const todayStr = dayjs().format("YYYY-MM-DD");
+        const todayDayKey = getDayKeyFromDate(todayStr);
+        const todaySessions = await db
+          .select()
+          .from(lotterySession)
+          .where(eq(lotterySession.date, todayStr));
+
+        if (todaySessions.length > 0) {
+          await Promise.all(
+            todaySessions.map((sess) => {
+              const matchedSchedule = input.find(
+                (item) => item.dayOfWeek === todayDayKey && item.period === sess.period
+              );
+              if (!matchedSchedule) return Promise.resolve();
+              return db
+                .update(lotterySession)
+                .set({
+                  name: matchedSchedule.name,
+                  displayNumber: matchedSchedule.drawTime,
+                  updatedAt: now,
+                })
+                .where(eq(lotterySession.id, sess.id));
+            })
           );
-          if (matchedSchedule) {
-            await db
-              .update(lotterySession)
-              .set({
-                name: matchedSchedule.name,
-                displayNumber: matchedSchedule.drawTime,
-                updatedAt: new Date(),
-              })
-              .where(eq(lotterySession.id, sess.id));
-          }
         }
 
         return { success: true };
@@ -566,8 +576,8 @@ export const appRouter = router({
   saveLotteryDisplaySettings: authedProcedure
     .input(
       z.object({
-        splashSecondsBefore: z.number().int().min(0).max(3600),
-        spinnerSecondsBeforeSplash: z.number().int().min(0).max(7200).optional(),
+        splashSecondsBefore: z.number().int().min(-7200).max(7200),
+        spinnerSecondsBeforeSplash: z.number().int().min(-7200).max(7200).optional(),
         cellSplashDurationSeconds: z.number().int().min(1).max(300),
         cellPauseIntervalSeconds: z.number().int().min(0).max(300),
         autoSeedMinutesBeforeSplash: z.number().int().min(0).max(120).optional().default(0),
@@ -710,16 +720,38 @@ export const appRouter = router({
 
         const locData = sessionLocs.map((loc) => {
           const locPrizes = prizes.filter((p) => p.locationId === loc.id);
+
+          // Find most recent updatedAt among filled prizes in this location
+          const filledPrizes = locPrizes.filter((p) => p.value && p.value.trim() !== "");
+          let latestUpdatedAt: string | null = null;
+          if (filledPrizes.length > 0) {
+            const timestamps = filledPrizes
+              .map((p) => (p.updatedAt ? new Date(p.updatedAt).getTime() : 0))
+              .filter((t) => t > 0);
+            if (timestamps.length > 0) {
+              latestUpdatedAt = new Date(Math.max(...timestamps)).toISOString();
+            }
+          } else if (loc.updatedAt) {
+            latestUpdatedAt = new Date(loc.updatedAt).toISOString();
+          }
+
           const entry: Record<string, any> = {
             _id: loc.id,
             location: loc.location,
             code: loc.code,
+            updatedAt: latestUpdatedAt,
           };
           for (const key of PRIZE_KEYS) {
             const group = locPrizes
               .filter((p) => p.prizeKey === key)
               .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map((p) => ({ id: p.id, value: p.value, type: key, status: "done" }));
+              .map((p) => ({
+                id: p.id,
+                value: p.value,
+                type: key,
+                status: "done",
+                updatedAt: p.updatedAt ? p.updatedAt.toISOString() : null,
+              }));
             entry[key] = group;
           }
           return entry;
@@ -729,6 +761,8 @@ export const appRouter = router({
           name: schedule?.name || session.name || DEFAULT_PERIOD_SCHEDULE[period].name,
           displayTable: session.displayTable,
           displayNumber: schedule?.drawTime || session.displayNumber || DEFAULT_PERIOD_SCHEDULE[period].drawTime,
+          showTableTime: schedule?.showTableTime ?? (schedule?.drawTime || session.displayNumber || DEFAULT_PERIOD_SCHEDULE[period].drawTime),
+          splashDelaySeconds: schedule?.splashDelaySeconds ?? 60,
           sessionId: session.id,
           prizeLabels: session.prizeLabels ? JSON.parse(session.prizeLabels) : null,
           ...Object.fromEntries(PRIZE_KEYS.map((k) => [k, PERIOD_LABELS[k].label])),
@@ -786,7 +820,7 @@ export const appRouter = router({
     .mutation(async ({ input }) => {
       await db
         .update(lotteryPrize)
-        .set({ value: input.value })
+        .set({ value: input.value, updatedAt: new Date() })
         .where(eq(lotteryPrize.id, input.prizeId));
       return { success: true };
     }),
@@ -849,12 +883,19 @@ export const appRouter = router({
       }
 
       // 4. Perform updates inside a transaction
+      const now = new Date();
       await db.transaction(async (tx) => {
         for (const item of input) {
           await tx
             .update(lotteryPrize)
-            .set({ value: item.value })
+            .set({ value: item.value, updatedAt: now })
             .where(eq(lotteryPrize.id, item.prizeId));
+        }
+        if (locationIds.length > 0) {
+          await tx
+            .update(lotteryLocation)
+            .set({ updatedAt: now })
+            .where(inArray(lotteryLocation.id, locationIds));
         }
       });
       return { success: true };

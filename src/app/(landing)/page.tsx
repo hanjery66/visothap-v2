@@ -118,7 +118,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => setCalendarDate((prev) => prev.subtract(1, "month"))}
-            className="p-1 hover:bg-zinc-100 rounded text-zinc-600 transition"
+            className="p-1 hover:bg-zinc-100 rounded text-zinc-600 transition cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -127,7 +127,7 @@ export default function LandingPage() {
           </span>
           <button
             onClick={() => setCalendarDate((prev) => prev.add(1, "month"))}
-            className="p-1 hover:bg-zinc-100 rounded text-zinc-600 transition"
+            className="p-1 hover:bg-zinc-100 rounded text-zinc-600 transition cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -156,12 +156,14 @@ export default function LandingPage() {
                 key={day.toString()}
                 onClick={() => !isFuture && handleDateSelect(day)}
                 disabled={isFuture}
-                className={`aspect-square w-full h-auto text-xs sm:text-sm font-normal rounded transition-all flex items-center justify-center p-0 ${isSelected
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-normal rounded transition-all flex items-center justify-center p-0 ${
+                  isFuture ? "cursor-not-allowed text-zinc-400 hover:bg-transparent" : "cursor-pointer"
+                } ${isSelected
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : isToday
                     ? "bg-red-50 text-primary border border-primary/50"
                     : isFuture
-                      ? "text-zinc-400 cursor-not-allowed hover:bg-transparent"
+                      ? ""
                       : "hover:bg-zinc-100 text-zinc-700"
                   }`}
               >
@@ -271,7 +273,7 @@ export default function LandingPage() {
                       <AdsCard
                         key={centerAds[index].id}
                         ad={centerAds[index]}
-                        className="h-16 w-full shrink-0"
+                        className="h-[4.5rem] w-full shrink-0"
                       />
                     )}
                     {tbl.component}

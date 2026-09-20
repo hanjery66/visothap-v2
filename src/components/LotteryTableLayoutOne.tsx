@@ -319,6 +319,9 @@ export function LotteryTableLayoutOne({
                             slotIdx,
                             displayConfig,
                             currentMoment,
+                            periodData?.showTableTime,
+                            periodData?.splashDelaySeconds,
+                            pz.updatedAt || loc.updatedAt,
                           );
 
 

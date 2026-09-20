@@ -3,12 +3,14 @@ export interface Prize {
   value: string;
   type?: string;
   status?: string;
+  updatedAt?: string | null;
 }
 
 export interface LocationData {
   _id?: string;
   location: string;
   code: string;
+  updatedAt?: string | null;
   gEight: Prize[];
   gSeven: Prize[];
   gSix: Prize[];
@@ -25,6 +27,8 @@ export interface LotteryPeriod {
   name: string;
   displayTable?: string;
   displayNumber?: string;
+  showTableTime?: string;
+  splashDelaySeconds?: number;
   sessionId?: string;
   prizeLabels?: string[] | null;
   gEight?: string;

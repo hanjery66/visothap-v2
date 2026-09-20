@@ -55,12 +55,12 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-9 select-none p-0 aria-disabled:opacity-50",
+          "size-9 select-none p-0 aria-disabled:opacity-50 cursor-pointer",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: buttonVariant }),
-          "size-9 select-none p-0 aria-disabled:opacity-50",
+          "size-9 select-none p-0 aria-disabled:opacity-50 cursor-pointer",
           defaultClassNames.button_next
         ),
         month_caption: cn(
@@ -102,7 +102,7 @@ function Calendar({
           defaultClassNames.week_number
         ),
         day: cn(
-          "group/day relative w-9 h-9 select-none p-0 text-center [&:first-child[data-selected=true]_button]:rounded-l [&:last-child[data-selected=true]_button]:rounded-r",
+          "group/day relative w-9 h-9 select-none p-0 text-center cursor-pointer [&:first-child[data-selected=true]_button]:rounded-l [&:last-child[data-selected=true]_button]:rounded-r",
           defaultClassNames.day
         ),
         range_start: cn(
@@ -203,7 +203,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        "size-9 p-0 font-normal text-sm",
+        "size-9 p-0 font-normal text-sm cursor-pointer",
         "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground",
         "data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-middle=true]:rounded-none",
         "data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-start=true]:rounded",

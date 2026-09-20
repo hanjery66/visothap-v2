@@ -21,6 +21,9 @@ export function computeCellDrawStatus(
   slotIndex: number,
   config: LotteryDisplayConfig,
   currentMoment?: dayjs.Dayjs,
+  showTableTime?: string | null,
+  splashDelaySeconds?: number | null,
+  valueUpdatedAt?: string | number | null,
 ): CellDrawStatus {
   if (!drawTime) return "done";
 
@@ -30,14 +33,38 @@ export function computeCellDrawStatus(
   const drawMoment = dayjs(dateParam)
     .hour(parsed.hour)
     .minute(parsed.minute)
-    .second(0);
+    .second(parsed.second ?? 0);
 
-  const splashSeconds =
-    config.splashSecondsBefore ??
-    (config.splashMinutesBefore ? config.splashMinutesBefore * 60 : 60);
+  // Table appears at showTableTime if provided, else fallback to offset
+  let tableStart: dayjs.Dayjs;
+  const parsedShow = showTableTime ? parseDrawTime(showTableTime) : null;
+  if (parsedShow) {
+    tableStart = dayjs(dateParam)
+      .hour(parsedShow.hour)
+      .minute(parsedShow.minute)
+      .second(parsedShow.second ?? 0);
+  } else {
+    const tableOffset = config.spinnerSecondsBeforeSplash ?? -180;
+    tableStart = drawMoment.add(tableOffset, "second");
+  }
 
-  // Splash window opens N seconds before draw time
-  const splashWindowStart = drawMoment.subtract(splashSeconds, "second");
+  // Splash animation starts N seconds after table appears
+  const splashDelay = splashDelaySeconds ?? config.splashSecondsBefore ?? 60;
+  let splashWindowStart = splashDelay < 0
+    ? drawMoment.add(splashDelay, "second")
+    : tableStart.add(splashDelay, "second");
+
+  // If values were entered after the scheduled splash start, animate from when they were entered!
+  if (valueUpdatedAt) {
+    const updatedMoment = dayjs(valueUpdatedAt);
+    if (
+      updatedMoment.isValid() &&
+      updatedMoment.isSame(dayjs(dateParam), "day") &&
+      updatedMoment.isAfter(splashWindowStart)
+    ) {
+      splashWindowStart = updatedMoment;
+    }
+  }
 
   const splashDurationSec = config.cellSplashDurationSeconds ?? 10;
   const pauseIntervalSec = config.cellPauseIntervalSeconds ?? 5;

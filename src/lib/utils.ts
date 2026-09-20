@@ -18,23 +18,28 @@ export const DISPLAY_DATETIME_FORMAT = "DD-MM-YYYY hh:mm A";
 export const DISPLAY_DATE_FORMAT = "DD-MM-YYYY";
 export const STORAGE_DATE_FORMAT = "YYYY-MM-DD";
 
-/** Parse draw times stored as "HH:mm" or "h:mm A". */
-export function parseDrawTime(time: string): { hour: number; minute: number } | null {
-  const hhmm = time.match(/^(\d{1,2}):(\d{2})$/);
-  if (hhmm) {
-    return { hour: Number(hhmm[1]), minute: Number(hhmm[2]) };
+/** Parse draw times stored as "HH:mm", "HH:mm:ss", "h:mm A", or "h:mm:ss A". */
+export function parseDrawTime(time: string): { hour: number; minute: number; second: number } | null {
+  const hhmmss = time.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (hhmmss) {
+    return {
+      hour: Number(hhmmss[1]),
+      minute: Number(hhmmss[2]),
+      second: Number(hhmmss[3] ?? 0),
+    };
   }
 
-  const ampm = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  const ampm = time.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
   if (ampm) {
     let hour = Number(ampm[1]);
     const minute = Number(ampm[2]);
-    const meridiem = ampm[3].toUpperCase();
+    const second = Number(ampm[3] ?? 0);
+    const meridiem = ampm[4].toUpperCase();
 
     if (meridiem === "PM" && hour !== 12) hour += 12;
     if (meridiem === "AM" && hour === 12) hour = 0;
 
-    return { hour, minute };
+    return { hour, minute, second };
   }
 
   return null;

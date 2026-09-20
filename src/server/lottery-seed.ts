@@ -247,14 +247,10 @@ export function getPeriodsReadyToSeed(
     return [];
   }
 
-  // Today — only periods whose start window has been reached
-  const splashSeconds =
+  const splashOffset =
     displaySettings?.splashSecondsBefore ??
-    (displaySettings?.splashMinutesBefore ? displaySettings.splashMinutesBefore * 60 : 60);
-  const spinnerSeconds =
-    displaySettings?.spinnerSecondsBeforeSplash ??
-    (displaySettings?.spinnerMinutesBeforeSplash ? displaySettings.spinnerMinutesBeforeSplash * 60 : 120);
-  const totalOffsetSeconds = splashSeconds + spinnerSeconds;
+    (displaySettings?.splashMinutesBefore ? -displaySettings.splashMinutesBefore * 60 : -60);
+  const rawSpinner = displaySettings?.spinnerSecondsBeforeSplash ?? -180;
 
   const ready: LotteryPeriodKey[] = [];
   const now = dayjs();
@@ -264,16 +260,31 @@ export function getPeriodsReadyToSeed(
     if (schedule && !schedule.enabled) continue;
 
     const drawTimeStr = schedule?.drawTime ?? DEFAULT_PERIOD_SCHEDULE[def.period].drawTime;
-    const parsed = parseDrawTime(drawTimeStr);
-    if (!parsed) continue;
+    const showTableTimeStr = schedule?.showTableTime;
 
-    const drawMoment = dayjs(dateStr)
-      .hour(parsed.hour)
-      .minute(parsed.minute)
-      .second(0);
+    let autoSeedMoment: dayjs.Dayjs | null = null;
+    const parsedShow = showTableTimeStr ? parseDrawTime(showTableTimeStr) : null;
+    if (parsedShow) {
+      autoSeedMoment = dayjs(dateStr)
+        .hour(parsedShow.hour)
+        .minute(parsedShow.minute)
+        .second(parsedShow.second ?? 0);
+    } else {
+      const parsed = parseDrawTime(drawTimeStr);
+      if (!parsed) continue;
 
-    const autoSeedMoment = drawMoment.subtract(totalOffsetSeconds, "second");
-    if (now.isAfter(autoSeedMoment) || now.isSame(autoSeedMoment)) {
+      const drawMoment = dayjs(dateStr)
+        .hour(parsed.hour)
+        .minute(parsed.minute)
+        .second(parsed.second ?? 0);
+
+      const splashStart = drawMoment.add(splashOffset, "second");
+      autoSeedMoment = rawSpinner < 0
+        ? drawMoment.add(rawSpinner, "second")
+        : splashStart.subtract(rawSpinner, "second");
+    }
+
+    if (autoSeedMoment && (now.isAfter(autoSeedMoment) || now.isSame(autoSeedMoment))) {
       ready.push(def.period);
     }
   }

@@ -127,6 +127,7 @@ export const lotteryLocation = pgTable("lottery_location", {
   location: text("location").notNull(),  // "TP. Đà Nẵng"
   code: text("code").notNull(),          // "XSDNG"
   sortOrder: integer("sort_order").notNull().default(0),
+  updatedAt: timestamp("updated_at"),
 });
 
 /**
@@ -142,6 +143,7 @@ export const lotteryPrize = pgTable("lottery_prize", {
   prizeKey: text("prize_key").notNull(),  // "gEight" | ... | "db"
   value: text("value").notNull().default(""),
   sortOrder: integer("sort_order").notNull().default(0),
+  updatedAt: timestamp("updated_at"),
 });
 
 export const lotterySchedule = pgTable("lottery_schedule", {
@@ -150,6 +152,8 @@ export const lotterySchedule = pgTable("lottery_schedule", {
   period: text("period").notNull(), // "first" | "second" | "third" | "fourth"
   name: text("name").notNull(),
   drawTime: text("draw_time").notNull(), // e.g. "17:15"
+  showTableTime: text("show_table_time"), // e.g. "17:10" - when table appears with spinners
+  splashDelaySeconds: integer("splash_delay_seconds").default(60), // seconds after table shows before splash starts
   enabled: boolean("enabled").default(true).notNull(),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),

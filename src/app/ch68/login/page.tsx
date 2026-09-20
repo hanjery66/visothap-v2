@@ -131,7 +131,7 @@ function LoginForm() {
 
         <Link
           href={"/"}
-          className="text-primary hover:text-primary font-medium underline mt-2 w-full flex justify-center"
+          className="text-primary hover:text-primary font-medium underline mt-2 w-full flex justify-center cursor-pointer"
         >
           Back to home
         </Link>
@@ -139,7 +139,7 @@ function LoginForm() {
         <Button type="submit" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 size={20} className="animate-spin -ml-1 mr-3" />
+              <Loader2 size={20} className="animate-spin -ml-1" />
               Logging in...
             </>
           ) : (
