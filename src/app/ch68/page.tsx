@@ -694,9 +694,9 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
               disabled={!hasValidDirtyColumn || isPending}
             >
               {isPending && (
-                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                <Loader2 className="w-3 h-3 animate-spin" />
               )}
-              Save Valid Columns
+              Save
             </Button>
             <Button
               variant="outline"
@@ -704,7 +704,7 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
               onClick={handleCancel}
               disabled={isPending}
             >
-              Cancel All
+              Cancel
             </Button>
           </div>
         )}

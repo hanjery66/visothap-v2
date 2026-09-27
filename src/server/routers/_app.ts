@@ -720,19 +720,19 @@ export const appRouter = router({
 
         const locData = sessionLocs.map((loc) => {
           const locPrizes = prizes.filter((p) => p.locationId === loc.id);
-
-          // Find most recent updatedAt among filled prizes in this location
           const filledPrizes = locPrizes.filter((p) => p.value && p.value.trim() !== "");
+
+          // Column update timestamp: loc.updatedAt records when this column was first filled
           let latestUpdatedAt: string | null = null;
-          if (filledPrizes.length > 0) {
+          if (loc.updatedAt) {
+            latestUpdatedAt = new Date(loc.updatedAt).toISOString();
+          } else if (filledPrizes.length > 0) {
             const timestamps = filledPrizes
               .map((p) => (p.updatedAt ? new Date(p.updatedAt).getTime() : 0))
               .filter((t) => t > 0);
             if (timestamps.length > 0) {
-              latestUpdatedAt = new Date(Math.max(...timestamps)).toISOString();
+              latestUpdatedAt = new Date(Math.min(...timestamps)).toISOString();
             }
-          } else if (loc.updatedAt) {
-            latestUpdatedAt = new Date(loc.updatedAt).toISOString();
           }
 
           const entry: Record<string, any> = {
@@ -866,10 +866,17 @@ export const appRouter = router({
       }
 
       const locationIds = Object.keys(locationUpdatesCount);
-      const dbLocationsPrizes = await db
-        .select()
-        .from(lotteryPrize)
-        .where(inArray(lotteryPrize.locationId, locationIds));
+      const [dbLocationsPrizes, dbLocations] = await Promise.all([
+        db
+          .select()
+          .from(lotteryPrize)
+          .where(inArray(lotteryPrize.locationId, locationIds)),
+        db
+          .select()
+          .from(lotteryLocation)
+          .where(inArray(lotteryLocation.id, locationIds)),
+      ]);
+      const locMap = Object.fromEntries(dbLocations.map((l) => [l.id, l]));
 
       for (const locId of locationIds) {
         const expectedCount = dbLocationsPrizes.filter(p => p.locationId === locId).length;
@@ -891,11 +898,38 @@ export const appRouter = router({
             .set({ value: item.value, updatedAt: now })
             .where(eq(lotteryPrize.id, item.prizeId));
         }
-        if (locationIds.length > 0) {
-          await tx
-            .update(lotteryLocation)
-            .set({ updatedAt: now })
-            .where(inArray(lotteryLocation.id, locationIds));
+
+        for (const locId of locationIds) {
+          const hadNumbersBefore = dbLocationsPrizes.some(
+            (p) => p.locationId === locId && p.value && p.value.trim() !== ""
+          );
+          const willHaveNumbers = input
+            .filter((item) => prizeLocationMap[item.prizeId] === locId)
+            .some((item) => item.value && item.value.trim() !== "");
+          const currentLoc = locMap[locId];
+
+          if (!willHaveNumbers) {
+            // Column was cleared of numbers -> reset updatedAt to null
+            await tx
+              .update(lotteryLocation)
+              .set({ updatedAt: null })
+              .where(eq(lotteryLocation.id, locId));
+          } else if (!hadNumbersBefore) {
+            // First time numbers are filled into this column -> start roll animation from now!
+            await tx
+              .update(lotteryLocation)
+              .set({ updatedAt: now })
+              .where(eq(lotteryLocation.id, locId));
+          } else if (!currentLoc?.updatedAt) {
+            // Already had numbers but no updatedAt was recorded -> set to past so it won't roll
+            const pastTime = new Date(Date.now() - 3600 * 1000);
+            await tx
+              .update(lotteryLocation)
+              .set({ updatedAt: pastTime })
+              .where(eq(lotteryLocation.id, locId));
+          }
+          // If hadNumbersBefore && willHaveNumbers: column already had numbers and is being edited.
+          // Keep existing lotteryLocation.updatedAt so it shows normally without rolling again!
         }
       });
       return { success: true };

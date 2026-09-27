@@ -113,7 +113,7 @@ function renderNorthernPrizeCell(
       currentMoment,
       showTableTime,
       splashDelaySeconds,
-      pz.updatedAt || locationUpdatedAt,
+      locationUpdatedAt,
     );
     const len = pz.value ? pz.value.length : expectedLength;
 

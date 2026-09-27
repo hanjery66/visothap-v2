@@ -321,7 +321,7 @@ export function LotteryTableLayoutOne({
                             currentMoment,
                             periodData?.showTableTime,
                             periodData?.splashDelaySeconds,
-                            pz.updatedAt || loc.updatedAt,
+                            loc.updatedAt,
                           );
 
 

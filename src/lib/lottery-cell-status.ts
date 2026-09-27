@@ -54,7 +54,8 @@ export function computeCellDrawStatus(
     ? drawMoment.add(splashDelay, "second")
     : tableStart.add(splashDelay, "second");
 
-  // If values were entered after the scheduled splash start, animate from when they were entered!
+  // Column-based timing: If this column was updated/pasted after the scheduled splash start,
+  // this column begins its reveal animation from the top (slot 0) at the moment it was updated!
   if (valueUpdatedAt) {
     const updatedMoment = dayjs(valueUpdatedAt);
     if (
