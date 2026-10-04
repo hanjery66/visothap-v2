@@ -13,6 +13,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  session: {
+    expiresIn: 60 * 60 * 6, // 6 hours in seconds
+    updateAge: 60 * 60 * 1, // 1 hour in seconds (updates token expiry if active)
+  },
   plugins: [
     username(),
   ],

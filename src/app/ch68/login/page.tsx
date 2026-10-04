@@ -129,12 +129,14 @@ function LoginForm() {
           </div>
         </div>
 
-        <Link
-          href={"/"}
-          className="text-primary hover:text-primary font-medium underline mt-2 w-full flex justify-center cursor-pointer"
-        >
-          Back to home
-        </Link>
+        <div className="flex justify-center mt-2">
+          <Link
+            href="/"
+            className="text-primary hover:text-primary font-medium underline cursor-pointer"
+          >
+            Back home
+          </Link>
+        </div>
 
         <Button type="submit" disabled={loading}>
           {loading ? (
@@ -143,7 +145,7 @@ function LoginForm() {
               Logging in...
             </>
           ) : (
-            "Login Now"
+            "Login"
           )}
         </Button>
       </form>
