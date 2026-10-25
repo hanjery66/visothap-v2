@@ -198,18 +198,9 @@ export function LotteryTableLayoutOne({
     <div className="rounded shadow-md overflow-hidden transition-all hover:shadow-lg">
       {/* Banner */}
       <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-base">
-        <span>
-          {drawDateTimeLabel}{" "}
-          {formattedName}
-        </span>
+        <span className="font-kantum text-lg">{drawDateTimeLabel}{" "}</span>
+        {formattedName}
       </div>
-
-      {/* Pending notice */}
-      {/* {isPending && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-0.5 text-amber-700 text-xs text-center font-medium">
-          Chưa đến giờ quay · Mở thưởng lúc <span className="font-bold">{drawDateTimeLabel}</span>
-        </div>
-      )} */}
 
       <div className="w-full overflow-hidden">
         <div className="flex w-full">
@@ -222,7 +213,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[0] = el;
               }}
-              className="flex items-center justify-center capitalize font-semibold text-sm md:text-base border-b border-zinc-200  text-center py-0.5"
+              className="flex items-center justify-center capitalize font-semibold text-lg border-b border-zinc-200  text-center py-0.5"
             >
               {dayjs(dateParam).format("dddd")}
             </div>
@@ -230,7 +221,7 @@ export function LotteryTableLayoutOne({
               ref={(el) => {
                 lblHeadRefs.current[1] = el;
               }}
-              className="flex items-center justify-center font-semibold text-sm md:text-base border-b border-zinc-200  text-center py-0.5"
+              className="flex items-center justify-center font-semibold text-lg border-b border-zinc-200  text-center py-0.5"
             >
               {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
             </div>
@@ -263,7 +254,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][0] = el;
                 }}
-                className="flex items-center justify-center capitalize text-black font-semibold text-sm md:text-base border-b border-zinc-200  text-center py-0.5"
+                className="flex items-center justify-center capitalize text-black font-semibold  md:text-lg border-b border-zinc-200  text-center py-0.5"
               >
                 {loc.location}
               </div>
@@ -273,7 +264,7 @@ export function LotteryTableLayoutOne({
                   if (!allHeadRefs.current[colIdx]) allHeadRefs.current[colIdx] = [];
                   allHeadRefs.current[colIdx][1] = el;
                 }}
-                className="flex items-center justify-center text-black font-semibold text-sm md:text-base border-b border-zinc-200  text-center uppercase py-0.5"
+                className="flex items-center justify-center text-black font-semibold  md:text-lg border-b border-zinc-200  text-center uppercase py-0.5"
               >
                 {loc.code}
               </div>

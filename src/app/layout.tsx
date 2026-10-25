@@ -76,6 +76,38 @@ export default function RootLayout({
                 window.addEventListener('orientationchange', function() {
                   setTimeout(setAppHeight, 150);
                 });
+
+                function adjustViewport() {
+                  var targetWidth = 1170;
+                  var screenWidth = window.screen.width;
+                  if (window.innerWidth && window.innerWidth > 0 && window.innerWidth < screenWidth) {
+                    screenWidth = window.innerWidth;
+                  }
+                  if (screenWidth < targetWidth) {
+                    var scale = screenWidth / targetWidth;
+                    var content = 'width=' + targetWidth + ', initial-scale=' + scale + ', minimum-scale=' + (scale * 0.5) + ', maximum-scale=3.0, user-scalable=yes';
+                    var metas = document.querySelectorAll('meta[name="viewport"]');
+                    if (metas.length > 0) {
+                      metas.forEach(function(m) {
+                        m.setAttribute('content', content);
+                      });
+                    } else {
+                      var meta = document.createElement('meta');
+                      meta.name = 'viewport';
+                      meta.content = content;
+                      document.head.appendChild(meta);
+                    }
+                  }
+                }
+
+                adjustViewport();
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', adjustViewport);
+                }
+                window.addEventListener('resize', adjustViewport);
+                window.addEventListener('orientationchange', function() {
+                  setTimeout(adjustViewport, 150);
+                });
               })();
             `,
           }}

@@ -54,14 +54,15 @@ function LoginForm() {
           signInError.message ||
           "Login failed. Please verify your credentials.",
         );
+        setLoading(false);
       } else {
-        router.refresh();
+        // Direct navigation to admin / callbackUrl ensures fresh cookies and avoids race conditions
+        window.location.href = callbackUrl;
       }
     } catch (err: any) {
       setError(
         err?.message || "A system error occurred. Please try again later.",
       );
-    } finally {
       setLoading(false);
     }
   };

@@ -241,9 +241,10 @@ export function LotteryTableLayoutTwo({
     <div className="rounded shadow-md overflow-hidden transition-all hover:shadow-lg">
       {/* Table header */}
       <div className="bg-primary text-primary-foreground font-bold text-center flex flex-col sm:flex-row justify-center items-center gap-1 uppercase py-1.5 text-xs sm:text-base">
-        <span>
-          {drawDateTimeLabel} {" "} {formattedName}
+        <span className="font-kantum text-lg">
+          {drawDateTimeLabel} {" "}
         </span>
+        {formattedName}
       </div>
 
       <div className="w-full overflow-hidden">
@@ -252,10 +253,10 @@ export function LotteryTableLayoutTwo({
             <TableBody>
               {/* Location row */}
               <TableRow className="border-b border-zinc-200 font-bold hover:bg-transparent">
-                <TableCell className="font-semibold capitalize text-sm md:text-base border-r border-zinc-200 w-1/5 text-center py-0.5">
+                <TableCell className="font-semibold capitalize text-sm md:text-lg border-r border-zinc-200 w-1/5 text-center py-0.5">
                   {dayjs(dateParam).format("dddd")}
                 </TableCell>
-                <TableCell className="text-sm md:text-base text-center font-semibold py-0.5 w-4/5">
+                <TableCell className="text-sm md:text-lg text-center font-semibold py-0.5 w-4/5">
                   Ngày: {formatDisplayDateTime(dateParam, undefined, "DD/MM/YYYY")}
                 </TableCell>
               </TableRow>
@@ -281,9 +282,8 @@ export function LotteryTableLayoutTwo({
                   return (
                     <TableRow
                       key={row.key}
-                      className={`border-b border-zinc-200 last:border-b-0 transition-colors ${
-                        isLightBg ? "bg-muted/50" : ""
-                      }`}
+                      className={`border-b border-zinc-200 last:border-b-0 transition-colors ${isLightBg ? "bg-muted/50" : ""
+                        }`}
                     >
                       <TableCell className="p-0 font-medium text-sm md:text-base text-muted-foreground border-r border-zinc-200 text-center w-1/5">
                         {row.label}
