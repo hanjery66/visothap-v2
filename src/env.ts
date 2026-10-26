@@ -11,6 +11,8 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     BLOB_READ_WRITE_TOKEN: z.string(),
+    HANJERY_URL: z.string(),
+    HANJERY_API_KEY: z.string(),
   },
 
   /**
@@ -32,6 +34,8 @@ export const env = createEnv({
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
+    HANJERY_URL: process.env.HANJERY_URL,
+    HANJERY_API_KEY: process.env.HANJERY_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

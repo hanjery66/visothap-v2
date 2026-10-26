@@ -70,7 +70,7 @@ function LoginForm() {
   return (
     <div className="w-full max-w-md  border border-primary/30 shadow-[0_0_60px_rgba(21,190,206,0.06)] rounded p-8 relative overflow-hidden">
       {/* Decorative top lightbar */}
-      <div className="absolute top-0 left-0 right-0 h-[2px]  from-transparent via-primary to-transparent opacity-80" />
+      <div className="absolute top-0 left-0 right-0 h-0.5  from-transparent via-primary to-transparent opacity-80" />
 
       {/* Brand logo & header */}
       <div className="flex flex-col items-center mb-8">
@@ -141,10 +141,7 @@ function LoginForm() {
 
         <Button type="submit" disabled={loading}>
           {loading ? (
-            <>
-              <Loader2 size={20} className="animate-spin -ml-1" />
-              Logging in...
-            </>
+            <Loader2 size={20} className="animate-spin -ml-1" />
           ) : (
             "Login"
           )}

@@ -17,6 +17,15 @@ import {
   Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function AdminLayout({
   children,
@@ -29,6 +38,7 @@ export default function AdminLayout({
 
   const { data: settings } = trpc.getGeneralSettings.useQuery();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -48,8 +58,12 @@ export default function AdminLayout({
       .signOut({
         fetchOptions: {
           onSuccess: () => {
+            setShowSignOutDialog(false);
             router.refresh();
             router.replace("/ch68/login");
+          },
+          onError: () => {
+            setLoggingOut(false);
           },
         },
       })
@@ -162,16 +176,54 @@ export default function AdminLayout({
         </Link>
 
         {/* Right: Sign out */}
-        <Button
-          onClick={handleSignOut}
-          disabled={loggingOut}
-          variant="default"
-          size="sm"
-          className="text-xs font-semibold"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          {loggingOut ? "Logging out..." : "Sign Out"}
-        </Button>
+        <Dialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+          <DialogTrigger asChild>
+            <Button
+              variant="default"
+              size="sm"
+              className="text-xs font-semibold"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign Out
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Sign Out</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to sign out? You will need to log in again to access the admin panel.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSignOutDialog(false)}
+                disabled={loggingOut}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleSignOut}
+                disabled={loggingOut}
+              >
+                {loggingOut ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Signing out...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="h-3.5 w-3.5" />
+                    Sign Out
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </header>
 
       {/* ── BODY (sidebar + content) ── */}

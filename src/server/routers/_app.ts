@@ -20,6 +20,43 @@ import {
 import { ensureDisplaySettingsSeeded } from "@/server/lottery-display";
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
 import { DEFAULT_PERIOD_SCHEDULE, getDayKeyFromDate } from "@/lib/lottery-schedule";
+import { env } from "@/env";
+
+export async function postLotteryResultToHanjery(
+  payload: Array<{
+    date: string;
+    shift_id: string;
+    column: string;
+    raw: string;
+  }>
+) {
+  if (!payload || payload.length === 0) return { success: true };
+
+  const validPayload = payload.filter((item) => Boolean(item.shift_id));
+  if (validPayload.length === 0) return { success: true, ignored: true };
+
+  const endpoint = env.HANJERY_URL + "/api/lottery-result/batch";
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": env.HANJERY_API_KEY },
+      body: JSON.stringify(validPayload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.warn("Hanjery sync warning:", res.status, errText);
+      return { success: false, status: res.status, error: errText };
+    }
+
+    const data = await res.json().catch(() => null);
+    return { success: true, data };
+  } catch (err: any) {
+    console.error("Failed to post lottery result to Hanjery:", err);
+    return { success: false, error: err?.message };
+  }
+}
 
 export const appRouter = router({
   getUsers: publicProcedure.query(async () => {
@@ -467,6 +504,47 @@ export const appRouter = router({
     }
   }),
 
+  // Proxy call to Hanjery API to fetch active shifts
+  getHanjeryShifts: authedProcedure.query(async () => {
+    try {
+      const endpoint = env.HANJERY_URL + "/api/lottery-result/batch";
+
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { "Content-Type": "application/json", "x-api-key": env.HANJERY_API_KEY },
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        console.warn("Hanjery shifts API returned status:", res.status);
+        return [];
+      }
+
+      const json = await res.json();
+      const list = Array.isArray(json) ? json : json?.data || [];
+      return list as Array<{ id: string; name: string }>;
+    } catch (error) {
+      console.warn("Could not fetch Hanjery shifts:", error);
+      return [];
+    }
+  }),
+
+  // Dedicated mutation to post lottery results to Hanjery
+  postLotteryResultToHanjery: authedProcedure
+    .input(
+      z.array(
+        z.object({
+          date: z.string(),
+          shift_id: z.string(),
+          column: z.string(),
+          raw: z.string(),
+        })
+      )
+    )
+    .mutation(async ({ input }) => {
+      return await postLotteryResultToHanjery(input);
+    }),
+
   // Save/update entire weekly lottery schedule settings
   saveLotterySchedule: authedProcedure
     .input(
@@ -479,6 +557,7 @@ export const appRouter = router({
           drawTime: z.string(),
           showTableTime: z.string().optional().nullable(),
           splashDelaySeconds: z.number().optional().nullable(),
+          hanjeryShiftId: z.string().optional().nullable(),
           enabled: z.boolean(),
         })
       )
@@ -496,6 +575,7 @@ export const appRouter = router({
           drawTime: item.drawTime,
           showTableTime: item.showTableTime,
           splashDelaySeconds: item.splashDelaySeconds,
+          hanjeryShiftId: item.hanjeryShiftId ?? null,
           enabled: item.enabled,
           createdAt: now,
           updatedAt: now,
@@ -511,6 +591,7 @@ export const appRouter = router({
               drawTime: sql`excluded.draw_time`,
               showTableTime: sql`excluded.show_table_time`,
               splashDelaySeconds: sql`excluded.splash_delay_seconds`,
+              hanjeryShiftId: sql`excluded.hanjery_shift_id`,
               enabled: sql`excluded.enabled`,
               updatedAt: now,
             },
@@ -827,25 +908,46 @@ export const appRouter = router({
 
   upsertLotteryPrizes: authedProcedure
     .input(
-      z.array(
+      z.union([
+        z.array(
+          z.object({
+            prizeId: z.string(),
+            value: z.string().regex(/^\d*$/, "Value must contain only digits").max(6, "Value is too long"),
+          })
+        ),
         z.object({
-          prizeId: z.string(),
-          value: z.string().regex(/^\d*$/, "Value must contain only digits").max(6, "Value is too long"),
-        })
-      )
+          updates: z.array(
+            z.object({
+              prizeId: z.string(),
+              value: z.string().regex(/^\d*$/, "Value must contain only digits").max(6, "Value is too long"),
+            })
+          ),
+          hanjeryPayload: z.array(
+            z.object({
+              date: z.string(),
+              shift_id: z.string(),
+              column: z.string(),
+              raw: z.string(),
+            })
+          ).optional(),
+        }),
+      ])
     )
     .mutation(async ({ input }) => {
-      if (input.length === 0) return { success: true };
+      const updates = Array.isArray(input) ? input : input.updates;
+      const hanjeryPayload = Array.isArray(input) ? undefined : input.hanjeryPayload;
+
+      if (updates.length === 0) return { success: true };
 
       // 1. Fetch corresponding prizes from DB
-      const prizeIds = input.map(item => item.prizeId);
+      const prizeIds = updates.map(item => item.prizeId);
       const dbPrizes = await db
         .select()
         .from(lotteryPrize)
         .where(inArray(lotteryPrize.id, prizeIds));
 
       // 2. Validate that all submitted prize IDs exist in the database
-      if (dbPrizes.length !== input.length) {
+      if (dbPrizes.length !== updates.length) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "One or more prize IDs are invalid.",
@@ -860,7 +962,7 @@ export const appRouter = router({
         prizeLocationMap[p.id] = p.locationId;
       }
 
-      for (const item of input) {
+      for (const item of updates) {
         const locId = prizeLocationMap[item.prizeId];
         locationUpdatesCount[locId] = (locationUpdatesCount[locId] ?? 0) + 1;
       }
@@ -892,7 +994,7 @@ export const appRouter = router({
       // 4. Perform updates inside a transaction
       const now = new Date();
       await db.transaction(async (tx) => {
-        for (const item of input) {
+        for (const item of updates) {
           await tx
             .update(lotteryPrize)
             .set({ value: item.value, updatedAt: now })
@@ -903,7 +1005,7 @@ export const appRouter = router({
           const hadNumbersBefore = dbLocationsPrizes.some(
             (p) => p.locationId === locId && p.value && p.value.trim() !== ""
           );
-          const willHaveNumbers = input
+          const willHaveNumbers = updates
             .filter((item) => prizeLocationMap[item.prizeId] === locId)
             .some((item) => item.value && item.value.trim() !== "");
           const currentLoc = locMap[locId];
@@ -932,6 +1034,12 @@ export const appRouter = router({
           // Keep existing lotteryLocation.updatedAt so it shows normally without rolling again!
         }
       });
+
+      // 5. If hanjeryPayload provided, post to Hanjery on the backend
+      if (hanjeryPayload && hanjeryPayload.length > 0) {
+        await postLotteryResultToHanjery(hanjeryPayload);
+      }
+
       return { success: true };
     }),
 

@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/app/_trpc/client";
 import { toast } from "sonner";
 import dayjs from "dayjs";
@@ -16,7 +17,7 @@ import { formatDisplayDateTime, parseDrawTime, STORAGE_DATE_FORMAT } from "@/lib
 import { DEFAULT_LOTTERY_DISPLAY_SETTINGS, type LotteryDisplayConfig } from "@/lib/lottery-display";
 
 // ────────────────────────────────────────────────────────────────
-// Types
+// Types & Dummy Data
 // ────────────────────────────────────────────────────────────────
 
 type DayKey = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
@@ -28,6 +29,7 @@ interface PeriodSchedule {
     showTableTime: string;
     splashDelaySeconds: number;
     enabled: boolean;
+    hanjeryShiftId?: string | null;
 }
 
 type WeekSchedule = Record<DayKey, Record<PeriodKey, PeriodSchedule>>;
@@ -56,11 +58,11 @@ const PERIODS: { key: PeriodKey; label: string }[] = [
     { key: "fourth", label: "Miền Bắc" },
 ];
 
-const DEFAULT_PERIOD_TIMES: Record<PeriodKey, { name: string; drawTime: string; showTableTime: string; splashDelaySeconds: number }> = {
-    first: { name: "Sổ Kết Quả Miền Đông", drawTime: "10:50", showTableTime: "10:47", splashDelaySeconds: 60 },
-    second: { name: "Sổ Kết Quả Miền Trung", drawTime: "13:50", showTableTime: "13:47", splashDelaySeconds: 60 },
-    third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:50", showTableTime: "16:47", splashDelaySeconds: 60 },
-    fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:45", showTableTime: "18:42", splashDelaySeconds: 60 },
+const DEFAULT_PERIOD_TIMES: Record<PeriodKey, { name: string; drawTime: string; showTableTime: string; splashDelaySeconds: number; hanjeryShiftId?: string | null }> = {
+    first: { name: "Sổ Kết Quả Miền Đông", drawTime: "10:50", showTableTime: "10:47", splashDelaySeconds: 60, hanjeryShiftId: null },
+    second: { name: "Sổ Kết Quả Miền Trung", drawTime: "13:50", showTableTime: "13:47", splashDelaySeconds: 60, hanjeryShiftId: null },
+    third: { name: "Sổ Kết Quả Miền Nam", drawTime: "16:50", showTableTime: "16:47", splashDelaySeconds: 60, hanjeryShiftId: null },
+    fourth: { name: "Sổ Kết Quả Miền Bắc", drawTime: "18:45", showTableTime: "18:42", splashDelaySeconds: 60, hanjeryShiftId: null },
 };
 
 const DAY_INDEX_MAP: DayKey[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -79,6 +81,7 @@ function buildScheduleFromData(data: any[]): WeekSchedule {
                 drawTime: DEFAULT_PERIOD_TIMES[p.key].drawTime,
                 showTableTime: DEFAULT_PERIOD_TIMES[p.key].showTableTime,
                 splashDelaySeconds: DEFAULT_PERIOD_TIMES[p.key].splashDelaySeconds,
+                hanjeryShiftId: null,
                 enabled: true,
             };
         }
@@ -93,6 +96,7 @@ function buildScheduleFromData(data: any[]): WeekSchedule {
                 drawTime: item.drawTime,
                 showTableTime: item.showTableTime ?? item.drawTime,
                 splashDelaySeconds: item.splashDelaySeconds ?? 60,
+                hanjeryShiftId: item.hanjeryShiftId ?? null,
                 enabled: item.enabled,
             };
         }
@@ -110,6 +114,14 @@ export default function LotteryScheduleSettings() {
     const { data: dbSchedule, isLoading } = trpc.getLotterySchedule.useQuery();
     const { data: dbDisplaySettings, isLoading: isDisplayLoading } =
         trpc.getLotteryDisplaySettings.useQuery();
+    const { data: hanjeryShifts } = trpc.getHanjeryShifts.useQuery();
+
+    const shiftOptions = useMemo(() => {
+        if (hanjeryShifts && hanjeryShifts.length > 0) {
+            return hanjeryShifts;
+        }
+        return []
+    }, [hanjeryShifts]);
 
     const [schedule, setSchedule] = useState<WeekSchedule | null>(null);
     const [displaySettings, setDisplaySettings] = useState<DisplaySettingsFormState>({
@@ -225,6 +237,7 @@ export default function LotteryScheduleSettings() {
                 drawTime: schedule[d.key][p.key].drawTime,
                 showTableTime: schedule[d.key][p.key].showTableTime,
                 splashDelaySeconds: Number(schedule[d.key][p.key].splashDelaySeconds) || 60,
+                hanjeryShiftId: schedule[d.key][p.key].hanjeryShiftId ?? null,
                 enabled: schedule[d.key][p.key].enabled,
             }))
         );
@@ -251,29 +264,7 @@ export default function LotteryScheduleSettings() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-end">
-                <Button
-                    variant="default"
-                    onClick={handleSave}
-                    disabled={!dirty || saving}
-                    className="shrink-0 gap-1.5"
-                >
-                    {saving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <Save className="h-4 w-4" />
-                    )}
-                    {saving ? "Saving..." : "Save changes"}
-                </Button>
-            </div>
-
             <div className="rounded space-y-3 bg-zinc-50/70 p-4 border border-zinc-200/70">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <h3 className="text-sm font-semibold text-zinc-800">Animation Pacing (Global)</h3>
-                    <span className="text-xs text-muted-foreground">
-                        Table display times and splash delays are configured individually per session below.
-                    </span>
-                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                         <Label htmlFor="cell-splash-duration" className="text-xs text-muted-foreground">
@@ -389,7 +380,7 @@ export default function LotteryScheduleSettings() {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
                                                 <Label htmlFor={`${d.key}-${p.key}-time`} className="text-xs text-muted-foreground">
-                                                    Actual result time
+                                                    Time
                                                 </Label>
                                                 <Input
                                                     id={`${d.key}-${p.key}-time`}
@@ -437,6 +428,44 @@ export default function LotteryScheduleSettings() {
                                             />
                                         </div>
 
+                                        <div className="space-y-1.5">
+                                            <div className="flex justify-between items-center">
+                                                <Label htmlFor={`${d.key}-${p.key}-shift`} className="text-xs text-muted-foreground">
+                                                    Hanjery Shift (Optional)
+                                                </Label>
+                                                {value.hanjeryShiftId && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updatePeriod(d.key, p.key, { hanjeryShiftId: null })}
+                                                        className="text-[10px] text-muted-foreground hover:text-destructive underline cursor-pointer"
+                                                    >
+                                                        Clear
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <Select
+                                                value={value.hanjeryShiftId || "none"}
+                                                onValueChange={(val) =>
+                                                    updatePeriod(d.key, p.key, { hanjeryShiftId: val === "none" ? null : val })
+                                                }
+                                                disabled={!value.enabled}
+                                            >
+                                                <SelectTrigger id={`${d.key}-${p.key}-shift`} className="h-9 text-xs w-full">
+                                                    <SelectValue placeholder="Hanjery Shift (optional)" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none" className="text-xs text-muted-foreground">
+                                                        Not Select
+                                                    </SelectItem>
+                                                    {shiftOptions.map((opt) => (
+                                                        <SelectItem key={opt.id} value={opt.id} className="text-xs">
+                                                            {opt.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
                                         {(() => {
                                             if (!value.enabled) return null;
                                             const parsedDraw = parseDrawTime(value.drawTime);
@@ -473,12 +502,12 @@ export default function LotteryScheduleSettings() {
                                                             {format(splashMoment)} <span className="text-[10px] text-zinc-400 font-normal">({splashDelaySec}s after table)</span>
                                                         </span>
                                                     </div>
-                                                    <div className="flex items-center justify-between pt-0.5 border-t border-zinc-200/60 font-medium">
-                                                        <span className="text-zinc-700">Actual result time:</span>
+                                                    {/* <div className="flex items-center justify-between pt-0.5 border-t border-zinc-200/60 font-medium">
+                                                        <span className="text-zinc-700">Time:</span>
                                                         <span className="font-bold text-primary">
                                                             {format(drawMoment)}
                                                         </span>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             );
                                         })()}
@@ -490,6 +519,22 @@ export default function LotteryScheduleSettings() {
                     </TabsContent>
                 ))}
             </Tabs>
+
+            <div className="flex items-center justify-end">
+                <Button
+                    variant="default"
+                    onClick={handleSave}
+                    disabled={!dirty || saving}
+                    className="shrink-0 gap-1.5"
+                >
+                    {saving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Save className="h-4 w-4" />
+                    )}
+                    Save changes
+                </Button>
+            </div>
         </div>
     );
 }

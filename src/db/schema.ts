@@ -154,6 +154,7 @@ export const lotterySchedule = pgTable("lottery_schedule", {
   drawTime: text("draw_time").notNull(), // e.g. "17:15"
   showTableTime: text("show_table_time"), // e.g. "17:10" - when table appears with spinners
   splashDelaySeconds: integer("splash_delay_seconds").default(60), // seconds after table shows before splash starts
+  hanjeryShiftId: text("hanjery_shift_id"),
   enabled: boolean("enabled").default(true).notNull(),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),

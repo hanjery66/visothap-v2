@@ -44,9 +44,17 @@ interface PeriodEditorProps {
   periodData: LotteryPeriod;
   sessionId: string;
   onSaved: () => void;
+  date?: string;
+  shiftId?: string | null;
 }
 
-function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
+function PeriodEditor({
+  periodData,
+  sessionId,
+  onSaved,
+  date,
+  shiftId,
+}: PeriodEditorProps) {
 
   if (!periodData?.data?.length) return null;
   const locations: LocationData[] = periodData.data;
@@ -382,15 +390,35 @@ function PeriodEditor({ periodData, sessionId, onSaved }: PeriodEditorProps) {
 
     if (allUpdates.length === 0) return;
 
-    savePrizes(allUpdates, {
-      onSuccess: () => {
-        setDirtyColumns((prev) => {
-          const next = new Set(prev);
-          savedLocKeys.forEach((key) => next.delete(key));
-          return next;
-        });
+    const hanjeryPayload = shiftId
+      ? locations.map((loc, idx) => {
+          const locKey = loc.code || idx;
+          const text = columnTexts[locKey] ?? "";
+          const currentLines = getNormalizedLines(text);
+          return {
+            date: date || dayjs().format("YYYY-MM-DD"),
+            shift_id: shiftId,
+            column: `V${idx + 1}`,
+            raw: currentLines.join("\n"),
+          };
+        })
+      : undefined;
+
+    savePrizes(
+      {
+        updates: allUpdates,
+        hanjeryPayload,
       },
-    });
+      {
+        onSuccess: () => {
+          setDirtyColumns((prev) => {
+            const next = new Set(prev);
+            savedLocKeys.forEach((key) => next.delete(key));
+            return next;
+          });
+        },
+      }
+    );
   };
 
 
@@ -893,7 +921,7 @@ export default function AdminPage() {
 
           {PERIOD_KEYS.map((key) => {
             const matchedSchedule = schedule?.find(
-              (s: any) => s.dayOfWeek === dayKey && s.period === key
+              (s) => s.dayOfWeek === dayKey && s.period === key
             );
             return (
               <TabsContent
@@ -933,6 +961,8 @@ export default function AdminPage() {
                       <PeriodEditor
                         periodData={session}
                         sessionId={session.sessionId ?? ""}
+                        date={selectedDate}
+                        shiftId={matchedSchedule?.hanjeryShiftId ?? null}
                         onSaved={() => { }}
                       />
                     </>
