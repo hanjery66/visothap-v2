@@ -36,6 +36,7 @@ import {
   LAYOUT_ONE_DIGIT_LENGTHS,
   LAYOUT_TWO_DIGIT_LENGTHS,
 } from "@/lib/lottery-constants";
+import type { LotterySchedule } from "@/db/schema";
 
 // ---------------------------------------------------------------------------
 // Period grid editor — renders one table per period with textarea column inputs
@@ -392,16 +393,16 @@ function PeriodEditor({
 
     const hanjeryPayload = shiftId
       ? locations.map((loc, idx) => {
-          const locKey = loc.code || idx;
-          const text = columnTexts[locKey] ?? "";
-          const currentLines = getNormalizedLines(text);
-          return {
-            date: date || dayjs().format("YYYY-MM-DD"),
-            shift_id: shiftId,
-            column: `V${idx + 1}`,
-            raw: currentLines.join("\n"),
-          };
-        })
+        const locKey = loc.code || idx;
+        const text = columnTexts[locKey] ?? "";
+        const currentLines = getNormalizedLines(text);
+        return {
+          date: date || dayjs().format("YYYY-MM-DD"),
+          shift_id: shiftId,
+          column: `V${idx + 1}`,
+          raw: currentLines.join("\n"),
+        };
+      })
       : undefined;
 
     savePrizes(
@@ -900,7 +901,8 @@ export default function AdminPage() {
             {PERIOD_KEYS.map((key) => {
               const session = (lotteryState as LotteryState)?.[key];
               const matchedSchedule = schedule?.find(
-                (s: any) => s.dayOfWeek === dayKey && s.period === key
+                // @ts-ignore
+                (s: LotterySchedule) => s.dayOfWeek === dayKey && s.period === key
               );
               const timeStr = session?.displayNumber || matchedSchedule?.drawTime;
               const displayTime = timeStr
@@ -921,7 +923,8 @@ export default function AdminPage() {
 
           {PERIOD_KEYS.map((key) => {
             const matchedSchedule = schedule?.find(
-              (s) => s.dayOfWeek === dayKey && s.period === key
+              // @ts-ignore
+              (s: LotterySchedule) => s.dayOfWeek === dayKey && s.period === key
             );
             return (
               <TabsContent
