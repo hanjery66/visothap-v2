@@ -208,6 +208,7 @@ export default function AdminLayout({
                 size="sm"
                 onClick={handleSignOut}
                 disabled={loggingOut}
+                className="text-white"
               >
                 {loggingOut ? (
                   <>

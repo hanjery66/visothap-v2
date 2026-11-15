@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import dayjs from "dayjs";
 import { db } from "@/db";
 import { user, advertisement, generalSetting, lotterySession, lotteryLocation, lotteryPrize, lotterySchedule, lotteryDisplaySetting, navLabel } from "@/db/schema";
-import { desc, eq, inArray, asc, sql } from "drizzle-orm";
+import { desc, eq, inArray, asc, sql, and } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import crypto from "crypto";
@@ -22,41 +22,14 @@ import { DEFAULT_LOTTERY_DISPLAY_SETTINGS } from "@/lib/lottery-display";
 import { DEFAULT_PERIOD_SCHEDULE, getDayKeyFromDate } from "@/lib/lottery-schedule";
 import { env } from "@/env";
 
-export async function postLotteryResultToHanjery(
-  payload: Array<{
-    date: string;
-    shift_id: string;
-    column: string;
-    raw: string;
-  }>
-) {
-  if (!payload || payload.length === 0) return { success: true };
-
-  const validPayload = payload.filter((item) => Boolean(item.shift_id));
-  if (validPayload.length === 0) return { success: true, ignored: true };
-
-  const endpoint = env.HANJERY_URL + "/api/lottery-result/batch";
-
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": env.HANJERY_API_KEY },
-      body: JSON.stringify(validPayload),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.warn("Hanjery sync warning:", res.status, errText);
-      return { success: false, status: res.status, error: errText };
-    }
-
-    const data = await res.json().catch(() => null);
-    return { success: true, data };
-  } catch (err: any) {
-    console.error("Failed to post lottery result to Hanjery:", err);
-    return { success: false, error: err?.message };
-  }
-}
+import {
+  postLotteryResultToHanjery,
+  scheduleHanjerySync,
+  getPendingHanjerySyncs,
+  sendHanjeryNow,
+  cancelHanjerySync,
+} from "@/server/hanjery-scheduler";
+export { postLotteryResultToHanjery };
 
 export const appRouter = router({
   getUsers: publicProcedure.query(async () => {
@@ -543,6 +516,25 @@ export const appRouter = router({
     )
     .mutation(async ({ input }) => {
       return await postLotteryResultToHanjery(input);
+    }),
+
+  // Get active pending Hanjery syncs waiting for spin animation to complete
+  getHanjeryPendingSyncs: authedProcedure.query(async () => {
+    return getPendingHanjerySyncs();
+  }),
+
+  // Force send a pending Hanjery sync immediately without waiting
+  sendHanjeryNow: authedProcedure
+    .input(z.object({ shiftId: z.string() }))
+    .mutation(async ({ input }) => {
+      return await sendHanjeryNow(input.shiftId);
+    }),
+
+  // Cancel a pending Hanjery sync
+  cancelHanjerySync: authedProcedure
+    .input(z.object({ shiftId: z.string() }))
+    .mutation(async ({ input }) => {
+      return cancelHanjerySync(input.shiftId);
     }),
 
   // Save/update entire weekly lottery schedule settings
@@ -1035,12 +1027,64 @@ export const appRouter = router({
         }
       });
 
-      // 5. If hanjeryPayload provided, post to Hanjery on the backend
+      // 5. If hanjeryPayload provided, schedule or post to Hanjery
+      let hanjerySync: {
+        scheduled: boolean;
+        sentImmediately?: boolean;
+        remainingSeconds?: number;
+        scheduledFor?: string;
+      } | undefined = undefined;
+
       if (hanjeryPayload && hanjeryPayload.length > 0) {
-        await postLotteryResultToHanjery(hanjeryPayload);
+        const validPayload = hanjeryPayload.filter((item) => Boolean(item.shift_id));
+        if (validPayload.length > 0) {
+          const shiftId = validPayload[0].shift_id;
+          const sessionId = dbLocations[0]?.sessionId;
+
+          let session: any = null;
+          let schedule: any = null;
+
+          if (sessionId) {
+            const [foundSession] = await db
+              .select()
+              .from(lotterySession)
+              .where(eq(lotterySession.id, sessionId))
+              .limit(1);
+            session = foundSession;
+
+            if (session) {
+              const dayKey = getDayKeyFromDate(session.date);
+              const [foundSchedule] = await db
+                .select()
+                .from(lotterySchedule)
+                .where(
+                  and(
+                    eq(lotterySchedule.dayOfWeek, dayKey),
+                    eq(lotterySchedule.period, session.period)
+                  )
+                )
+                .limit(1);
+              schedule = foundSchedule;
+            }
+          }
+
+          const displaySettings = await ensureDisplaySettingsSeeded();
+
+          hanjerySync = await scheduleHanjerySync({
+            shiftId,
+            payload: validPayload,
+            date: session?.date ?? validPayload[0].date,
+            period: session?.period ?? "first",
+            drawTime: schedule?.drawTime ?? session?.displayNumber,
+            showTableTime: schedule?.showTableTime,
+            splashDelaySeconds: schedule?.splashDelaySeconds,
+            displayConfig: displaySettings,
+            savedAt: now,
+          });
+        }
       }
 
-      return { success: true };
+      return { success: true, hanjerySync };
     }),
 
   /**

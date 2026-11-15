@@ -28,6 +28,8 @@ import {
   X,
   Settings,
   Trash2,
+  Clock,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { getDayKeyFromDate } from "@/lib/lottery-schedule";
@@ -226,12 +228,56 @@ function PeriodEditor({
 
   const handleLabelCancel = () => setEditingLabelIdx(null);
 
+  const { data: pendingSyncs, refetch: refetchSyncs } =
+    trpc.getHanjeryPendingSyncs.useQuery(undefined, {
+      refetchInterval: (query) => {
+        const list = query.state.data;
+        return list && list.length > 0 ? 1000 : 5000;
+      },
+    });
+
+  const { mutate: sendNow, isPending: isSendingNow } =
+    trpc.sendHanjeryNow.useMutation({
+      onSuccess: () => {
+        toast.success("Sent to Hanjery successfully!");
+        refetchSyncs();
+      },
+      onError: (err) => {
+        toast.error(`Failed to send to Hanjery: ${err.message}`);
+      },
+    });
+
+  const { mutate: cancelSync, isPending: isCancelingSync } =
+    trpc.cancelHanjerySync.useMutation({
+      onSuccess: () => {
+        toast.info("Hanjery sync cancelled");
+        refetchSyncs();
+      },
+      onError: (err) => {
+        toast.error(`Failed to cancel sync: ${err.message}`);
+      },
+    });
+
+  const activeSync = pendingSyncs?.find((s: any) => s.shiftId === shiftId);
+
   const { mutate: savePrizes, isPending } =
     trpc.upsertLotteryPrizes.useMutation({
-      onSuccess: () => {
+      onSuccess: (res: any) => {
         onSaved();
         utils.getLotteryByDate.invalidate();
-        toast.success("success");
+        refetchSyncs();
+        if (res?.hanjerySync?.scheduled) {
+          const sec = res.hanjerySync.remainingSeconds ?? 0;
+          const mins = Math.floor(sec / 60);
+          const secs = sec % 60;
+          toast.success(
+            `Saved! Hanjery sync scheduled in ${mins}m ${secs}s (waiting for spin animation to finish)`
+          );
+        } else if (res?.hanjerySync?.sentImmediately) {
+          toast.success("Saved and synced to Hanjery!");
+        } else {
+          toast.success("Saved successfully");
+        }
       },
       onError(error) {
         toast.error(error.message);
@@ -391,19 +437,27 @@ function PeriodEditor({
 
     if (allUpdates.length === 0) return;
 
-    const hanjeryPayload = shiftId
-      ? locations.map((loc, idx) => {
+    const validHanjeryItems = locations
+      .map((loc, idx) => {
         const locKey = loc.code || idx;
         const text = columnTexts[locKey] ?? "";
         const currentLines = getNormalizedLines(text);
+        const validation = validateLines(currentLines);
+        // Only include columns that have valid, complete numbers
+        if (!validation.isValid || currentLines.length === 0) {
+          return null;
+        }
         return {
           date: date || dayjs().format("YYYY-MM-DD"),
-          shift_id: shiftId,
+          shift_id: shiftId!,
           column: `V${idx + 1}`,
           raw: currentLines.join("\n"),
         };
       })
-      : undefined;
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const hanjeryPayload =
+      shiftId && validHanjeryItems.length > 0 ? validHanjeryItems : undefined;
 
     savePrizes(
       {
@@ -411,12 +465,25 @@ function PeriodEditor({
         hanjeryPayload,
       },
       {
-        onSuccess: () => {
+        onSuccess: (res: any) => {
           setDirtyColumns((prev) => {
             const next = new Set(prev);
             savedLocKeys.forEach((key) => next.delete(key));
             return next;
           });
+          refetchSyncs();
+          if (res?.hanjerySync?.scheduled) {
+            const sec = res.hanjerySync.remainingSeconds ?? 0;
+            const mins = Math.floor(sec / 60);
+            const secs = sec % 60;
+            toast.success(
+              `Saved! Hanjery sync scheduled in ${mins}m ${secs}s (waiting for spin animation to finish)`
+            );
+          } else if (res?.hanjerySync?.sentImmediately) {
+            toast.success("Saved and synced to Hanjery!");
+          } else {
+            toast.success("Saved successfully");
+          }
         },
       }
     );
@@ -438,6 +505,43 @@ function PeriodEditor({
   return (
     <div className="flex gap-4">
       <div className="overflow-x-auto rounded  flex-col  w-full flex justify-center items-center ">
+        {activeSync && (
+          <div className="w-full max-w-4xl mb-3 flex items-center justify-between bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 px-3 py-2 rounded text-xs">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 animate-pulse text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Hanjery sync waiting for spin animation:</strong>{" "}
+                {Math.floor(activeSync.remainingSeconds / 60)}m{" "}
+                {String(activeSync.remainingSeconds % 60).padStart(2, "0")}s remaining
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2.5 text-xs border-amber-500/30 hover:bg-amber-500/20 text-amber-900 dark:text-amber-200"
+                onClick={() => sendNow({ shiftId: activeSync.shiftId })}
+                disabled={isSendingNow}
+              >
+                {isSendingNow ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Send className="w-3 h-3" />
+                )}
+                Send to Hanjery Now
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-xs text-zinc-500 hover:text-destructive"
+                onClick={() => cancelSync({ shiftId: activeSync.shiftId })}
+                disabled={isCancelingSync}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
         <table className="w-full max-w-4xl border border-zinc-200  min-w-150 border-collapse text-sm">
           <thead>
             <tr className="bg-primary/5 border-b border-zinc-200">

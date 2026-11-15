@@ -28,6 +28,8 @@
         "date-fns": "^4.4.0",
         "dayjs": "^1.11.20",
         "drizzle-orm": "^0.45.2",
+        "jodit": "^4.20.1",
+        "jodit-react": "^5.10.1",
         "lucide-react": "^1.16.0",
         "next": "16.0.4",
         "postgres": "^3.4.9",
@@ -523,6 +525,10 @@
     "isexe": ["isexe@2.0.0", "", {}, "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw=="],
 
     "jiti": ["jiti@2.7.0", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
+
+    "jodit": ["jodit@4.20.1", "", {}, "sha512-+JOubIk3jfhl0hja5jKA0nt3iWDPnID64Iw+UEYcXvbWroFzU2KFztsAPhGlSUJu1BhpBEOPq48EJIeLgI8CVA=="],
+
+    "jodit-react": ["jodit-react@5.10.1", "", { "dependencies": { "jodit": "^4.20.1" }, "peerDependencies": { "react": "~0.14 || ^15 || ^16 || ^17 || ^18 || ^19", "react-dom": "~0.14 || ^15 || ^16 || ^17 || ^18 || ^19" } }, "sha512-Ll79nKQJ5BiODZYN/gsM1sr978Jzhh/bscI3ZMsmGV1rgG0xO4G3skiKO0JFSs8+hppbAzJJON0FVAtteSwoDw=="],
 
     "jose": ["jose@6.2.3", "", {}, "sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw=="],
 

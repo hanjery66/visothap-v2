@@ -46,6 +46,11 @@ export const metadata: Metadata = {
   title: "Visothap",
   description: "Kết Quả Xổ Số Miền Nam, Kết Quả Xổ Số Miền Bắc",
   metadataBase: new URL("https://www.Visothap.net"),
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
   openGraph: {
     siteName: "Visothap.net",
     images: [],
@@ -62,7 +67,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  width: 1170,
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -81,29 +87,22 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                function setAppHeight() {
-                  var h = window.innerHeight;
-                  document.documentElement.style.setProperty('--app-height', h + 'px');
-                }
-                setAppHeight();
-                window.addEventListener('resize', setAppHeight);
-                window.addEventListener('orientationchange', function() {
-                  setTimeout(setAppHeight, 150);
-                });
+                var baseTargetWidth = 1280;
 
-                function adjustViewport() {
-                  var targetWidth = 1170;
-                  var screenWidth = window.screen.width;
-                  if (window.innerWidth && window.innerWidth > 0 && window.innerWidth < screenWidth) {
-                    screenWidth = window.innerWidth;
-                  }
-                  if (screenWidth < targetWidth) {
-                    var scale = screenWidth / targetWidth;
-                    var content = 'width=' + targetWidth + ', initial-scale=' + scale + ', minimum-scale=' + (scale * 0.5) + ', maximum-scale=3.0, user-scalable=yes';
+                function applyScale() {
+                  var rawWidth = window.innerWidth || window.screen.width;
+                  var scrollW = (document.documentElement && document.documentElement.scrollWidth) || 0;
+                  var targetWidth = Math.max(baseTargetWidth, scrollW);
+
+                  if (rawWidth > 0 && rawWidth < targetWidth) {
+                    var scale = Number((rawWidth / targetWidth).toFixed(4));
+                    var content = 'width=' + targetWidth + ', initial-scale=' + scale + ', minimum-scale=' + scale + ', maximum-scale=3.0, user-scalable=yes';
                     var metas = document.querySelectorAll('meta[name="viewport"]');
                     if (metas.length > 0) {
                       metas.forEach(function(m) {
-                        m.setAttribute('content', content);
+                        if (m.getAttribute('content') !== content) {
+                          m.setAttribute('content', content);
+                        }
                       });
                     } else {
                       var meta = document.createElement('meta');
@@ -114,13 +113,17 @@ export default function RootLayout({
                   }
                 }
 
-                adjustViewport();
+                applyScale();
+
                 if (document.readyState === 'loading') {
-                  document.addEventListener('DOMContentLoaded', adjustViewport);
+                  document.addEventListener('DOMContentLoaded', applyScale);
                 }
-                window.addEventListener('resize', adjustViewport);
+
+                setTimeout(applyScale, 50);
+                setTimeout(applyScale, 200);
+
                 window.addEventListener('orientationchange', function() {
-                  setTimeout(adjustViewport, 150);
+                  setTimeout(applyScale, 200);
                 });
               })();
             `,

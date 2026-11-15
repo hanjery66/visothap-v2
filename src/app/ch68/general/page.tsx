@@ -11,8 +11,11 @@ import {
   Loader2,
   Image as ImageIcon,
   Upload,
+  Home,
+  Check,
 } from "lucide-react";
 import { ensureError } from "@/lib/utils";
+import JoditEditor from "@/components/ui/jodit-editor";
 
 export default function GeneralPage() {
   const utils = trpc.useUtils();
@@ -161,10 +164,66 @@ export default function GeneralPage() {
   return (
     <div className="w-full max-w-5xl">
       <form onSubmit={handleUpdateGeneral} className="flex flex-col gap-6">
+        {/* Top Header / Breadcrumb matching screenshot */}
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-200">
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
+              General
+            </h1>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Home className="w-3.5 h-3.5" />
+              <span>/</span>
+              <span>General</span>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={saveMutation.isPending}
+            className="px-4 font-semibold text-xs flex items-center gap-1.5"
+          >
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                Update
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* LEFT FOOTER CONTENT */}
+        <div className="flex flex-col gap-2 text-left">
+          <Label className="text-sm font-medium text-zinc-700 tracking-wide">
+            Left footer content
+          </Label>
+          <JoditEditor
+            value={leftFooterContent}
+            onChange={setLeftFooterContent}
+            placeholder="Enter left footer content..."
+          />
+        </div>
+
+        {/* RIGHT FOOTER CONTENT */}
+        <div className="flex flex-col gap-2 text-left">
+          <Label className="text-sm font-medium text-zinc-700 tracking-wide">
+            Right footer content
+          </Label>
+          <JoditEditor
+            value={rightFooterContent}
+            onChange={setRightFooterContent}
+            placeholder="Enter right footer content..."
+          />
+        </div>
+
         {/* LOGO SECTION */}
-        <div className="flex flex-col gap-3">
-          <Label className="text-sm font-semibold tracking-wide text-foreground">
-            Header Logo
+        <div className="flex flex-col gap-2 text-left">
+          <Label className="text-sm font-medium text-zinc-700 tracking-wide">
+            Logo
           </Label>
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center p-4 border border-zinc-200 rounded bg-zinc-50/40">
             {/* Live rectangular preview box */}
@@ -229,51 +288,7 @@ export default function GeneralPage() {
           </div>
         </div>
 
-        {/* FOOTER HTML CONFIGURATION SECTION */}
-        <div className="flex flex-col gap-4">
-          <Label className="text-sm font-semibold tracking-wide text-foreground">
-            Footer HTML Content Markup
-          </Label>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex flex-col gap-1.5 text-left">
-              <Label
-                htmlFor="left-footer-markup"
-                className="text-xs font-medium text-zinc-600 tracking-wide"
-              >
-                Left Footer Content (HTML)
-              </Label>
-              <textarea
-                id="left-footer-markup"
-                value={leftFooterContent}
-                onChange={(e) => setLeftFooterContent(e.target.value)}
-                rows={3}
-                className="flex w-full rounded border border-zinc-200 px-3 py-2 text-sm shadow-xs transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                placeholder="E.g. <p>© 2026 VISOTHAP. All rights reserved.</p>"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5 text-left">
-              <Label
-                htmlFor="right-footer-markup"
-                className="text-xs font-medium text-zinc-600 tracking-wide"
-              >
-                Right Footer Content (HTML)
-              </Label>
-              <textarea
-                id="right-footer-markup"
-                value={rightFooterContent}
-                onChange={(e) => setRightFooterContent(e.target.value)}
-                rows={3}
-                className="flex w-full rounded border border-zinc-200 px-3 py-2 text-sm shadow-xs transition-all placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                placeholder="E.g. <p>Contact: info@visothap.net</p>"
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Action Button */}
+        {/* Action Button at bottom */}
         <div className="flex justify-end pt-4 border-t border-zinc-200">
           <Button
             type="submit"
@@ -283,11 +298,11 @@ export default function GeneralPage() {
             {saveMutation.isPending ? (
               <>
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Saving ...
+                Updating ...
               </>
             ) : (
               <>
-                Save
+                Update
                 <Sparkles className="h-3 w-3" />
               </>
             )}
