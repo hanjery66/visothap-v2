@@ -44,7 +44,21 @@ const kantum = Kantumruy_Pro({
 
 export const metadata: Metadata = {
   title: "Visothap",
-  description: "Visothap - The place where you can find the best products",
+  description: "Kết Quả Xổ Số Miền Nam, Kết Quả Xổ Số Miền Bắc",
+  metadataBase: new URL("https://www.Visothap.net"),
+  openGraph: {
+    siteName: "Visothap.net",
+    images: [],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      noimageindex: true,
+    },
+  },
 };
 
 export const viewport: Viewport = {
