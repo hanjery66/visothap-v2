@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
+import React, { useEffect, Suspense, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { trpc } from "@/app/_trpc/client";
-import { Button } from "@/components/ui/button";
-import { LayoutDashboard } from "lucide-react";
 import type { GeneralSettings } from "@/types";
 
 function LandingHeaderAndNav({
@@ -57,7 +55,7 @@ function LandingHeaderAndNav({
       <header className="mt-2 w-full">
         <div className="flex justify-between items-center w-full">
           <Link href="/" className="flex items-center gap-3 shrink-0">
-            {settings?.fullLogo ? (
+            {settings?.fullLogo && (
               <div className="relative h-12 w-auto max-w-50 sm:max-w-xs flex items-center">
                 <Image
                   src={settings.fullLogo}
@@ -68,11 +66,8 @@ function LandingHeaderAndNav({
                   unoptimized
                 />
               </div>
-            ) : (
-              <div className="h-12 flex items-center font-bold text-2xl text-primary tracking-wide font-mono">
-                Logo
-              </div>
-            )}
+            )
+            }
           </Link>
           {/* <div className="flex items-center gap-4 shrink-0">
             <Button asChild variant="dark">
@@ -109,27 +104,41 @@ function LandingHeaderAndNav({
   );
 }
 
+const TARGET_WIDTH = 1040;
+
 export default function LandingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { data: settings } = trpc.getGeneralSettings.useQuery();
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setScale(width < TARGET_WIDTH ? width / TARGET_WIDTH : 1);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
-    <section
-      className="flex-1 flex flex-col w-full min-h-dvh"
-    >
-      <div className="container flex-1 flex flex-col">
+    <section className="flex-1 flex flex-col w-full min-h-dvh">
+      <div
+        className="container px-5 flex-1 flex flex-col"
+        style={
+          scale < 1
+            ? {
+              width: `${TARGET_WIDTH}px`,
+              zoom: scale,
+            }
+            : undefined
+        }>
         <Suspense
           fallback={
-            <div className="border-b py-4 shadow-sm">
-              <div className="flex justify-between items-center">
-                <div className="h-12 flex items-center justify-center font-bold text-2xl text-cyan-600 tracking-wide font-mono">
-                  Logo
-                </div>
-              </div>
-            </div>
+            null
           }
         >
           <LandingHeaderAndNav settings={settings} />
@@ -150,10 +159,9 @@ export default function LandingLayout({
         </main>
       </div>
 
-
       {/* full-bleed breaks out of the body's container max-width → true full viewport width */}
       <div className="bg-primary text-primary-foreground w-full mt-auto">
-        <div className=" flex items-center justify-between p-8">
+        <div className="container flex items-center justify-between py-6 px-4">
           <div
             className="text-xs md:text-base"
             dangerouslySetInnerHTML={{

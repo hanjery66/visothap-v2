@@ -66,11 +66,6 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -82,54 +77,6 @@ export default function RootLayout({
       className={`h-full ${helvetica.variable} ${kantum.variable} ${helvetica.className} antialiased`}
       suppressHydrationWarning={true}
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var baseTargetWidth = 1280;
-
-                function applyScale() {
-                  var rawWidth = window.innerWidth || window.screen.width;
-                  var scrollW = (document.documentElement && document.documentElement.scrollWidth) || 0;
-                  var targetWidth = Math.max(baseTargetWidth, scrollW);
-
-                  if (rawWidth > 0 && rawWidth < targetWidth) {
-                    var scale = Number((rawWidth / targetWidth).toFixed(4));
-                    var content = 'width=' + targetWidth + ', initial-scale=' + scale + ', minimum-scale=' + scale + ', maximum-scale=3.0, user-scalable=yes';
-                    var metas = document.querySelectorAll('meta[name="viewport"]');
-                    if (metas.length > 0) {
-                      metas.forEach(function(m) {
-                        if (m.getAttribute('content') !== content) {
-                          m.setAttribute('content', content);
-                        }
-                      });
-                    } else {
-                      var meta = document.createElement('meta');
-                      meta.name = 'viewport';
-                      meta.content = content;
-                      document.head.appendChild(meta);
-                    }
-                  }
-                }
-
-                applyScale();
-
-                if (document.readyState === 'loading') {
-                  document.addEventListener('DOMContentLoaded', applyScale);
-                }
-
-                setTimeout(applyScale, 50);
-                setTimeout(applyScale, 200);
-
-                window.addEventListener('orientationchange', function() {
-                  setTimeout(applyScale, 200);
-                });
-              })();
-            `,
-          }}
-        />
-      </head>
       <body className="h-full min-h-full flex flex-col w-full">
         <TRPCProvider>
           {children}
