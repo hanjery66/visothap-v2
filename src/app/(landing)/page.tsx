@@ -156,15 +156,14 @@ export default function LandingPage() {
                 key={day.toString()}
                 onClick={() => !isFuture && handleDateSelect(day)}
                 disabled={isFuture}
-                className={`aspect-square w-full h-auto text-xs sm:text-sm font-normal rounded transition-all flex items-center justify-center p-0 ${
-                  isFuture ? "cursor-not-allowed text-zinc-400 hover:bg-transparent" : "cursor-pointer"
-                } ${isSelected
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : isToday
-                    ? "bg-red-50 text-primary border border-primary/50"
-                    : isFuture
-                      ? ""
-                      : "hover:bg-zinc-100 text-zinc-700"
+                className={`aspect-square w-full h-auto text-xs sm:text-sm font-normal rounded transition-all flex items-center justify-center p-0 ${isFuture ? "cursor-not-allowed text-zinc-400 hover:bg-transparent" : "cursor-pointer"
+                  } ${isSelected
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : isToday
+                      ? "bg-red-50 text-primary border border-primary/50"
+                      : isFuture
+                        ? ""
+                        : "hover:bg-zinc-100 text-zinc-700"
                   }`}
               >
                 {day.date()}
@@ -177,9 +176,9 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="grid grid-cols-[220px_1fr_220px] gap-10 items-start w-full">
+    <div className="grid grid-cols-[280px_1fr_280px] gap-14 md:gap-8 items-start w-full">
       {/* LEFT AD COLUMN */}
-      <div className="flex flex-col gap-4">
+      <div className="flex-5 bg-red-300 flex-col gap-4">
         {adsByPosition.Left && adsByPosition.Left.length > 0 ? (
           adsByPosition.Left.map((ad: Ads) => (
             <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />
@@ -273,7 +272,7 @@ export default function LandingPage() {
                       <AdsCard
                         key={centerAds[index].id}
                         ad={centerAds[index]}
-                        className="h-[4.5rem] w-full shrink-0"
+                        className="h-18 w-full shrink-0"
                       />
                     )}
                     {tbl.component}
@@ -290,12 +289,12 @@ export default function LandingPage() {
       </div>
 
       {/* RIGHT COLUMN: Calendar + Ads */}
-      <div className="flex flex-col gap-4">
+      <div className="flex-5 flex-col gap-4">
         {/* Interactive Calendar */}
         {renderCalendar()}
 
         {/* Right Advertisements */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 mt-4">
           {adsByPosition.Right && adsByPosition.Right.length > 0 ? (
             adsByPosition.Right.map((ad: Ads) => (
               <AdsCard key={ad.id} ad={ad} className="h-72 w-full shrink-0" />

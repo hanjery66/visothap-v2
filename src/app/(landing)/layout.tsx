@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense, useState } from "react";
+import React, { useEffect, Suspense, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -49,6 +49,9 @@ function LandingHeaderAndNav({
     router.push(queryString ? `${pathname}?${queryString}` : pathname);
   };
 
+
+
+
   return (
     <>
       {/* Top logo header */}
@@ -69,14 +72,6 @@ function LandingHeaderAndNav({
             )
             }
           </Link>
-          {/* <div className="flex items-center gap-4 shrink-0">
-            <Button asChild variant="dark">
-              <Link href="/ch68" className="flex items-center gap-1.5">
-                <LayoutDashboard size={16} strokeWidth={2.5} />
-                Admin Board
-              </Link>
-            </Button>
-          </div> */}
         </div>
       </header>
 
@@ -104,7 +99,7 @@ function LandingHeaderAndNav({
   );
 }
 
-const TARGET_WIDTH = 1040;
+const designWidth = 1440
 
 export default function LandingLayout({
   children,
@@ -112,56 +107,80 @@ export default function LandingLayout({
   children: React.ReactNode;
 }) {
   const { data: settings } = trpc.getGeneralSettings.useQuery();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
   const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState(0);
 
   useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      setScale(width < TARGET_WIDTH ? width / TARGET_WIDTH : 1);
+    const container = containerRef.current;
+    const content = contentRef.current;
+
+    if (!container || !content) return;
+
+    const update = () => {
+      const availableWidth = container.clientWidth;
+
+      const nextScale = Math.min(
+        1,
+        availableWidth / designWidth
+      );
+
+      setScale(nextScale);
+      setHeight(content.offsetHeight);
     };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+
+    const observer = new ResizeObserver(update);
+
+    observer.observe(container);
+    observer.observe(content);
+
+    window.addEventListener("resize", update);
+
+    update();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [designWidth]);
+
 
   return (
-    <section className="flex-1 flex flex-col w-full min-h-dvh">
-      <div
-        className="container px-5 flex-1 flex flex-col"
-        style={
-          scale < 1
-            ? {
-              width: `${TARGET_WIDTH}px`,
-              zoom: scale,
-            }
-            : undefined
-        }>
-        <Suspense
-          fallback={
-            null
-          }
-        >
-          <LandingHeaderAndNav settings={settings} />
-        </Suspense>
+    <section className="flex-1 flex flex-col">
 
-        {/* Content body */}
-        <main className="flex-1 py-6">
-          <Suspense
-            fallback={
-              <div className="bg-white rounded  shadow-sm border border-zinc-100 p-8 text-center text-zinc-500 font-medium flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#15bece]"></div>
-                Loading ...
-              </div>
-            }
-          >
-            {children}
+      <div
+        ref={containerRef}
+        className="w-full overflow-hidden relative"
+        style={{ height: height * scale }}
+      >
+        <div
+          ref={contentRef}
+          style={{
+            width: designWidth,
+            position: "absolute",
+            left: "50%",
+            transform: `translateX(-50%) scale(${scale})`,
+            transformOrigin: "top center",
+          }}
+        >
+          <Suspense>
+            <section className="px-10 md:px-48 lg:px-36 ">
+              <LandingHeaderAndNav settings={settings} />
+              <main className="flex-1 py-6">
+                {children}
+              </main>
+            </section>
           </Suspense>
-        </main>
+
+        </div>
       </div>
 
-      {/* full-bleed breaks out of the body's container max-width → true full viewport width */}
+      {/* full-bleed breaks out of the body's  max-width → true full viewport width */}
       <div className="bg-primary text-primary-foreground w-full mt-auto">
-        <div className="container flex items-center justify-between py-6 px-4">
+        <div className=" flex items-center justify-between py-6 px-4">
           <div
             className="text-xs md:text-base"
             dangerouslySetInnerHTML={{
